@@ -24,6 +24,7 @@ import CartPage from "../pages/Cart/CartPage";
 import ProtectedRoute from "./ProtectedRoute";
 import FarmerRoute from "./FarmerRoute";
 import NotificationsPage from "../pages/Notifications/NotificationsPage";
+import CreatePostPage from "../pages/Community/CreatePostPage";
 
 export const router = createBrowserRouter([
   /*
@@ -55,6 +56,11 @@ export const router = createBrowserRouter([
       {
         path: "products/:id",
         element: <ProductDetailsPage />,
+      },
+
+      {
+        path: "/community/create",
+        element: <CreatePostPage />,
       },
 
       /*
