@@ -82,6 +82,11 @@ path(
     "api/farmers/",
     include("farmers.urls")
 ),
+# Community API
+path(
+    "api/community/",
+    include("community.urls"),
+),
 ]
 
 # Serve media files during development
