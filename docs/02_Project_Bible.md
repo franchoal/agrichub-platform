@@ -674,3 +674,73 @@ Every feature added to AgricHub Marketplace must answer one question:
 > Does this feature improve agricultural commerce for farmers and buyers?
 
 If the answer is **No**, it does not belong in Version 1 without formal approval.
+
+# AgricHub Africa — Project Bible
+
+## Project Overview
+
+AgricHub Africa is a digital agricultural ecosystem built to modernize agricultural commerce, logistics, and supply chain operations across Africa. The platform connects verified farmers, buyers, transport providers, cooperatives, processors, financial institutions, and agricultural service providers within one integrated digital environment.
+
+The Marketplace serves as the foundation of the platform, but AgricHub is designed to grow into a complete agricultural operating system that supports the entire journey of agricultural products—from production to delivery and eventually export.
+
+## Primary Users
+
+- Farmers
+- Buyers
+- Transport & Logistics Partners
+- Agricultural Cooperatives
+- Warehouse Operators
+- Agro Processors
+- Administrators
+- Financial Partners (Future)
+
+## Platform Modules
+
+### Phase One
+- User Authentication
+- Farmer Profiles
+- Buyer Profiles
+- Product Marketplace
+- Categories
+- Cart
+- Orders
+- Payments
+- Notifications
+- Reviews
+
+### Phase Two
+- Automated Logistics
+- Shipment Management
+- Delivery Tracking
+- Route Optimization
+- Transport Partner Portal
+
+### Phase Three
+- Warehouse Management
+- Collection Centres
+- Fleet Management
+- Cold Chain Logistics
+- Escrow Wallet
+- Farmer Analytics
+
+### Future Expansion
+- AI Market Intelligence
+- Farm Financing
+- Insurance
+- Export Marketplace
+- Agricultural Advisory Services
+- Supply Chain Analytics
+
+## Product Principles
+
+AgricHub is built on five guiding principles:
+
+- Trust through farmer verification.
+- Transparency in pricing and transactions.
+- Automation over manual processes.
+- Scalability for millions of users.
+- Technology that improves farmer profitability.
+
+## Long-Term Goal
+
+To become Africa's leading digital agricultural commerce and supply chain platform, providing every stakeholder in agriculture with the tools needed to produce, trade, transport, finance, and grow sustainably from one connected ecosystem.

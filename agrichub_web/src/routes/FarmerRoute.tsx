@@ -7,12 +7,14 @@ import {
 import { useAuthStore } from "../store/authStore";
 import { useFarmerProfile } from "../hooks/useFarmerProfile";
 
+
 const FarmerRoute = () => {
   const location = useLocation();
 
   const user = useAuthStore(
     (state) => state.user
   );
+
 
   /*
   ==========================================
@@ -23,31 +25,25 @@ const FarmerRoute = () => {
   if (!user) {
     return (
       <Navigate
-        to="/login/farmer"
+        to="/login"
         replace
       />
     );
   }
 
-  /*
-  ==========================================
-  Farmer Only
-  ==========================================
-  */
-
-  if (user.role !== "farmer") {
-    return (
-      <Navigate
-        to="/products"
-        replace
-      />
-    );
-  }
 
   /*
   ==========================================
-  Check Farmer Profile
+  Check Existing Seller/Farmer Profile
   ==========================================
+
+  Transitional architecture:
+
+  AgricWise does not assign permanent roles.
+
+  The existing FarmerProfile currently
+  represents the person's agricultural
+  seller/farmer capability.
   */
 
   const {
@@ -55,6 +51,7 @@ const FarmerRoute = () => {
     isError,
     data: profile,
   } = useFarmerProfile();
+
 
   /*
   ==========================================
@@ -66,35 +63,36 @@ const FarmerRoute = () => {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
+
           <div className="mb-4 text-5xl">
             🌾
           </div>
 
           <h2 className="text-xl font-semibold">
-            Loading Farmer Portal...
+            Loading AgricWise Workspace...
           </h2>
 
           <p className="mt-2 text-gray-600">
             Please wait.
           </p>
+
         </div>
       </div>
     );
   }
 
+
   /*
   ==========================================
-  No Farm Profile Yet
+  No Farmer/Seller Profile Yet
 
-  Redirect every farmer to onboarding
-  except when already on the profile page.
+  Redirect to profile onboarding.
   ==========================================
   */
 
   if (
     (isError || !profile) &&
-    location.pathname !==
-      "/farmer/profile"
+    location.pathname !== "/farmer/profile"
   ) {
     return (
       <Navigate
@@ -103,6 +101,7 @@ const FarmerRoute = () => {
       />
     );
   }
+
 
   /*
   ==========================================
@@ -114,8 +113,7 @@ const FarmerRoute = () => {
 
   if (
     profile &&
-    location.pathname ===
-      "/farmer/profile"
+    location.pathname === "/farmer/profile"
   ) {
     return (
       <Navigate
@@ -125,6 +123,7 @@ const FarmerRoute = () => {
     );
   }
 
+
   /*
   ==========================================
   Allow Access
@@ -133,5 +132,6 @@ const FarmerRoute = () => {
 
   return <Outlet />;
 };
+
 
 export default FarmerRoute;

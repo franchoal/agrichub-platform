@@ -5,7 +5,7 @@ export interface RegisterData {
   first_name: string;
   last_name: string;
   phone_number?: string;
-  role: "buyer" | "farmer";
+  location?: string;
   password: string;
 }
 

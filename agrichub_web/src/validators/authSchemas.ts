@@ -2,6 +2,9 @@ import { z } from "zod";
 
 /**
  * Registration Schema
+ *
+ * AgricWise registration is person-centered.
+ * Users do not select a permanent buyer/farmer role.
  */
 export const registerSchema = z.object({
   first_name: z
@@ -20,7 +23,9 @@ export const registerSchema = z.object({
     .string()
     .optional(),
 
-  role: z.enum(["buyer", "farmer"]),
+  location: z
+    .string()
+    .optional(),
 
   password: z
     .string()

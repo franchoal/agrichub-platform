@@ -2,15 +2,23 @@ import { Link } from "react-router-dom";
 
 import {
   ArrowRight,
-  Leaf,
-  ShoppingBasket,
-  ShieldCheck,
-  Users,
-  TrendingUp,
-  CheckCircle2,
-  Search,
-  Globe2,
   BarChart3,
+  BookOpen,
+  BriefcaseBusiness,
+  ChevronRight,
+  Handshake,
+  Leaf,
+  MessageCircle,
+  Package,
+  Search,
+  ShieldCheck,
+  ShoppingBasket,
+  Sparkles,
+  Store,
+  Tractor,
+  TrendingUp,
+  Users,
+  Wrench,
 } from "lucide-react";
 
 import {
@@ -21,641 +29,97 @@ import {
   livestock,
 } from "../../assets/images";
 
-const Sectiontitle = ({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}) => (
-  <div className="mx-auto mb-12 max-w-2xl text-center">
-    <h2 className="text-4xl font-bold text-gray-900">
-      {title}
-    </h2>
-
-    <p className="mt-4 text-lg text-gray-600">
-      {subtitle}
-    </p>
-  </div>
-);
 
 const HomePage = () => {
   return (
-    <main className="bg-white">
+    <main className="min-h-screen bg-slate-50 pb-10">
 
       {/* ========================================= */}
-{/* HERO */}
-{/* ========================================= */}
-
-<section className="relative overflow-hidden">
-
-  {/* Background */}
-
-  <img
-    src={heroFarm}
-    alt="AgricHub Africa"
-    className="absolute inset-0 h-full w-full object-cover"
-  />
-
-  {/* Overlay */}
-
-  <div className="absolute inset-0 bg-gradient-to-r from-green-950/95 via-green-900/80 to-green-700/50" />
-
-  {/* Decorative Blurs */}
-
-  <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
-
-  <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-yellow-300/20 blur-3xl" />
-
-  <div className="relative mx-auto flex min-h-[760px] max-w-7xl items-center px-6 py-20">
-
-    <div className="grid w-full items-center gap-20 lg:grid-cols-2">
-
-      {/* ================= LEFT ================= */}
-
-      <div>
-
-        <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur">
-          🌍 Africa's Smart Agricultural Ecosystem
-        </span>
-
-        <h1 className="mt-8 text-5xl font-black leading-tight text-white lg:text-7xl">
-
-          Building the
-
-          <span className="block text-yellow-300">
-            Future of African Agriculture
-          </span>
-
-          One Farmer at a Time
-
-        </h1>
-
-        <p className="mt-8 max-w-2xl text-lg leading-8 text-green-50">
-
-          AgricHub Africa is a digital agricultural ecosystem connecting
-          farmers, buyers, processors, cooperatives, agribusinesses and
-          financial partners through one intelligent platform.
-
-          <br /><br />
-
-          Buy fresh produce directly from verified farmers, grow your
-          agricultural business, discover new markets, and unlock the
-          opportunities shaping the future of African agriculture.
-
-        </p>
-
-        {/* CTA */}
-
-        <div className="mt-10 flex flex-wrap gap-5">
-
-          <Link
-            to="/products"
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-semibold text-green-700 shadow-xl transition hover:-translate-y-1"
-          >
-            Explore Marketplace
-
-            <ArrowRight size={18} />
-          </Link>
-
-          <Link
-            to="/farmer"
-            className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition hover:bg-white hover:text-green-700"
-          >
-            Join as Farmer
-          </Link>
-
-        </div>
-
-        {/* Platform Highlights */}
-
-        <div className="mt-16 grid grid-cols-2 gap-6 lg:grid-cols-4">
-
-          <div>
-            <h3 className="text-4xl font-black text-white">
-              500+
-            </h3>
-
-            <p className="mt-2 text-green-100">
-              Farmers
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-4xl font-black text-white">
-              5K+
-            </h3>
-
-            <p className="mt-2 text-green-100">
-              Products
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-4xl font-black text-white">
-              36
-            </h3>
-
-            <p className="mt-2 text-green-100">
-              Nigerian States
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-4xl font-black text-white">
-              Africa
-            </h3>
-
-            <p className="mt-2 text-green-100">
-              Expansion Vision
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ================= RIGHT ================= */}
-
-      <div className="hidden lg:block">
-
-        <div className="rounded-3xl bg-white/95 p-10 shadow-2xl backdrop-blur">
-
-          <ShoppingBasket
-            size={72}
-            className="text-green-600"
-          />
-
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            More Than A Marketplace
-          </h2>
-
-          <p className="mt-4 leading-8 text-gray-600">
-
-            AgricHub Africa provides farmers and agribusinesses with
-            powerful digital tools designed to simplify trading,
-            improve visibility, increase income and create sustainable
-            agricultural growth across Africa.
-
-          </p>
-
-          <div className="mt-8 space-y-4">
-
-            {[
-              "Verified Farmers & Buyers",
-              "Nationwide Agricultural Marketplace",
-              "Business Management Tools",
-              "Digital Farm Visibility",
-              "Secure Transactions",
-              "Built for Africa",
-            ].map((item) => (
-
-              <div
-                key={item}
-                className="flex items-center gap-3"
-              >
-
-                <CheckCircle2
-                  size={20}
-                  className="text-green-600"
-                />
-
-                <span className="text-gray-700">
-                  {item}
-                </span>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-      {/* ========================================= */}
-{/* EXPLORE AGRICULTURAL CATEGORIES */}
-{/* ========================================= */}
-
-<section className="bg-slate-50 py-24">
-
-  <div className="mx-auto max-w-7xl px-6">
-
-    <Sectiontitle
-      title="Explore Africa's Agricultural Marketplace"
-      subtitle="From fresh farm produce to livestock and essential agricultural commodities, discover quality products supplied by verified farmers and agribusinesses across the AgricHub Africa ecosystem."
-    />
-
-    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-
-      {[
-        {
-          image: vegetables,
-          title: "Fresh Vegetables",
-          description: "Healthy vegetables harvested directly from trusted farms.",
-        },
-        {
-          image: fruits,
-          title: "Fresh Fruits",
-          description: "Seasonal fruits sourced from verified growers.",
-        },
-        {
-          image: grains,
-          title: "Grains & Cereals",
-          description: "Rice, maize, beans and staple crops for homes and businesses.",
-        },
-        {
-          image: livestock,
-          title: "Livestock",
-          description: "Quality livestock and animal products from trusted farmers.",
-        },
-      ].map((category) => (
-
-        <Link
-          key={category.title}
-          to="/products"
-          className="group overflow-hidden rounded-3xl bg-white shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-2xl"
-        >
-
-          <div className="relative h-64 overflow-hidden">
-
-            <img
-              src={category.image}
-              alt={category.title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-            <div className="absolute bottom-5 left-5">
-
-              <span className="rounded-full bg-white/90 px-4 py-1 text-sm font-semibold text-green-700">
-                Explore
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="p-7">
-
-            <h3 className="text-2xl font-bold text-gray-900">
-              {category.title}
-            </h3>
-
-            <p className="mt-4 leading-7 text-gray-600">
-              {category.description}
-            </p>
-
-            <div className="mt-6 flex items-center font-semibold text-green-700 transition group-hover:translate-x-1">
-
-              Browse Products
-
-              <ArrowRight
-                size={18}
-                className="ml-2"
-              />
-
-            </div>
-
-          </div>
-
-        </Link>
-
-      ))}
-
-    </div>
-
-    {/* Bottom Callout */}
-
-    <div className="mt-20 rounded-3xl bg-white p-10 text-center shadow-lg">
-
-      <h3 className="text-3xl font-bold text-gray-900">
-        Thousands of Agricultural Products. One Trusted Platform.
-      </h3>
-
-      <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-600">
-
-        AgricHub Africa brings together farmers, cooperatives, processors,
-        distributors, retailers, and buyers in one digital marketplace—
-        making agricultural trade more transparent, accessible, and profitable.
-
-      </p>
-
-      <Link
-        to="/products"
-        className="mt-8 inline-flex items-center rounded-xl bg-green-600 px-8 py-4 font-semibold text-white transition hover:bg-green-700"
-      >
-        Explore Marketplace
-
-        <ArrowRight
-          size={18}
-          className="ml-2"
-        />
-      </Link>
-
-    </div>
-
-  </div>
-
-</section>
-      {/* ========================================= */}
-{/* HOW AGRICHUB AFRICA WORKS */}
-{/* ========================================= */}
-
-<section className="py-24 bg-white">
-
-  <div className="mx-auto max-w-7xl px-6">
-
-    <Sectiontitle
-      title="How AgricHub Africa Works"
-      subtitle="A simple digital ecosystem connecting farmers, buyers, and agricultural opportunities across Africa."
-    />
-
-    <div className="grid gap-10 md:grid-cols-3">
-
-      {[
-        {
-          icon: Users,
-          title: "Join the Ecosystem",
-          text:
-            "Create your AgricHub account as a farmer or buyer and become part of Africa's growing digital agricultural community.",
-        },
-        {
-          icon: Search,
-          title: "Discover & Connect",
-          text:
-            "Browse verified farmers, quality agricultural products, and trusted opportunities while building lasting business relationships.",
-        },
-        {
-          icon: ShoppingBasket,
-          title: "Trade & Grow",
-          text:
-            "Buy, sell, manage orders, expand your reach, and grow your agricultural business through one powerful digital platform.",
-        },
-      ].map((step, index) => {
-
-        const Icon = step.icon;
-
-        return (
-
-          <div
-            key={step.title}
-            className="rounded-3xl border border-gray-100 bg-white p-10 text-center shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-2xl"
-          >
-
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-
-              <Icon
-                size={38}
-                className="text-green-700"
-              />
-
-            </div>
-
-            <div className="mt-8">
-
-              <span className="rounded-full bg-green-50 px-4 py-1 text-sm font-bold text-green-700">
-                STEP {index + 1}
-              </span>
-
-              <h3 className="mt-5 text-2xl font-bold text-gray-900">
-                {step.title}
-              </h3>
-
-              <p className="mt-5 leading-8 text-gray-600">
-                {step.text}
-              </p>
-
-            </div>
-
-          </div>
-
-        );
-
-      })}
-
-    </div>
-
-    {/* Bottom Statement */}
-
-    <div className="mx-auto mt-20 max-w-4xl rounded-3xl bg-gradient-to-r from-green-700 to-emerald-600 p-10 text-center text-white shadow-xl">
-
-      <h3 className="text-3xl font-bold">
-        One Platform. Endless Agricultural Opportunities.
-      </h3>
-
-      <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-green-100">
-
-        AgricHub Africa empowers farmers with digital tools,
-        gives buyers direct access to trusted agricultural products,
-        and creates stronger connections that drive sustainable
-        agricultural growth across Africa.
-
-      </p>
-
-    </div>
-
-  </div>
-
-</section>
-     {/* ========================= */}
-{/* WHY AGRICHUB AFRICA */}
-{/* ========================= */}
-
-<section className="bg-slate-50 py-28">
-
-  <div className="mx-auto max-w-7xl px-6">
-
-    <Sectiontitle
-      title="Why AgricHub Africa?"
-      subtitle="Building the Digital Infrastructure for African Agriculture."
-    />
-
-    <p className="mx-auto mb-16 max-w-4xl text-center text-lg leading-8 text-gray-600">
-      AgricHub Africa is more than an online marketplace.
-      We are building one connected ecosystem where farmers,
-      agribusinesses, logistics providers, financial institutions,
-      governments, researchers and consumers collaborate through
-      technology to transform agriculture across Africa.
-    </p>
-
-    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-
-      {[
-        {
-          icon: Leaf,
-          title: "Digital Agricultural Marketplace",
-          text: "Buy and sell fresh agricultural produce directly from verified farmers while reducing unnecessary middlemen.",
-        },
-
-        {
-          icon: TrendingUp,
-          title: "Farmer Business Suite",
-          text: "Powerful digital tools for inventory management, pricing, customer management, analytics and business growth.",
-        },
-
-        {
-          icon: Users,
-          title: "Integrated Logistics",
-          text: "Connecting farmers with reliable transportation and delivery partners to move produce efficiently.",
-        },
-
-        {
-          icon: ShieldCheck,
-          title: "Financial Inclusion",
-          text: "Expanding access to digital payments, agricultural financing and future credit opportunities for farmers.",
-        },
-
-        {
-          icon: BarChart3,
-          title: "Agricultural Intelligence",
-          text: "Market insights, production trends and real-time analytics that support smarter agricultural decisions.",
-        },
-
-        {
-          icon: Globe2,
-          title: "Built for Africa",
-          text: "Designed to scale across every African country while empowering local agricultural communities through technology.",
-        },
-
-      ].map((feature) => {
-
-        const Icon = feature.icon;
-
-        return (
-
-          <div
-            key={feature.title}
-            className="group rounded-3xl border border-transparent bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-green-200 hover:shadow-2xl"
-          >
-
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 transition group-hover:bg-green-600">
-
-              <Icon
-                size={34}
-                className="text-green-700 transition group-hover:text-white"
-              />
-
-            </div>
-
-            <h3 className="text-2xl font-bold text-gray-900">
-              {feature.title}
-            </h3>
-
-            <p className="mt-5 leading-8 text-gray-600">
-              {feature.text}
-            </p>
-
-          </div>
-
-        );
-
-      })}
-
-    </div>
-
-    {/* Vision Banner */}
-
-    <div className="mt-20 overflow-hidden rounded-[32px] bg-gradient-to-r from-green-800 via-green-700 to-green-600 p-12 text-white shadow-2xl">
-
-      <div className="flex flex-col items-center justify-between gap-10 lg:flex-row">
-
-        <div className="max-w-3xl">
-
-          <span className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold">
-            OUR VISION
-          </span>
-
-          <h3 className="mt-6 text-4xl font-black">
-            Building Africa's Largest Digital Agricultural Ecosystem
-          </h3>
-
-          <p className="mt-6 text-lg leading-8 text-green-100">
-            Our mission is to connect millions of farmers, agribusinesses,
-            financial institutions, logistics providers and consumers
-            through one intelligent platform that drives food security,
-            economic growth and sustainable agriculture across Africa.
-          </p>
-
-        </div>
-
-        <Link
-          to="/about"
-          className="rounded-2xl bg-white px-8 py-4 font-bold text-green-700 transition hover:-translate-y-1 hover:bg-green-50"
-        >
-          Learn More About AgricHub
-        </Link>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-            {/* ========================================= */}
-      {/* FARMER SUCCESS */}
+      {/* HERO / APP WELCOME */}
       {/* ========================================= */}
 
-      <section className="relative overflow-hidden py-28">
+      <section className="relative overflow-hidden bg-green-950">
 
         <img
           src={heroFarm}
-          alt="Farmers"
+          alt="Agricultural community"
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        <div className="absolute inset-0 bg-green-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-950/95 via-green-900/90 to-green-800/70" />
 
-        <div className="relative mx-auto max-w-7xl px-6">
+        <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-8 sm:px-6 lg:px-8 lg:pb-20 lg:pt-16">
 
-          <Sectiontitle
-            title="Helping farmers Build Profitable Agricultural Business"
-            subtitle="AgricHub-Africa gives farmers more than market access. 
-            We provide the digital foundation for sustainable agricultural growth."
-          />
+          {/* Welcome label */}
 
-          <div className="mt-16 grid gap-10 text-center text-white md:grid-cols-4">
+          <div className="flex items-center justify-between">
 
-            {[
-              {
-                number: "100+",
-                label: "Registered Farmers",
-              },
-              {
-                number: "1,000+",
-                label: "Products Listed",
-              },
-              {
-                number: "36",
-                label: "States Covered",
-              },
-              {
-                number: "24/7",
-                label: "Marketplace Access",
-              },
-            ].map((item) => (
+            <div>
+              <p className="text-sm font-medium text-green-200">
+                Welcome to
+              </p>
 
-              <div key={item.label}>
+              <h1 className="mt-1 text-2xl font-black text-white sm:text-3xl">
+                AgricWise
+              </h1>
+            </div>
 
-                <h3 className="text-5xl font-black text-yellow-300">
-                  {item.number}
-                </h3>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+              <Leaf
+                size={23}
+                className="text-green-200"
+              />
+            </div>
 
-                <p className="mt-3 text-lg text-green-100">
-                  {item.label}
-                </p>
+          </div>
 
-              </div>
 
-            ))}
+          {/* Hero message */}
+
+          <div className="mt-12 max-w-3xl lg:mt-20">
+
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-green-100 backdrop-blur">
+              <Sparkles size={14} />
+              Connect. Trade. Grow.
+            </span>
+
+            <h2 className="mt-6 text-4xl font-black leading-tight text-white sm:text-5xl lg:text-7xl">
+
+              Agriculture works
+              <span className="block text-yellow-300">
+                better together.
+              </span>
+
+            </h2>
+
+            <p className="mt-5 max-w-2xl text-base leading-7 text-green-50 sm:text-lg sm:leading-8">
+
+              AgricWise connects people, products, services,
+              businesses, knowledge and opportunities across
+              the agricultural ecosystem.
+
+            </p>
+
+
+            <div className="mt-8 flex flex-wrap gap-3">
+
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-bold text-green-800 shadow-lg transition hover:-translate-y-0.5"
+              >
+                <Search size={18} />
+                Explore
+              </Link>
+
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/50 bg-white/10 px-6 py-3.5 font-bold text-white backdrop-blur transition hover:bg-white hover:text-green-800"
+              >
+                Join AgricWise
+                <ArrowRight size={18} />
+              </Link>
+
+            </div>
 
           </div>
 
@@ -663,77 +127,366 @@ const HomePage = () => {
 
       </section>
 
+
       {/* ========================================= */}
-      {/* TESTIMONIALS */}
+      {/* QUICK ACTIONS */}
       {/* ========================================= */}
 
-      <section className="bg-gray-50 py-24">
+      <section className="relative z-10 mx-auto -mt-5 max-w-7xl px-4 sm:px-6 lg:px-8">
 
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="rounded-3xl bg-white p-4 shadow-xl sm:p-6">
 
-          <Sectiontitle
-            title="Built For Farmers, Trusted by Buyers"
-            subtitle="Building confidence in agricultural commerce across Nigeria."
-          />
+          <div className="mb-5 flex items-center justify-between">
 
-          <div className="grid gap-8 lg:grid-cols-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                What do you want to do?
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Participate in the ecosystem your way.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
 
             {[
               {
-                name: "Adebayo",
-                role: "Farmer • Ogun State",
-                text:
-                  "AgricHub-Africa has helped me reach customers beyond my local market and increase my sales.",
+                icon: ShoppingBasket,
+                label: "Buy",
+                href: "/products",
               },
               {
-                name: "Chioma",
-                role: "Buyer • Lagos",
-                text:
-                  "Buying fresh produce directly from verified farmers has never been easier.",
+                icon: Store,
+                label: "Sell",
+                href: "/farmer/dashboard",
               },
               {
-                name: "Yusuf",
-                role: "Farmer • Kaduna",
-                text:
-                  "Managing products and receiving customer orders online has transformed my business.",
+                icon: Wrench,
+                label: "Offer Service",
+                href: "/products",
               },
-            ].map((item) => (
+              {
+                icon: Search,
+                label: "Request",
+                href: "/products",
+              },
+              {
+                icon: Users,
+                label: "Connect",
+                href: "/products",
+              },
+              {
+                icon: MessageCircle,
+                label: "Discuss",
+                href: "/products",
+              },
+              {
+                icon: BookOpen,
+                label: "Learn",
+                href: "/products",
+              },
+              {
+                icon: BriefcaseBusiness,
+                label: "Opportunities",
+                href: "/products",
+              },
+            ].map((action) => {
 
-              <div
-                key={item.name}
-                className="rounded-3xl bg-white p-10 shadow-md transition hover:-translate-y-2 hover:shadow-xl"
-              >
+              const Icon = action.icon;
 
-                <div className="mb-6 flex text-yellow-500">
+              return (
+                <Link
+                  key={action.label}
+                  to={action.href}
+                  className="group flex flex-col items-center rounded-2xl border border-gray-100 bg-slate-50 p-4 text-center transition hover:-translate-y-1 hover:border-green-200 hover:bg-green-50"
+                >
 
-                  ⭐⭐⭐⭐⭐
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700 transition group-hover:bg-green-600 group-hover:text-white">
 
-                </div>
+                    <Icon size={21} />
 
-                <p className="leading-8 text-gray-600">
+                  </div>
 
-                  "{item.text}"
+                  <span className="mt-3 text-sm font-semibold text-gray-700">
+                    {action.label}
+                  </span>
 
-                </p>
+                </Link>
+              );
 
-                <div className="mt-8">
+            })}
 
-                  <h4 className="font-bold text-gray-900">
+          </div>
 
-                    {item.name}
+        </div>
 
-                  </h4>
+      </section>
 
-                  <p className="text-sm text-gray-500">
 
-                    {item.role}
+      {/* ========================================= */}
+      {/* DISCOVER */}
+      {/* ========================================= */}
 
+      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+
+        <div className="flex items-end justify-between">
+
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wider text-green-700">
+              Discover
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-gray-900 sm:text-3xl">
+              Explore Agriculture
+            </h2>
+
+            <p className="mt-2 max-w-xl text-gray-500">
+              Find products and discover what's happening across
+              the agricultural ecosystem.
+            </p>
+          </div>
+
+          <Link
+            to="/products"
+            className="hidden items-center gap-1 font-semibold text-green-700 sm:flex"
+          >
+            View all
+            <ChevronRight size={18} />
+          </Link>
+
+        </div>
+
+
+        {/* Category cards */}
+
+        <div className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
+
+          {[
+            {
+              image: vegetables,
+              title: "Vegetables",
+              text: "Fresh produce",
+            },
+            {
+              image: fruits,
+              title: "Fruits",
+              text: "Seasonal produce",
+            },
+            {
+              image: grains,
+              title: "Grains",
+              text: "Staple crops",
+            },
+            {
+              image: livestock,
+              title: "Livestock",
+              text: "Animals & products",
+            },
+          ].map((category) => (
+
+            <Link
+              key={category.title}
+              to="/products"
+              className="group relative overflow-hidden rounded-2xl bg-white shadow-sm"
+            >
+
+              <div className="h-44 overflow-hidden sm:h-52">
+
+                <img
+                  src={category.image}
+                  alt={category.title}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+
+                  <h3 className="font-bold text-white">
+                    {category.title}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-white/80">
+                    {category.text}
                   </p>
 
                 </div>
 
               </div>
 
+            </Link>
+
+          ))}
+
+        </div>
+
+      </section>
+
+
+      {/* ========================================= */}
+      {/* AGRICWISE ECOSYSTEM */}
+      {/* ========================================= */}
+
+      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+
+          <div className="max-w-2xl">
+
+            <p className="text-sm font-bold uppercase tracking-wider text-green-700">
+              The AgricWise Ecosystem
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-gray-900 sm:text-3xl">
+              More than buying and selling.
+            </h2>
+
+            <p className="mt-4 leading-7 text-gray-600">
+              Agriculture needs more than a marketplace. AgricWise
+              brings the people, businesses, services, knowledge and
+              opportunities that make agricultural activity work.
+            </p>
+
+          </div>
+
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+            {[
+              {
+                icon: Package,
+                title: "Products",
+                text: "Discover agricultural products, inputs and produce.",
+              },
+              {
+                icon: Wrench,
+                title: "Services",
+                text: "Find people offering agricultural skills and services.",
+              },
+              {
+                icon: Tractor,
+                title: "Equipment",
+                text: "Connect around farm machinery, tools and equipment.",
+              },
+              {
+                icon: Search,
+                title: "Requests",
+                text: "Tell the ecosystem what you need.",
+              },
+              {
+                icon: Handshake,
+                title: "People & Businesses",
+                text: "Discover agricultural participants and businesses.",
+              },
+              {
+                icon: BookOpen,
+                title: "Knowledge & Opportunities",
+                text: "Learn, participate and discover new opportunities.",
+              },
+            ].map((item) => {
+
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-gray-100 bg-slate-50 p-5"
+                >
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700">
+                    <Icon size={21} />
+                  </div>
+
+                  <h3 className="mt-4 font-bold text-gray-900">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                    {item.text}
+                  </p>
+
+                </div>
+              );
+
+            })}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ========================================= */}
+      {/* HOW IT WORKS */}
+      {/* ========================================= */}
+
+      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+
+        <div className="rounded-3xl bg-green-900 p-7 text-white sm:p-10 lg:p-12">
+
+          <div className="max-w-2xl">
+
+            <p className="text-sm font-bold uppercase tracking-wider text-green-300">
+              Simple by design
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+              One account. Many possibilities.
+            </h2>
+
+            <p className="mt-4 leading-7 text-green-100">
+              You don't need to choose a permanent role when you join.
+              Participate according to what you need and what you have
+              to offer.
+            </p>
+
+          </div>
+
+
+          <div className="mt-9 grid gap-5 md:grid-cols-3">
+
+            {[
+              {
+                number: "01",
+                title: "Join",
+                text: "Create one simple AgricWise account.",
+              },
+              {
+                number: "02",
+                title: "Participate",
+                text: "Buy, sell, offer, request, connect or learn.",
+              },
+              {
+                number: "03",
+                title: "Grow",
+                text: "Build relationships, reputation and opportunities.",
+              },
+            ].map((step) => (
+
+              <div
+                key={step.number}
+                className="rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur"
+              >
+
+                <span className="text-sm font-black text-yellow-300">
+                  {step.number}
+                </span>
+
+                <h3 className="mt-3 text-xl font-bold">
+                  {step.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-green-100">
+                  {step.text}
+                </p>
+
+              </div>
+
             ))}
 
           </div>
@@ -742,98 +495,126 @@ const HomePage = () => {
 
       </section>
 
+
       {/* ========================================= */}
-{/* FINAL CALL TO ACTION */}
-{/* ========================================= */}
+      {/* TRUST */}
+      {/* ========================================= */}
 
-<section className="bg-gradient-to-r from-green-800 via-green-700 to-emerald-700 py-28">
+      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
 
-  <div className="mx-auto max-w-5xl px-6 text-center text-white">
+        <div className="grid gap-5 md:grid-cols-3">
 
-    <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold backdrop-blur">
-      🌍 Building Africa's Agricultural Future
-    </span>
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
 
-    <h2 className="mt-8 text-5xl font-black leading-tight lg:text-6xl">
+            <ShieldCheck
+              size={30}
+              className="text-green-700"
+            />
 
-      Join the Digital Revolution
+            <h3 className="mt-4 font-bold text-gray-900">
+              Trust & Reputation
+            </h3>
 
-      <br />
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Build confidence through identity, reviews,
+              verification and genuine participation.
+            </p>
 
-      Transforming Agriculture Across Africa
+          </div>
 
-    </h2>
 
-    <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-green-100">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
 
-      Whether you're a farmer looking to expand your market,
-      a buyer searching for quality agricultural products,
-      or a partner committed to strengthening Africa's food systems,
-      AgricHub Africa provides the technology, marketplace, and network
-      to help you succeed.
+            <TrendingUp
+              size={30}
+              className="text-green-700"
+            />
 
-    </p>
+            <h3 className="mt-4 font-bold text-gray-900">
+              Grow Your Activity
+            </h3>
 
-    <div className="mt-14 flex flex-wrap justify-center gap-5">
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Turn your products, skills, services and
+              agricultural activity into new opportunities.
+            </p>
 
-      <Link
-        to="/register/farmer"
-        className="rounded-xl bg-white px-8 py-4 font-semibold text-green-700 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl"
-      >
-        Become a Farmer Partner
-      </Link>
+          </div>
 
-      <Link
-        to="/products"
-        className="rounded-xl border border-white px-8 py-4 font-semibold text-white transition hover:bg-white hover:text-green-700"
-      >
-        Explore Marketplace
-      </Link>
 
-    </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
 
-    <div className="mt-14 grid gap-8 text-left text-green-100 md:grid-cols-3">
+            <BarChart3
+              size={30}
+              className="text-green-700"
+            />
 
-      <div>
-        <h3 className="text-2xl font-bold text-white">
-          🌾 Farmers
-        </h3>
+            <h3 className="mt-4 font-bold text-gray-900">
+              Built for Agriculture
+            </h3>
 
-        <p className="mt-3 leading-7">
-          Reach more customers, manage your farm digitally, and grow a profitable agricultural business.
-        </p>
-      </div>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              A digital environment designed around the
+              realities of agricultural commerce and community.
+            </p>
 
-      <div>
-        <h3 className="text-2xl font-bold text-white">
-          🛒 Buyers
-        </h3>
+          </div>
 
-        <p className="mt-3 leading-7">
-          Access fresh, verified agricultural products directly from trusted farmers across Nigeria.
-        </p>
-      </div>
+        </div>
 
-      <div>
-        <h3 className="text-2xl font-bold text-white">
-          🤝 Partners
-        </h3>
+      </section>
 
-        <p className="mt-3 leading-7">
-          Collaborate with us to accelerate innovation, food security, and sustainable agriculture throughout Africa.
-        </p>
-      </div>
 
-    </div>
+      {/* ========================================= */}
+      {/* FINAL CTA */}
+      {/* ========================================= */}
 
-  </div>
+      <section className="mx-auto max-w-7xl px-4 pb-8 pt-16 sm:px-6 lg:px-8">
 
-</section>
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-green-700 to-emerald-600 px-6 py-12 text-center text-white shadow-xl sm:px-10">
+
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
+            <Leaf size={16} />
+            Connect. Trade. Grow.
+          </span>
+
+          <h2 className="mx-auto mt-6 max-w-3xl text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
+            Be part of the agricultural ecosystem.
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-2xl leading-7 text-green-100">
+            Whether you are looking for a product, offering a service,
+            building a business, making a request, sharing knowledge
+            or looking for an opportunity—AgricWise gives you a place
+            to connect and participate.
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+
+            <Link
+              to="/register"
+              className="rounded-xl bg-white px-7 py-3.5 font-bold text-green-700 transition hover:-translate-y-0.5"
+            >
+              Join AgricWise
+            </Link>
+
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/50 px-7 py-3.5 font-bold text-white transition hover:bg-white hover:text-green-700"
+            >
+              Start Exploring
+              <ArrowRight size={18} />
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
 
     </main>
-
   );
-
 };
+
 
 export default HomePage;

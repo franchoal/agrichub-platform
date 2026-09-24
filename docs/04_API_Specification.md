@@ -339,3 +339,212 @@ Any future schema change must:
 - Assess migration impact.
 - Update this document.
 - Be approved before implementation.
+
+# AgricHub Africa — API Specification
+
+## Overview
+
+AgricHub Africa exposes a RESTful API that powers the Web Application, Mobile Application, future third-party integrations, and internal platform services.
+
+The API is built using Django REST Framework and follows consistent REST principles, JWT authentication, predictable resource naming, pagination, filtering, and standardized JSON responses.
+
+Base URL
+
+```
+/api/
+```
+
+---
+
+# Authentication
+
+Authentication uses JSON Web Tokens (JWT).
+
+Supported features include:
+
+- User Registration
+- User Login
+- Token Refresh
+- User Profile
+- Password Management
+
+---
+
+# Current API Modules
+
+## Accounts
+
+Responsible for:
+
+- Authentication
+- User Accounts
+- Profiles
+- Roles
+- Farmer Registration
+
+---
+
+## Products
+
+Responsible for:
+
+- Categories
+- Product Listings
+- Product Details
+- Product Images
+- Product Search
+- Product Filtering
+
+---
+
+## Farmers
+
+Responsible for:
+
+- Farmer Dashboard
+- Farmer Products
+- Farmer Orders
+- Farmer Profile
+
+---
+
+## Cart
+
+Responsible for:
+
+- Shopping Cart
+- Cart Items
+- Quantity Updates
+- Cart Totals
+
+---
+
+## Orders
+
+Responsible for:
+
+- Checkout
+- Orders
+- Order Details
+- Order Status
+
+---
+
+## Payments
+
+Responsible for:
+
+- Payment Processing
+- Transaction Status
+- Payment Verification
+
+---
+
+## Notifications
+
+Responsible for:
+
+- User Notifications
+- Read Status
+- Notification History
+
+---
+
+## Reviews
+
+Responsible for:
+
+- Product Reviews
+- Farmer Ratings
+- Buyer Feedback
+
+---
+
+# Future API Modules
+
+As AgricHub evolves into a complete agricultural ecosystem, additional APIs will be introduced.
+
+## Logistics API
+
+- Delivery Quotes
+- Shipment Creation
+- Pickup Requests
+- Delivery Tracking
+- Estimated Delivery Time
+
+---
+
+## Transport API
+
+- Driver Registration
+- Vehicle Management
+- Delivery Assignment
+- Capacity Management
+
+---
+
+## Warehouse API
+
+- Warehouse Listings
+- Storage Requests
+- Inventory Movement
+- Collection Centres
+
+---
+
+## Finance API
+
+- Wallet
+- Escrow
+- Farmer Loans
+- Commission Reports
+
+---
+
+## Analytics API
+
+- Farmer Performance
+- Marketplace Statistics
+- Sales Reports
+- Revenue Analytics
+
+---
+
+## AI Services API
+
+- Product Recommendations
+- Demand Forecasting
+- Dynamic Pricing
+- Route Optimization
+
+---
+
+# API Standards
+
+AgricHub APIs follow these standards:
+
+- RESTful architecture
+- JSON request/response format
+- JWT Authentication
+- Pagination
+- Filtering
+- Search
+- Ordering
+- Role-Based Authorization
+- Standard HTTP Status Codes
+
+---
+
+# Documentation
+
+Interactive API documentation is automatically generated using Django REST Framework Spectacular.
+
+```
+/api/schema/
+
+/api/docs/
+
+/api/redoc/
+```
+
+These endpoints provide the latest API documentation and should be considered the primary reference for endpoint details.

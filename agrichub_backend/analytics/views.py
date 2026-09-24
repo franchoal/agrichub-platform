@@ -23,11 +23,9 @@ class AnalyticsView(generics.RetrieveAPIView):
         permissions.IsAdminUser,
     ]
 
-
     def retrieve(self, request, *args, **kwargs):
 
         total_users = User.objects.count()
-
 
         user_growth = list(
             User.objects.annotate(
@@ -40,9 +38,7 @@ class AnalyticsView(generics.RetrieveAPIView):
             .order_by("date")
         )
 
-
         total_products = Product.objects.count()
-
 
         product_growth = list(
             Product.objects.annotate(
@@ -55,9 +51,7 @@ class AnalyticsView(generics.RetrieveAPIView):
             .order_by("date")
         )
 
-
         total_orders = Order.objects.count()
-
 
         order_status_distribution = dict(
             Order.objects.values("status")
@@ -70,7 +64,6 @@ class AnalyticsView(generics.RetrieveAPIView):
             )
         )
 
-
         total_revenue = (
             Payment.objects.filter(
                 status=Payment.SUCCESSFUL
@@ -82,18 +75,19 @@ class AnalyticsView(generics.RetrieveAPIView):
             or 0
         )
 
-
+        # Transitional definition:
+        # An active farmer is an active user with a FarmerProfile.
         active_farmers = User.objects.filter(
-            role=User.FARMER,
+            farmer_profile__isnull=False,
             is_active=True,
         ).count()
 
-
+        # Transitional definition:
+        # An active buyer is an active user who has placed an order.
         active_buyers = User.objects.filter(
-            role=User.BUYER,
+            orders__isnull=False,
             is_active=True,
-        ).count()
-
+        ).distinct().count()
 
         data = {
             "total_users": total_users,
@@ -107,7 +101,6 @@ class AnalyticsView(generics.RetrieveAPIView):
             "active_buyers": active_buyers,
         }
 
-
         serializer = self.get_serializer(
             data=data
         )
@@ -115,7 +108,6 @@ class AnalyticsView(generics.RetrieveAPIView):
         serializer.is_valid(
             raise_exception=True
         )
-
 
         return Response(
             serializer.data

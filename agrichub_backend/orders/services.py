@@ -13,7 +13,7 @@ from .models import Order, OrderItem
 @transaction.atomic
 def checkout(buyer, delivery_address, payment_method):
     """
-    Checkout the authenticated buyer's cart.
+    Checkout the authenticated person's cart.
 
     Multi-farmer workflow:
 
@@ -33,11 +33,6 @@ def checkout(buyer, delivery_address, payment_method):
         ↓
     Clear Cart
     """
-
-    if buyer.role != "buyer":
-        raise ValueError(
-            "Only buyers can checkout."
-        )
 
     cart = Cart.objects.prefetch_related(
         "items__product__farmer"
@@ -64,9 +59,7 @@ def checkout(buyer, delivery_address, payment_method):
 
         farmer_orders[farmer].append(item)
 
-
     created_orders = []
-
 
     for farmer, items in farmer_orders.items():
 
@@ -76,9 +69,7 @@ def checkout(buyer, delivery_address, payment_method):
             status=Order.PENDING,
         )
 
-
         total_amount = Decimal("0.00")
-
 
         for item in items:
 
@@ -89,12 +80,10 @@ def checkout(buyer, delivery_address, payment_method):
                 price=item.product.price,
             )
 
-
             total_amount += (
                 item.product.price *
                 item.quantity
             )
-
 
         payment = Payment.objects.create(
             order=order,
@@ -103,13 +92,11 @@ def checkout(buyer, delivery_address, payment_method):
             amount=total_amount,
         )
 
-
         delivery = Delivery.objects.create(
             order=order,
             address=delivery_address,
             status=Delivery.PENDING,
         )
-
 
         # Notify buyer
         Notification.objects.create(
@@ -123,7 +110,6 @@ def checkout(buyer, delivery_address, payment_method):
             notification_type=Notification.NEW_ORDER,
         )
 
-
         # Notify farmer
         Notification.objects.create(
             user=farmer.user,
@@ -135,7 +121,6 @@ def checkout(buyer, delivery_address, payment_method):
             notification_type=Notification.NEW_ORDER,
         )
 
-
         created_orders.append(
             {
                 "order": order,
@@ -144,9 +129,7 @@ def checkout(buyer, delivery_address, payment_method):
             }
         )
 
-
     # Clear cart after successful checkout
     cart.items.all().delete()
-
 
     return created_orders

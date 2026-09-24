@@ -17,21 +17,12 @@ import {
   type RegisterFormData,
 } from "../../validators/authSchemas";
 
-interface RegisterPageProps {
-  accountType: "buyer" | "farmer";
-}
 
-const RegisterPage = ({
-  accountType,
-}: RegisterPageProps) => {
+const RegisterPage = () => {
   const navigate = useNavigate();
 
   const registerMutation = useRegister(() => {
-    navigate(
-      accountType === "farmer"
-        ? "/login/farmer"
-        : "/login/buyer"
-    );
+    navigate("/login");
   });
 
   const {
@@ -44,7 +35,12 @@ const RegisterPage = ({
     resolver: zodResolver(registerSchema),
 
     defaultValues: {
-      role: accountType,
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone_number: "",
+      location: "",
+      password: "",
     },
   });
 
@@ -57,16 +53,8 @@ const RegisterPage = ({
   return (
     <AuthLayout>
       <Card
-        title={
-          accountType === "farmer"
-            ? "Create Farmer Account"
-            : "Create Buyer Account"
-        }
-        subtitle={
-          accountType === "farmer"
-            ? "Register your farm and start selling on AgricHub Marketplace."
-            : "Create your buyer account and start shopping fresh farm products."
-        }
+        title="Create Your AgricWise Account"
+        subtitle="Join AgricWise and connect with people, products, services, opportunities and the wider agricultural community."
       >
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -101,12 +89,11 @@ const RegisterPage = ({
             error={errors.phone_number?.message}
           />
 
-          {/* Hidden account role */}
-
-          <input
-            type="hidden"
-            {...register("role")}
-            value={accountType}
+          <Input
+            label="Location"
+            placeholder="City, State"
+            {...register("location")}
+            error={errors.location?.message}
           />
 
           <Input
@@ -132,16 +119,10 @@ const RegisterPage = ({
             </p>
 
             <Link
-              to={
-                accountType === "farmer"
-                  ? "/login/farmer"
-                  : "/login/buyer"
-              }
+              to="/login"
               className="mt-2 inline-block font-semibold text-green-700 hover:underline"
             >
-              {accountType === "farmer"
-                ? "Farmer Login"
-                : "Buyer Login"}
+              Sign In
             </Link>
           </div>
         </form>

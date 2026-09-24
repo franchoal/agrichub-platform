@@ -419,3 +419,199 @@ Admin is configured.
 Endpoints are tested.
 
 Documentation is updated.
+
+# AgricHub Africa — Backend Blueprint
+
+## Overview
+
+The AgricHub backend is built with Django and Django REST Framework using a modular architecture where every major business domain is separated into its own application. This approach improves maintainability, scalability, testing, and future expansion.
+
+The platform is designed to evolve from a digital agricultural marketplace into a complete agricultural commerce and supply chain ecosystem serving millions of users across Africa.
+
+---
+
+## Core Technology Stack
+
+- Django
+- Django REST Framework
+- PostgreSQL
+- JWT Authentication
+- Cloudinary
+- WhiteNoise
+- Gunicorn
+- Render Cloud Hosting
+
+---
+
+## Current Core Applications
+
+### Accounts
+
+Responsible for:
+
+- Authentication
+- User Registration
+- JWT Login
+- User Roles
+- User Profiles
+
+---
+
+### Farmers
+
+Responsible for:
+
+- Farmer Profiles
+- Verification
+- Farm Information
+- Farm Location
+- Business Information
+
+---
+
+### Products
+
+Responsible for:
+
+- Product Categories
+- Product Listings
+- Product Images
+- Inventory
+- Availability
+
+---
+
+### Cart
+
+Responsible for:
+
+- Shopping Cart
+- Cart Items
+- Quantity Management
+
+---
+
+### Orders
+
+Responsible for:
+
+- Order Creation
+- Order Items
+- Order Status
+- Checkout Flow
+
+---
+
+### Payments
+
+Responsible for:
+
+- Payment Processing
+- Transaction Records
+- Payment Status
+
+---
+
+### Notifications
+
+Responsible for:
+
+- Order Notifications
+- Payment Updates
+- Product Updates
+- Account Notifications
+
+---
+
+### Reviews
+
+Responsible for:
+
+- Product Reviews
+- Farmer Ratings
+- Buyer Feedback
+
+---
+
+## Planned Applications
+
+The following modules will be introduced as AgricHub expands.
+
+### Logistics
+
+- Shipment Creation
+- Delivery Pricing
+- Pickup Scheduling
+- Delivery Assignment
+- Shipment Tracking
+
+---
+
+### Transport
+
+- Driver Profiles
+- Vehicle Management
+- Route Assignment
+- Delivery Capacity
+
+---
+
+### Warehousing
+
+- Collection Centres
+- Warehouses
+- Cold Storage
+- Inventory Movement
+
+---
+
+### Finance
+
+- Wallet
+- Escrow
+- Farmer Loans
+- Commission Management
+
+---
+
+### Analytics
+
+- Sales Reports
+- Farmer Insights
+- Marketplace Statistics
+- Business Intelligence
+
+---
+
+### AI
+
+- Demand Prediction
+- Smart Pricing
+- Route Optimization
+- Product Recommendations
+
+---
+
+## Architectural Principles
+
+AgricHub follows these principles:
+
+- Modular applications
+- RESTful APIs
+- Stateless authentication
+- Service-oriented business logic
+- Scalable database design
+- Cloud-native deployment
+- Secure role-based authorization
+
+---
+
+## Development Philosophy
+
+Every new feature should belong to an existing application or a clearly defined new application.
+
+Business logic should remain inside its domain.
+
+Applications communicate through APIs and shared models where appropriate while maintaining loose coupling.
+
+This architecture allows AgricHub to grow from a marketplace into a continental agricultural ecosystem without requiring major structural redesign.

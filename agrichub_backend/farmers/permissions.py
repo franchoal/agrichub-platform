@@ -3,13 +3,22 @@ from rest_framework import permissions
 
 class IsFarmer(permissions.BasePermission):
     """
-    Allows access only to authenticated users
-    with the farmer role.
+    Transitional permission for the existing FarmerProfile
+    workspace.
+
+    Access is allowed to authenticated users who have a
+    FarmerProfile.
+
+    The FarmerProfile currently represents the agricultural
+    seller/farmer capability in the legacy architecture.
     """
 
     def has_permission(self, request, view):
 
-        return (
-            request.user.is_authenticated
-            and request.user.role == "farmer"
+        if not request.user.is_authenticated:
+            return False
+
+        return hasattr(
+            request.user,
+            "farmer_profile"
         )

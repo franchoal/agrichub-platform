@@ -1,19 +1,21 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+
 export interface AuthUser {
   id: number;
   email: string;
   first_name?: string;
   last_name?: string;
-  role: "buyer" | "farmer";
 }
+
 
 interface LoginPayload {
   user: AuthUser;
   access: string;
   refresh: string;
 }
+
 
 interface AuthState {
   user: AuthUser | null;
@@ -33,9 +35,11 @@ interface AuthState {
   clearUser: () => void;
 }
 
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+
       user: null,
 
       accessToken: null,
@@ -44,13 +48,19 @@ export const useAuthStore = create<AuthState>()(
 
       isAuthenticated: false,
 
-      login: ({ user, access, refresh }) =>
+
+      login: ({
+        user,
+        access,
+        refresh,
+      }) =>
         set({
           user,
           accessToken: access,
           refreshToken: refresh,
           isAuthenticated: !!access,
         }),
+
 
       logout: () =>
         set({
@@ -60,11 +70,13 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
 
+
       setUser: (user) =>
         set((state) => ({
           user,
           isAuthenticated: !!state.accessToken,
         })),
+
 
       clearUser: () =>
         set({
@@ -73,7 +85,9 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
         }),
+
     }),
+
     {
       name: "agrichub-auth",
     }

@@ -10,7 +10,6 @@ from .serializers import (
 )
 
 
-
 class RegisterView(generics.CreateAPIView):
 
     serializer_class = RegisterSerializer
@@ -20,7 +19,6 @@ class RegisterView(generics.CreateAPIView):
     ]
 
 
-
 class LoginView(generics.GenericAPIView):
 
     serializer_class = LoginSerializer
@@ -28,7 +26,6 @@ class LoginView(generics.GenericAPIView):
     permission_classes = [
         permissions.AllowAny
     ]
-
 
     def post(self, request):
 
@@ -40,21 +37,19 @@ class LoginView(generics.GenericAPIView):
             raise_exception=True
         )
 
-
         user = serializer.validated_data["user"]
-
 
         refresh = RefreshToken.for_user(
             user
         )
-
 
         return Response({
 
             "user": {
                 "id": user.id,
                 "email": user.email,
-                "role": user.role,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
             },
 
             "refresh": str(refresh),
@@ -62,9 +57,7 @@ class LoginView(generics.GenericAPIView):
             "access": str(
                 refresh.access_token
             )
-
         })
-
 
 
 class ProfileView(generics.RetrieveAPIView):
@@ -74,7 +67,6 @@ class ProfileView(generics.RetrieveAPIView):
     permission_classes = [
         permissions.IsAuthenticated
     ]
-
 
     def get_object(self):
 

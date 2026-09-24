@@ -16,10 +16,10 @@ class ProductReviewListView(generics.ListAPIView):
 
     permission_classes = [
         permissions.AllowAny,
-        
     ]
+
     pagination_class = None
-    
+
     def get_queryset(self):
 
         product_id = self.kwargs["product_id"]
@@ -37,8 +37,8 @@ class ProductReviewListView(generics.ListAPIView):
 
 class ReviewCreateView(generics.CreateAPIView):
     """
-    Buyers create reviews for products they have
-    successfully purchased and received.
+    Authenticated people can create reviews for products
+    they have successfully purchased and received.
     """
 
     serializer_class = ReviewSerializer
@@ -51,13 +51,7 @@ class ReviewCreateView(generics.CreateAPIView):
 
         product = serializer.validated_data["product"]
 
-        # Only buyers can review products.
-        if self.request.user.role != "buyer":
-            raise ValidationError(
-                "Only buyers can submit reviews."
-            )
-
-        # Buyer must have completed an order
+        # Person must have completed an order
         # containing this product.
         has_completed_order = Order.objects.filter(
             buyer=self.request.user,

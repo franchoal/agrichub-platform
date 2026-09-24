@@ -26,6 +26,7 @@ const FarmerDashboardPage = () => {
 
   const {
     data: profile,
+    isLoading: isProfileLoading,
   } = useFarmerProfile();
 
   const {
@@ -39,13 +40,30 @@ const FarmerDashboardPage = () => {
     ordersData?.results ?? [];
 
   /**
-   * Only authenticated farmers
-   * can access this page.
+   * Only authenticated users with an existing
+   * FarmerProfile can access this transitional
+   * agricultural workspace.
    */
-  if (
-    !user ||
-    user.role !== "farmer"
-  ) {
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
+
+  if (isProfileLoading) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-gray-500">
+          Loading workspace...
+        </p>
+      </main>
+    );
+  }
+
+  if (!profile) {
     return (
       <Navigate
         to="/products"
@@ -75,149 +93,153 @@ const FarmerDashboardPage = () => {
 
       {/* Header */}
 
-    {/* Hero Section */}
+      {/* Hero Section */}
 
-<section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white shadow-xl">
+      <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white shadow-xl">
 
-  <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10" />
+        <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10" />
 
-  <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white/5" />
+        <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white/5" />
 
-  <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 
-    <div>
+          <div>
 
-      <p className="text-sm uppercase tracking-widest text-green-100">
-        Farmer Business Dashboard
-      </p>
+            <p className="text-sm uppercase tracking-widest text-green-100">
+              Farmer Business Dashboard
+            </p>
 
-      <h1 className="mt-3 text-4xl font-bold leading-tight">
-        Welcome back,
-        <br />
-        {profile?.farm_name || "Your Farm"}
-      </h1>
+            <h1 className="mt-3 text-4xl font-bold leading-tight">
+              Welcome back,
+              <br />
+              {profile?.farm_name || "Your Farm"}
+            </h1>
 
-      <p className="mt-4 max-w-2xl text-green-100">
-        Manage products, fulfil customer orders,
-        and grow your agricultural business
-        from one powerful dashboard.
-      </p>
+            <p className="mt-4 max-w-2xl text-green-100">
+              Manage products, fulfil customer orders,
+              and grow your agricultural business
+              from one powerful dashboard.
+            </p>
 
-    </div>
+          </div>
 
-    <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4">
 
-      <Link
-        to="/farmer/products/create"
-        className="rounded-2xl bg-white px-6 py-3 font-semibold text-green-700 transition hover:shadow-lg"
-      >
-        + Add Product
-      </Link>
+            <Link
+              to="/farmer/products/create"
+              className="rounded-2xl bg-white px-6 py-3 font-semibold text-green-700 transition hover:shadow-lg"
+            >
+              + Add Product
+            </Link>
 
-      <Link
-        to="/products"
-        className="rounded-2xl border border-white/30 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
-      >
-        Marketplace
-      </Link>
+            <Link
+              to="/products"
+              className="rounded-2xl border border-white/30 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+            >
+              Marketplace
+            </Link>
 
-    </div>
+          </div>
 
-  </div>
+        </div>
 
-</section>
-<section className="mb-10">
+      </section>
 
-  <div className="mb-6">
-    <h2 className="text-2xl font-bold text-gray-900">
-      Business Overview
-    </h2>
+      <section className="mb-10">
 
-    <p className="text-gray-500">
-      A snapshot of your farm business today.
-    </p>
-  </div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Business Overview
+          </h2>
 
-  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"></div>
+          <p className="text-gray-500">
+            A snapshot of your farm business today.
+          </p>
+        </div>
 
-    {/* Total Products */}
-    <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-  <p className="text-sm text-gray-500">
-    Products Listed
-  </p>
+          {/* Total Products */}
 
-  <h2 className="mt-3 text-4xl font-bold text-green-700">
-    {products.length}
-  </h2>
+          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 
-  <p className="mt-3 text-sm text-gray-500">
-    Available in the marketplace
-  </p>
+            <p className="text-sm text-gray-500">
+              Products Listed
+            </p>
 
-</div>
+            <h2 className="mt-3 text-4xl font-bold text-green-700">
+              {products.length}
+            </h2>
 
-    {/* Active Orders */}
-<div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <p className="mt-3 text-sm text-gray-500">
+              Available in the marketplace
+            </p>
 
-  <p className="text-sm text-gray-500">
-    Active Orders
-  </p>
+          </div>
 
-  <h2 className="mt-3 text-4xl font-bold text-blue-600">
-    {orders.length}
-  </h2>
+          {/* Active Orders */}
 
-  <p className="mt-3 text-sm text-gray-500">
-    Customer purchases
-  </p>
+          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 
-</div>
+            <p className="text-sm text-gray-500">
+              Active Orders
+            </p>
 
-    {/* Pending Orders */}
-<div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <h2 className="mt-3 text-4xl font-bold text-blue-600">
+              {orders.length}
+            </h2>
 
-  <p className="text-sm text-gray-500">
-    Pending Orders
-  </p>
+            <p className="mt-3 text-sm text-gray-500">
+              Customer purchases
+            </p>
 
-  <h2 className="mt-3 text-4xl font-bold text-orange-500">
+          </div>
 
-    {
-      orders.filter(
-        order => order.status === "pending"
-      ).length
-    }
+          {/* Pending Orders */}
 
-  </h2>
+          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 
-  <p className="mt-3 text-sm text-gray-500">
-    Awaiting fulfilment
-  </p>
+            <p className="text-sm text-gray-500">
+              Pending Orders
+            </p>
 
-</div>
+            <h2 className="mt-3 text-4xl font-bold text-orange-500">
 
-    {/* Estimated Revenue */}
-<div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              {
+                orders.filter(
+                  order => order.status === "pending"
+                ).length
+              }
 
-  <p className="text-sm text-gray-500">
-    Estimated Revenue
-  </p>
+            </h2>
 
-  <h2 className="mt-3 text-4xl font-bold text-emerald-600">
+            <p className="mt-3 text-sm text-gray-500">
+              Awaiting fulfilment
+            </p>
 
-    ₦0
-    {/* ₦{estimatedRevenue.toLocaleString()} */}
+          </div>
 
-  </h2>
+          {/* Estimated Revenue */}
 
-  <p className="mt-3 text-sm text-gray-500">
-    Revenue analytics coming soon
-  </p>
+          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 
-  </div>
+            <p className="text-sm text-gray-500">
+              Estimated Revenue
+            </p>
 
-</section>
+            <h2 className="mt-3 text-4xl font-bold text-emerald-600">
+              ₦0
+            </h2>
+
+            <p className="mt-3 text-sm text-gray-500">
+              Revenue analytics coming soon
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
 
       {/* Verification Status */}
 
@@ -229,6 +251,7 @@ const FarmerDashboardPage = () => {
               : "border-yellow-200 bg-yellow-50"
           }`}
         >
+
           <h2
             className={`text-lg font-semibold ${
               profile.is_verified
@@ -252,6 +275,7 @@ const FarmerDashboardPage = () => {
               ? "Your account has been verified. Any product marked as available will be visible in the marketplace."
               : "Your profile is awaiting administrator approval. You can continue adding and managing products, but they won't appear in the marketplace until your account has been verified."}
           </p>
+
         </div>
       )}
 
@@ -260,6 +284,7 @@ const FarmerDashboardPage = () => {
       <div className="mb-10 grid gap-5 md:grid-cols-4">
 
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Products
           </p>
@@ -267,9 +292,11 @@ const FarmerDashboardPage = () => {
           <h2 className="mt-2 text-3xl font-bold text-green-700">
             {productsData?.count ?? 0}
           </h2>
+
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Orders
           </p>
@@ -277,36 +304,45 @@ const FarmerDashboardPage = () => {
           <h2 className="mt-2 text-3xl font-bold text-blue-700">
             {ordersData?.count ?? 0}
           </h2>
+
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Pending
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-yellow-600">
+
             {
               orders.filter(
                 (order) =>
                   order.status === "pending"
               ).length
             }
+
           </h2>
+
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Completed
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-emerald-700">
+
             {
               orders.filter(
                 (order) =>
                   order.status === "completed"
               ).length
             }
+
           </h2>
+
         </div>
 
       </div>
@@ -319,6 +355,7 @@ const FarmerDashboardPage = () => {
           to="/farmer/products/create"
           className="rounded-xl bg-green-600 p-6 text-white shadow transition hover:bg-green-700"
         >
+
           <h2 className="text-xl font-semibold">
             ➕ Add Product
           </h2>
@@ -326,28 +363,33 @@ const FarmerDashboardPage = () => {
           <p className="mt-2 text-sm text-green-100">
             List a new product.
           </p>
+
         </Link>
+
         <Link
-  to="#"
-  className="rounded-3xl border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
->
-  <h2 className="text-xl font-semibold text-green-700">
-    📊 Analytics
-  </h2>
+          to="#"
+          className="rounded-3xl border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+        >
 
-  <p className="mt-2 text-sm text-gray-600">
-    Business insights
-  </p>
+          <h2 className="text-xl font-semibold text-green-700">
+            📊 Analytics
+          </h2>
 
-  <span className="mt-4 inline-block rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
-    Coming Soon
-  </span>
-</Link>
+          <p className="mt-2 text-sm text-gray-600">
+            Business insights
+          </p>
+
+          <span className="mt-4 inline-block rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
+            Coming Soon
+          </span>
+
+        </Link>
 
         <Link
           to="/farmer/orders"
           className="rounded-xl bg-white p-6 shadow transition hover:bg-green-50"
         >
+
           <h2 className="text-xl font-semibold text-green-700">
             🛒 Customer Orders
           </h2>
@@ -355,12 +397,14 @@ const FarmerDashboardPage = () => {
           <p className="mt-2 text-sm text-gray-600">
             Manage incoming orders.
           </p>
+
         </Link>
 
         <Link
           to="/notifications"
           className="rounded-xl bg-white p-6 shadow transition hover:bg-green-50"
         >
+
           <h2 className="text-xl font-semibold text-green-700">
             🔔 Notifications
           </h2>
@@ -368,63 +412,65 @@ const FarmerDashboardPage = () => {
           <p className="mt-2 text-sm text-gray-600">
             View recent notifications.
           </p>
+
         </Link>
 
       </div>
+
       <section className="mb-10 grid gap-6 lg:grid-cols-2">
 
-  <div className="rounded-3xl border bg-white p-8 shadow-sm">
+        <div className="rounded-3xl border bg-white p-8 shadow-sm">
 
-    <h2 className="text-2xl font-semibold">
-      Business Performance
-    </h2>
+          <h2 className="text-2xl font-semibold">
+            Business Performance
+          </h2>
 
-    <div className="mt-8 flex h-56 items-center justify-center rounded-2xl bg-gray-50">
+          <div className="mt-8 flex h-56 items-center justify-center rounded-2xl bg-gray-50">
 
-      <div className="text-center">
+            <div className="text-center">
 
-        <p className="text-lg font-medium text-gray-700">
-          Analytics Coming Soon
-        </p>
+              <p className="text-lg font-medium text-gray-700">
+                Analytics Coming Soon
+              </p>
 
-        <p className="mt-2 text-sm text-gray-500">
-          Sales trends, revenue insights,
-          and product performance.
-        </p>
+              <p className="mt-2 text-sm text-gray-500">
+                Sales trends, revenue insights,
+                and product performance.
+              </p>
 
-      </div>
+            </div>
 
-    </div>
+          </div>
 
-  </div>
+        </div>
 
-  <div className="rounded-3xl border bg-white p-8 shadow-sm">
+        <div className="rounded-3xl border bg-white p-8 shadow-sm">
 
-    <h2 className="text-2xl font-semibold">
-      Business Insights
-    </h2>
+          <h2 className="text-2xl font-semibold">
+            Business Insights
+          </h2>
 
-    <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-4">
 
-      <div>✓ {products.length} Products Listed</div>
+            <div>✓ {products.length} Products Listed</div>
 
-      <div>✓ {orders.length} Customer Orders</div>
+            <div>✓ {orders.length} Customer Orders</div>
 
-      <div>
-        ✓ {
-          orders.filter(
-            o => o.status === "pending"
-          ).length
-        } Pending Orders
-      </div>
+            <div>
+              ✓ {
+                orders.filter(
+                  o => o.status === "pending"
+                ).length
+              } Pending Orders
+            </div>
 
-      <div>✓ Verified Farm Business</div>
+            <div>✓ Verified Farm Business</div>
 
-    </div>
+          </div>
 
-  </div>
+        </div>
 
-</section>
+      </section>
 
       {/* Recent Orders */}
 
@@ -495,58 +541,61 @@ const FarmerDashboardPage = () => {
         )}
 
       </section>
+
       <section className="mb-10">
 
-  <h2 className="mb-6 text-3xl font-bold">
-    Grow Your Farm Business
-  </h2>
+        <h2 className="mb-6 text-3xl font-bold">
+          Grow Your Farm Business
+        </h2>
 
-  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
 
-    {[
-      "Business Analytics",
-      "Expert Consultation",
-      "Farm Business Advisory",
-      "Smart Logistics",
-    ].map((item) => (
+          {[
+            "Business Analytics",
+            "Expert Consultation",
+            "Farm Business Advisory",
+            "Smart Logistics",
+          ].map((item) => (
 
-      <div
-        key={item}
-        className="rounded-3xl border bg-white p-6 shadow-sm transition hover:shadow-xl"
-      >
+            <div
+              key={item}
+              className="rounded-3xl border bg-white p-6 shadow-sm transition hover:shadow-xl"
+            >
 
-        <h3 className="font-semibold">
-          {item}
-        </h3>
+              <h3 className="font-semibold">
+                {item}
+              </h3>
 
-        <p className="mt-3 text-sm text-gray-600">
-          Premium services to help grow your farm business.
+              <p className="mt-3 text-sm text-gray-600">
+                Premium services to help grow your farm business.
+              </p>
+
+              <span className="mt-4 inline-block rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
+                Coming Soon
+              </span>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
+      <section className="mb-10 rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white">
+
+        <h2 className="text-2xl font-bold">
+          💡 Business Tip
+        </h2>
+
+        <p className="mt-4 max-w-2xl text-green-100">
+          Products with high-quality images and detailed
+          descriptions attract more buyers and increase trust.
         </p>
 
-        <span className="mt-4 inline-block rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-700">
-          Coming Soon
-        </span>
+      </section>
 
-      </div>
-
-    ))}
-
-  </div>
-
-</section>
-<section className="mb-10 rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white">
-
-  <h2 className="text-2xl font-bold">
-    💡 Business Tip
-  </h2>
-
-  <p className="mt-4 max-w-2xl text-green-100">
-    Products with high-quality images and detailed
-    descriptions attract more buyers and increase trust.
-  </p>
-
-</section>
-            {/* Products */}
+      {/* Products */}
 
       <section className="rounded-xl bg-white p-8 shadow">
 
@@ -557,10 +606,12 @@ const FarmerDashboardPage = () => {
           </h2>
 
           <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700">
+
             {productsData?.count ?? 0} Product
             {(productsData?.count ?? 0) !== 1
               ? "s"
               : ""}
+
           </span>
 
         </div>
@@ -571,6 +622,7 @@ const FarmerDashboardPage = () => {
             to="/farmer/products"
             className="rounded-xl bg-gray-50 p-6 transition hover:bg-green-50"
           >
+
             <h2 className="text-xl font-semibold text-green-700">
               📦 My Products
             </h2>
@@ -585,6 +637,7 @@ const FarmerDashboardPage = () => {
             to="/farmer/profile"
             className="rounded-xl bg-gray-50 p-6 transition hover:bg-green-50"
           >
+
             <h2 className="text-xl font-semibold text-green-700">
               👨‍🌾 Farm Profile
             </h2>
@@ -664,22 +717,21 @@ const FarmerDashboardPage = () => {
         )}
 
       </section>
+
       <section className="mt-12 rounded-3xl border bg-white p-8 text-center shadow-sm">
 
-  <h2 className="text-3xl font-bold">
-    Grow Your Farm Business
-  </h2>
+        <h2 className="text-3xl font-bold">
+          Grow Your Farm Business
+        </h2>
 
-  <p className="mx-auto mt-4 max-w-2xl text-gray-600">
-    AgricHub is building digital tools that help Nigerian
-    farmers sell, manage, and grow with confidence.
-  </p>
+        <p className="mx-auto mt-4 max-w-2xl text-gray-600">
+          AgricHub is building digital tools that help Nigerian
+          farmers sell, manage, and grow with confidence.
+        </p>
 
-</section>
-      
+      </section>
 
     </main>
-
   );
 };
 
