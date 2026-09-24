@@ -9,6 +9,11 @@ class PostSerializer(serializers.ModelSerializer):
         source="author.email",
         read_only=True,
     )
+    author_photo = serializers.ImageField(
+        source="author.profile.photo",
+        read_only=True,
+    )
+    author_connection_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -17,6 +22,8 @@ class PostSerializer(serializers.ModelSerializer):
             "author",
             "author_name",
             "author_email",
+            "author_photo",
+            "author_connection_count",
             "content",
             "post_type",
             "location",
@@ -33,6 +40,14 @@ class PostSerializer(serializers.ModelSerializer):
     def get_author_name(self, obj):
         return f"{obj.author.first_name} {obj.author.last_name}".strip()
 
+    def get_author_connection_count(self, obj):
+        return Connection.objects.filter(
+            follower=obj.author,
+            status=Connection.ACCEPTED,
+        ).count() + Connection.objects.filter(
+            following=obj.author,
+            status=Connection.ACCEPTED,
+        ).count()
 
 class CommentSerializer(serializers.ModelSerializer):
     author_name = serializers.SerializerMethodField()
@@ -58,6 +73,14 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_author_name(self, obj):
         return f"{obj.author.first_name} {obj.author.last_name}".strip()
 
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                "Comment cannot be empty."
+            )
+
+        return value.strip()
+
 
 class ReactionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -76,15 +99,37 @@ class ReactionSerializer(serializers.ModelSerializer):
 
 
 class ConnectionSerializer(serializers.ModelSerializer):
+    follower_name = serializers.SerializerMethodField()
+    following_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Connection
         fields = [
             "id",
             "follower",
+            "follower_name",
             "following",
+            "following_name",
+            "status",
             "created_at",
+            "updated_at",
         ]
         read_only_fields = [
             "follower",
+            "follower_name",
+            "status",
             "created_at",
+            "updated_at",
         ]
+
+    def get_follower_name(self, obj):
+        return (
+            f"{obj.follower.first_name} "
+            f"{obj.follower.last_name}"
+        ).strip()
+
+    def get_following_name(self, obj):
+        return (
+            f"{obj.following.first_name} "
+            f"{obj.following.last_name}"
+        ).strip()

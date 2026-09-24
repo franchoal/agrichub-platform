@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class Post(models.Model):
@@ -151,6 +152,16 @@ class Reaction(models.Model):
 
 
 class Connection(models.Model):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+    CONNECTION_STATUS_CHOICES = [
+        (PENDING, "Pending"),
+        (ACCEPTED, "Accepted"),
+        (REJECTED, "Rejected"),
+    ]
+
     follower = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -163,8 +174,18 @@ class Connection(models.Model):
         related_name="followers",
     )
 
+    status = models.CharField(
+        max_length=20,
+        choices=CONNECTION_STATUS_CHOICES,
+        default=PENDING,
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
     )
 
     class Meta:
@@ -172,14 +193,19 @@ class Connection(models.Model):
             models.UniqueConstraint(
                 fields=["follower", "following"],
                 name="unique_user_connection",
-            )
+            ),
+            models.CheckConstraint(
+                condition=~Q(follower=models.F("following")),
+                name="prevent_self_connection",
+            ),
         ]
 
     def __str__(self):
         return (
             f"{self.follower.first_name} "
             f"{self.follower.last_name}".strip()
-            + " follows "
+            + " → "
             + f"{self.following.first_name} "
             f"{self.following.last_name}".strip()
+            + f" ({self.status})"
         )

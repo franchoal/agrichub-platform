@@ -80,17 +80,24 @@ class LoginSerializer(serializers.Serializer):
 
         return data
 
-
 class ProfileSerializer(serializers.ModelSerializer):
 
     location = serializers.CharField(
         source="profile.location",
-        read_only=True
+        required=False,
+        allow_blank=True
     )
 
     bio = serializers.CharField(
         source="profile.bio",
-        read_only=True
+        required=False,
+        allow_blank=True
+    )
+
+    photo = serializers.ImageField(
+        source="profile.photo",
+        required=False,
+        allow_null=True
     )
 
     class Meta:
@@ -105,6 +112,57 @@ class ProfileSerializer(serializers.ModelSerializer):
             "phone_number",
             "location",
             "bio",
+            "photo",
             "is_verified",
             "created_at",
         ]
+
+        read_only_fields = [
+            "id",
+            "email",
+            "is_verified",
+            "created_at",
+        ]
+
+    def update(self, instance, validated_data):
+
+        profile_data = validated_data.pop(
+            "profile",
+            {}
+        )
+
+        instance.first_name = validated_data.get(
+            "first_name",
+            instance.first_name
+        )
+
+        instance.last_name = validated_data.get(
+            "last_name",
+            instance.last_name
+        )
+
+        instance.phone_number = validated_data.get(
+            "phone_number",
+            instance.phone_number
+        )
+
+        instance.save()
+
+        profile = instance.profile
+
+        profile.location = profile_data.get(
+            "location",
+            profile.location
+        )
+
+        profile.bio = profile_data.get(
+            "bio",
+            profile.bio
+        )
+
+        if "photo" in profile_data:
+            profile.photo = profile_data["photo"]
+
+        profile.save()
+
+        return instance

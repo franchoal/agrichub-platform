@@ -146,6 +146,9 @@ class User(
         "last_name",
     ]
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
     def __str__(self):
         return self.email
 
@@ -163,6 +166,12 @@ class Profile(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="profile"
+    )
+
+    photo = models.ImageField(
+        upload_to="profiles/",
+        blank=True,
+        null=True
     )
 
     location = models.CharField(

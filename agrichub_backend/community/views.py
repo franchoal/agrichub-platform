@@ -1,4 +1,8 @@
+from django.db.models import Q
 from rest_framework import generics, permissions
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Post, Comment, Reaction, Connection
 from .serializers import (
@@ -88,8 +92,128 @@ class ConnectionListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return Connection.objects.filter(
-            follower=self.request.user
-        ).select_related("following")
+            Q(
+                follower=self.request.user,
+                status=Connection.ACCEPTED,
+            )
+            | Q(
+                following=self.request.user,
+                status=Connection.ACCEPTED,
+            )
+        ).select_related(
+            "follower",
+            "following",
+        )
 
     def perform_create(self, serializer):
-        serializer.save(follower=self.request.user)
+        following = serializer.validated_data["following"]
+
+        if following == self.request.user:
+            raise ValidationError(
+                "You cannot connect with yourself."
+            )
+
+        existing = Connection.objects.filter(
+            Q(
+                follower=self.request.user,
+                following=following,
+            )
+            | Q(
+                follower=following,
+                following=self.request.user,
+            )
+        ).first()
+
+        if existing:
+            if existing.status == Connection.ACCEPTED:
+                raise permissions.ValidationError(
+                    "You are already connected with this user."
+                )
+
+            if existing.status == Connection.PENDING:
+                raise permissions.ValidationError(
+                    "A connection request already exists."
+                )
+
+            existing.follower = self.request.user
+            existing.following = following
+            existing.status = Connection.PENDING
+            existing.save(
+                update_fields=[
+                    "follower",
+                    "following",
+                    "status",
+                    "updated_at",
+                ]
+            )
+            return
+
+        serializer.save(
+            follower=self.request.user,
+            status=Connection.PENDING,
+        )
+
+
+class ConnectionRequestListView(generics.ListAPIView):
+    serializer_class = ConnectionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Connection.objects.filter(
+            following=self.request.user,
+            status=Connection.PENDING,
+        ).select_related(
+            "follower",
+            "following",
+        )
+
+
+class ConnectionAcceptView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            connection = Connection.objects.select_related(
+                "follower",
+                "following",
+            ).get(
+                pk=pk,
+                following=request.user,
+                status=Connection.PENDING,
+            )
+        except Connection.DoesNotExist:
+            return Response(
+                {"detail": "Connection request not found."},
+                status=404,
+            )
+
+        connection.status = Connection.ACCEPTED
+        connection.save(update_fields=["status", "updated_at"])
+
+        return Response(
+            ConnectionSerializer(connection).data
+        )
+
+
+class ConnectionRejectView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            connection = Connection.objects.get(
+                pk=pk,
+                following=request.user,
+                status=Connection.PENDING,
+            )
+        except Connection.DoesNotExist:
+            return Response(
+                {"detail": "Connection request not found."},
+                status=404,
+            )
+
+        connection.status = Connection.REJECTED
+        connection.save(update_fields=["status", "updated_at"])
+
+        return Response(
+            ConnectionSerializer(connection).data
+        )

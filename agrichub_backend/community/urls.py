@@ -6,6 +6,9 @@ from .views import (
     CommentListCreateView,
     ReactionListCreateView,
     ConnectionListCreateView,
+    ConnectionRequestListView,
+    ConnectionAcceptView,
+    ConnectionRejectView,
 )
 
 
@@ -30,9 +33,25 @@ urlpatterns = [
         ReactionListCreateView.as_view(),
         name="community-reaction-list",
     ),
+
     path(
         "connections/",
         ConnectionListCreateView.as_view(),
         name="community-connection-list",
+    ),
+    path(
+        "connections/requests/",
+        ConnectionRequestListView.as_view(),
+        name="community-connection-requests",
+    ),
+    path(
+        "connections/<int:pk>/accept/",
+        ConnectionAcceptView.as_view(),
+        name="community-connection-accept",
+    ),
+    path(
+        "connections/<int:pk>/reject/",
+        ConnectionRejectView.as_view(),
+        name="community-connection-reject",
     ),
 ]

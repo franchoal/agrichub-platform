@@ -60,7 +60,7 @@ class LoginView(generics.GenericAPIView):
         })
 
 
-class ProfileView(generics.RetrieveAPIView):
+class ProfileView(generics.RetrieveUpdateAPIView):
 
     serializer_class = ProfileSerializer
 
