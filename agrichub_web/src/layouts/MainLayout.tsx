@@ -1,455 +1,478 @@
-import { useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { logoIcon } from "../assets";
-
 import {
-  Menu,
-  ShoppingCart,
   Bell,
-  Package,
-  LayoutDashboard,
+  Home,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Plus,
+  Search,
+  ShoppingCart,
   User,
+  X,
 } from "lucide-react";
-
-import { heroFarm } from "../assets/images";
+import { useState } from "react";
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { useAuthStore } from "../store/authStore";
-import { useCart } from "../hooks/useCart";
-import { useNotifications } from "../hooks/useNotifications";
+// import { useCartStore } from "../store/cartStore";
+
 
 const MainLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { user, logout } = useAuthStore();
+  // const { items } = useCartStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const {
-    isAuthenticated,
-    user,
-    logout,
-  } = useAuthStore();
 
-  const { data: cart } = useCart();
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
 
-  const { data: notifications } = useNotifications({
-    enabled: isAuthenticated,
-  });
-
-  const unreadNotifications =
-    notifications?.results?.filter(
-      (notification) => !notification.is_read
-    ).length ?? 0;
-
-  const cartCount = cart?.items.length ?? 0;
+    return location.pathname.startsWith(path);
+  };
 
   const handleLogout = () => {
     logout();
+    setMobileMenuOpen(false);
+    navigate("/");
+  };
 
-    navigate("/", {
-      replace: true,
-    });
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="min-h-screen bg-gray-50">
 
-      {/* ================= HEADER ================= */}
+      {/* ===================================== */}
+      {/* DESKTOP / TABLET HEADER */}
+      {/* ===================================== */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-lg">
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
 
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-          {/* Logo */}
+          {/* LOGO */}
 
           <Link
             to="/"
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
+            onClick={closeMobileMenu}
           >
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
-              <img
-                src={logoIcon}
-                alt="AgricWise"
-                className="h-full w-full object-contain"
-              />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-700">
+              <span className="text-lg font-black text-white">
+                A
+              </span>
             </div>
 
-            <div>
-              <h1 className="text-xl font-extrabold text-green-700">
-                AgricWise Africa
-              </h1>
+            <div className="hidden sm:block">
+              <div className="text-lg font-black leading-none text-green-800">
+                AgricWise
+              </div>
 
-              <p className="text-[11px] text-gray-500">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                 Connect. Trade. Grow.
-              </p>
+              </div>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
 
-          <nav className="hidden items-center gap-8 lg:flex">
+          {/* DESKTOP NAVIGATION */}
+
+          <nav className="hidden items-center gap-1 md:flex">
 
             <Link
               to="/"
-              className="font-medium text-gray-700 transition hover:text-green-700"
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                isActive("/")
+                  ? "bg-green-50 text-green-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+              }`}
             >
               Home
             </Link>
 
             <Link
-              to="/about"
-              className="font-medium text-gray-700 transition hover:text-green-700"
-            >
-              About
-            </Link>
-
-            <Link
               to="/products"
-              className="font-medium text-gray-700 transition hover:text-green-700"
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                isActive("/products")
+                  ? "bg-green-50 text-green-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+              }`}
             >
-              Explore
+              Marketplace
             </Link>
 
-            {!isAuthenticated ? (
-              <>
-                <Link
-                  to="/login"
-                  className="font-medium text-gray-700 transition hover:text-green-700"
-                >
-                  Sign In
-                </Link>
-
-                <Link
-                  to="/register"
-                  className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
-                >
-                  Join AgricWise
-                </Link>
-              </>
-            ) : (
-              <>
-                {/* ================= COMMON USER ACTIONS ================= */}
-
-                <Link
-                  to="/products"
-                  className="relative flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                >
-                  <ShoppingCart size={20} />
-
-                  Cart
-
-                  {cartCount > 0 && (
-                    <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-bold text-white">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link
-                  to="/orders"
-                  className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                >
-                  <Package size={20} />
-                  Orders
-                </Link>
-
-                {/* Legacy seller workspace */}
-
-                <Link
-                  to="/farmer/dashboard"
-                  className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                >
-                  <LayoutDashboard size={20} />
-                  My Activity
-                </Link>
-
-                <Link
-                  to="/notifications"
-                  className="relative flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                >
-                  <Bell size={20} />
-
-                  Notifications
-
-                  {unreadNotifications > 0 && (
-                    <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </Link>
-
-                {/* ================= USER ================= */}
-
-                <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
-
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                    <User
-                      size={18}
-                      className="text-green-700"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {user?.first_name} {user?.last_name}
-                    </p>
-
-                    <p className="text-xs text-gray-500">
-                      AgricWise Member
-                    </p>
-                  </div>
-
-                </div>
-
-                <button
-                  onClick={handleLogout}
-                  className="rounded-xl border border-red-500 px-5 py-2 font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                  Logout
-                </button>
-              </>
+            {user && (
+              <Link
+                to="/farmer/dashboard"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                  isActive("/farmer")
+                    ? "bg-green-50 text-green-700"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+                }`}
+              >
+                My Activity
+              </Link>
             )}
 
           </nav>
 
-          {/* Mobile Menu Button */}
+
+          {/* DESKTOP ACTIONS */}
+
+          <div className="hidden items-center gap-2 md:flex">
+
+            {user ? (
+              <>
+                <Link
+                  to="/notifications"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
+                  aria-label="Notifications"
+                >
+                  <Bell size={19} />
+                </Link>
+
+                <Link
+                  to="/cart"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
+                  aria-label="Cart"
+                >
+                </Link>
+
+                <Link
+                  to="/profile"
+                  className="ml-1 flex items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-gray-50"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
+                    <User size={16} />
+                  </div>
+
+                  <span className="max-w-32 truncate text-sm font-semibold text-gray-700">
+                    {user.first_name || user.email}
+                  </span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-red-50 hover:text-red-600"
+                  aria-label="Logout"
+                >
+                  <LogOut size={18} />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login/buyer"
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                >
+                  Join AgricWise
+                </Link>
+              </>
+            )}
+
+          </div>
+
+
+          {/* MOBILE MENU BUTTON */}
 
           <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="rounded-xl p-2 transition hover:bg-gray-100 lg:hidden"
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-50 md:hidden"
+            aria-label="Toggle menu"
           >
-            <Menu size={28} />
+            {mobileMenuOpen ? (
+              <X size={22} />
+            ) : (
+              <Menu size={22} />
+            )}
           </button>
 
         </div>
 
-      </header>
 
-      {/* ================= MAIN ================= */}
+        {/* ===================================== */}
+        {/* MOBILE DROPDOWN MENU */}
+        {/* ===================================== */}
 
-      <main className="flex-1">
-        <Outlet />
-      </main>
+        {mobileMenuOpen && (
+          <div className="border-t border-gray-100 bg-white px-4 py-4 md:hidden">
 
-      {/* ================= MOBILE DRAWER ================= */}
-
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
-
-          {/* Overlay */}
-
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-
-          {/* Drawer */}
-
-          <aside className="absolute right-0 top-0 flex h-full w-80 flex-col bg-white shadow-2xl">
-
-            {/* Drawer Header */}
-
-            <div className="relative h-44 overflow-hidden">
-
-              <img
-                src={heroFarm}
-                alt="AgricWise"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-br from-green-900/80 to-green-700/70" />
-
-              <div className="relative flex h-full items-center px-6">
-
-                <div>
-
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white shadow">
-                    <img
-                      src={logoIcon}
-                      alt="AgricWise Logo"
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
-
-                  <h2 className="text-2xl font-bold text-white">
-                    AgricWise
-                  </h2>
-
-                  <p className="text-sm text-green-100">
-                    Connect. Trade. Grow.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* Navigation */}
-
-            <div className="flex-1 space-y-2 overflow-y-auto p-6">
+            <div className="space-y-1">
 
               <Link
                 to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                onClick={closeMobileMenu}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
               >
-                🏠 Home
-              </Link>
-
-              <Link
-                to="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-              >
-                ℹ️ About
+                <Home size={18} />
+                Home
               </Link>
 
               <Link
                 to="/products"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                onClick={closeMobileMenu}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
               >
-                🌾 Explore
+                <ShoppingCart size={18} />
+                Marketplace
               </Link>
 
-              {!isAuthenticated ? (
+              {user && (
                 <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                  >
-                    👤 Sign In
-                  </Link>
-
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl bg-green-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-green-700"
-                  >
-                    🌱 Join AgricWise
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <hr className="my-4" />
-
-                  <Link
-                    to="/products"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                  >
-                    🛒 Cart ({cartCount})
-                  </Link>
-
-                  <Link
-                    to="/orders"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                  >
-                    📦 Orders
-                  </Link>
-
-                  <Link
-                    to="/farmer/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                  >
-                    📊 My Activity
-                  </Link>
-
                   <Link
                     to="/notifications"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                    onClick={closeMobileMenu}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
                   >
-                    🔔 Notifications
-
-                    {unreadNotifications > 0 && (
-                      <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
-                        {unreadNotifications}
-                      </span>
-                    )}
+                    <Bell size={18} />
+                    Notifications
                   </Link>
+
+                  <Link
+                    to="/cart"
+                    onClick={closeMobileMenu}
+                    className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                  >
+                    <span className="flex items-center gap-3">
+                      <ShoppingCart size={18} />
+                      Cart
+                    </span>
+
+                  </Link>
+
+                  <Link
+                    to="/profile"
+                    onClick={closeMobileMenu}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                  >
+                    <User size={18} />
+                    Profile
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut size={18} />
+                    Logout
+                  </button>
                 </>
+              )}
+
+              {!user && (
+                <Link
+                  to="/register"
+                  onClick={closeMobileMenu}
+                  className="mt-2 flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white"
+                >
+                  Join AgricWise
+                </Link>
               )}
 
             </div>
 
-            {/* Footer */}
+          </div>
+        )}
 
-            {isAuthenticated && (
-              <div className="border-t bg-gray-50 p-6">
+      </header>
 
-                <div className="mb-5">
 
-                  <p className="font-semibold text-gray-900">
-                    {user?.first_name} {user?.last_name}
-                  </p>
+      {/* ===================================== */}
+      {/* PAGE CONTENT */}
+      {/* ===================================== */}
 
-                  <p className="text-sm text-gray-500">
-                    AgricWise Member
-                  </p>
+      <main className="pb-24 md:pb-0">
+        <Outlet />
+      </main>
 
-                </div>
 
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="w-full rounded-xl border border-red-500 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                  Logout
-                </button>
+      {/* ===================================== */}
+      {/* MOBILE APP BOTTOM NAVIGATION */}
+      {/* ===================================== */}
 
-              </div>
-            )}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
 
-          </aside>
+        <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
 
-        </div>
-      )}
+          {/* HOME */}
 
-      {/* ================= FOOTER ================= */}
+          <Link
+            to="/"
+            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
+              isActive("/")
+                ? "text-green-700"
+                : "text-gray-400"
+            }`}
+          >
+            <Home
+              size={20}
+              strokeWidth={isActive("/") ? 2.5 : 2}
+            />
 
-      <footer className="border-t bg-white">
+            <span className="text-[10px] font-semibold">
+              Home
+            </span>
+          </Link>
 
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row">
 
-          <p>
-            © {new Date().getFullYear()} AgricWise Africa. Built by Franchoal_Dev Technologies.
-          </p>
+          {/* DISCOVER */}
 
-          <div className="flex items-center gap-6">
+          <Link
+            to="/products"
+            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
+              isActive("/products")
+                ? "text-green-700"
+                : "text-gray-400"
+            }`}
+          >
+            <Search
+              size={20}
+              strokeWidth={isActive("/products") ? 2.5 : 2}
+            />
 
+            <span className="text-[10px] font-semibold">
+              Discover
+            </span>
+          </Link>
+
+
+          {/* POST */}
+
+          {user ? (
             <Link
               to="/"
-              className="transition hover:text-green-700"
+              className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
+            >
+              <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
+                <Plus size={23} strokeWidth={2.5} />
+              </span>
+
+              <span className="-mt-2 text-[10px] font-semibold text-gray-500">
+                Post
+              </span>
+            </Link>
+          ) : (
+            <Link
+              to="/register"
+              className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
+            >
+              <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
+                <Plus size={23} strokeWidth={2.5} />
+              </span>
+
+              <span className="-mt-2 text-[10px] font-semibold text-gray-500">
+                Post
+              </span>
+            </Link>
+          )}
+
+
+          {/* MESSAGES */}
+
+          <Link
+            to="/messages"
+            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
+              isActive("/messages")
+                ? "text-green-700"
+                : "text-gray-400"
+            }`}
+          >
+            <MessageCircle
+              size={20}
+              strokeWidth={isActive("/messages") ? 2.5 : 2}
+            />
+
+            <span className="text-[10px] font-semibold">
+              Messages
+            </span>
+          </Link>
+
+
+          {/* PROFILE */}
+
+          <Link
+            to="/profile"
+            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
+              isActive("/profile")
+                ? "text-green-700"
+                : "text-gray-400"
+            }`}
+          >
+            <User
+              size={20}
+              strokeWidth={isActive("/profile") ? 2.5 : 2}
+            />
+
+            <span className="text-[10px] font-semibold">
+              Profile
+            </span>
+          </Link>
+
+        </div>
+
+      </nav>
+
+
+      {/* ===================================== */}
+      {/* DESKTOP FOOTER */}
+      {/* ===================================== */}
+
+      <footer className="hidden border-t border-gray-100 bg-white md:block">
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+
+          <div>
+            <p className="text-sm font-bold text-gray-800">
+              AgricWise Africa
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Connect. Trade. Grow.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-5 text-xs font-medium text-gray-500">
+            <Link
+              to="/"
+              className="hover:text-green-700"
             >
               Home
             </Link>
 
             <Link
               to="/products"
-              className="transition hover:text-green-700"
+              className="hover:text-green-700"
             >
-              Explore
+              Marketplace
             </Link>
 
             <Link
-              to="/about"
-              className="transition hover:text-green-700"
+              to="/profile"
+              className="hover:text-green-700"
             >
-              About
+              Profile
             </Link>
-
-            <Link
-              to="/farmer"
-              className="transition hover:text-green-700"
-            >
-              My Activity
-            </Link>
-
           </div>
 
         </div>
@@ -459,5 +482,6 @@ const MainLayout = () => {
     </div>
   );
 };
+
 
 export default MainLayout;

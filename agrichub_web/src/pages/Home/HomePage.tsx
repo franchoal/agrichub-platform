@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -30,8 +31,38 @@ import {
 
 import { useCommunityPosts } from "../../hooks/useCommunityPosts";
 
+import {
+  connectWithUser,
+  createCommunityComment,
+  getCommunityComments,
+  type CommunityComment,
+} from "../../services/communityService";
+
 
 const HomePage = () => {
+  const [openComments, setOpenComments] =
+    useState<number | null>(null);
+
+  const [comments, setComments] = useState<
+    Record<number, CommunityComment[]>
+  >({});
+
+  const [commentText, setCommentText] = useState<
+    Record<number, string>
+  >({});
+
+  const [isLoadingComments, setIsLoadingComments] =
+    useState<Record<number, boolean>>({});
+
+  const [isSubmittingComment, setIsSubmittingComment] =
+    useState<Record<number, boolean>>({});
+
+  const [connectedUsers, setConnectedUsers] =
+    useState<Record<number, boolean>>({});
+
+  const [isConnecting, setIsConnecting] =
+    useState<Record<number, boolean>>({});
+
   const {
     data: communityPosts = [],
     isLoading: isLoadingPosts,
@@ -61,6 +92,119 @@ const HomePage = () => {
 
       default:
         return "Discussion";
+    }
+  };
+
+
+  const handleToggleComments = async (postId: number) => {
+    if (openComments === postId) {
+      setOpenComments(null);
+      return;
+    }
+
+    setOpenComments(postId);
+
+    if (comments[postId]) {
+      return;
+    }
+
+    setIsLoadingComments((previous) => ({
+      ...previous,
+      [postId]: true,
+    }));
+
+    try {
+      const response = await getCommunityComments(postId);
+
+      setComments((previous) => ({
+        ...previous,
+        [postId]: response.results,
+      }));
+    } catch (error) {
+      console.error(
+        "Failed to load community comments:",
+        error
+      );
+    } finally {
+      setIsLoadingComments((previous) => ({
+        ...previous,
+        [postId]: false,
+      }));
+    }
+  };
+
+
+  const handleSubmitComment = async (postId: number) => {
+    const content = commentText[postId]?.trim();
+
+    if (!content) {
+      return;
+    }
+
+    setIsSubmittingComment((previous) => ({
+      ...previous,
+      [postId]: true,
+    }));
+
+    try {
+      const newComment = await createCommunityComment(
+        postId,
+        content
+      );
+
+      setComments((previous) => ({
+        ...previous,
+        [postId]: [
+          ...(previous[postId] || []),
+          newComment,
+        ],
+      }));
+
+      setCommentText((previous) => ({
+        ...previous,
+        [postId]: "",
+      }));
+    } catch (error) {
+      console.error(
+        "Failed to create community comment:",
+        error
+      );
+    } finally {
+      setIsSubmittingComment((previous) => ({
+        ...previous,
+        [postId]: false,
+      }));
+    }
+  };
+
+
+  const handleConnect = async (userId: number) => {
+    if (connectedUsers[userId]) {
+      return;
+    }
+
+    setIsConnecting((previous) => ({
+      ...previous,
+      [userId]: true,
+    }));
+
+    try {
+      await connectWithUser(userId);
+
+      setConnectedUsers((previous) => ({
+        ...previous,
+        [userId]: true,
+      }));
+    } catch (error) {
+      console.error(
+        "Failed to connect with user:",
+        error
+      );
+    } finally {
+      setIsConnecting((previous) => ({
+        ...previous,
+        [userId]: false,
+      }));
     }
   };
 
@@ -204,7 +348,9 @@ const HomePage = () => {
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <ImageIcon size={16} />
-              <span className="hidden sm:inline">Post</span>
+              <span className="hidden sm:inline">
+                Post
+              </span>
             </Link>
 
             <Link
@@ -212,7 +358,9 @@ const HomePage = () => {
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <ShoppingBasket size={16} />
-              <span className="hidden sm:inline">Sell</span>
+              <span className="hidden sm:inline">
+                Sell
+              </span>
             </Link>
 
             <Link
@@ -220,7 +368,9 @@ const HomePage = () => {
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <Wrench size={16} />
-              <span className="hidden sm:inline">Service</span>
+              <span className="hidden sm:inline">
+                Service
+              </span>
             </Link>
 
             <Link
@@ -244,9 +394,7 @@ const HomePage = () => {
         </div>
 
       </section>
-
-
-      {/* ========================================= */}
+            {/* ========================================= */}
       {/* MAIN COMMUNITY AREA */}
       {/* ========================================= */}
 
@@ -406,6 +554,8 @@ const HomePage = () => {
                     className="mb-5 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
                   >
 
+                    {/* POST CONTENT */}
+
                     <div className="p-5 sm:p-6">
 
                       {/* AUTHOR */}
@@ -481,25 +631,176 @@ const HomePage = () => {
 
                     {/* ACTIONS */}
 
-                    <div className="flex items-center gap-6 px-5 py-4 text-xs font-semibold text-gray-500 sm:px-6">
+                    <div className="flex items-center gap-6 border-t border-gray-100 px-5 py-4 text-xs font-semibold text-gray-500 sm:px-6">
 
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 transition hover:text-green-700"
+                        onClick={() =>
+                          handleToggleComments(post.id)
+                        }
+                        className={`inline-flex items-center gap-1.5 transition ${
+                          openComments === post.id
+                            ? "text-green-700"
+                            : "hover:text-green-700"
+                        }`}
                       >
+
                         <MessageCircle size={16} />
+
                         Comment
+
+                        {comments[post.id]?.length > 0 && (
+                          <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
+                            {comments[post.id].length}
+                          </span>
+                        )}
+
                       </button>
 
+
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 transition hover:text-green-700"
+                        onClick={() =>
+                          handleConnect(post.author)
+                        }
+                        disabled={
+                          isConnecting[post.author] ||
+                          connectedUsers[post.author]
+                        }
+                        className={`inline-flex items-center gap-1.5 transition ${
+                          connectedUsers[post.author]
+                            ? "text-green-700"
+                            : "hover:text-green-700"
+                        } disabled:cursor-not-allowed`}
                       >
+
                         <Send size={16} />
-                        Connect
+
+                        {isConnecting[post.author]
+                          ? "Connecting..."
+                          : connectedUsers[post.author]
+                            ? "Connected"
+                            : "Connect"}
+
                       </button>
 
                     </div>
+
+
+                    {/* COMMENTS */}
+
+                    {openComments === post.id && (
+
+                      <div className="border-t border-gray-100 bg-gray-50 px-5 py-5 sm:px-6">
+
+                        {/* COMMENT LIST */}
+
+                        {isLoadingComments[post.id] ? (
+
+                          <p className="text-sm text-gray-500">
+                            Loading comments...
+                          </p>
+
+                        ) : comments[post.id]?.length > 0 ? (
+
+                          <div className="space-y-4">
+
+                            {comments[post.id].map((comment) => (
+
+                              <div
+                                key={comment.id}
+                                className="flex gap-3"
+                              >
+
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-black text-green-700">
+                                  {comment.author_name
+                                    ?.charAt(0)
+                                    .toUpperCase() || "A"}
+                                </div>
+
+                                <div className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3">
+
+                                  <p className="text-xs font-bold text-gray-900">
+                                    {comment.author_name ||
+                                      "AgricWise Member"}
+                                  </p>
+
+                                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                                    {comment.content}
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+                            ))}
+
+                          </div>
+
+                        ) : (
+
+                          <p className="text-sm text-gray-500">
+                            No comments yet. Start the conversation.
+                          </p>
+
+                        )}
+
+
+                        {/* COMMENT INPUT */}
+
+                        <div className="mt-4 flex gap-2">
+
+                          <input
+                            type="text"
+                            value={
+                              commentText[post.id] || ""
+                            }
+                            onChange={(event) =>
+                              setCommentText((previous) => ({
+                                ...previous,
+                                [post.id]:
+                                  event.target.value,
+                              }))
+                            }
+                            onKeyDown={(event) => {
+
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+
+                                handleSubmitComment(
+                                  post.id
+                                );
+                              }
+
+                            }}
+                            placeholder="Write a comment..."
+                            className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmitComment(
+                                post.id
+                              )
+                            }
+                            disabled={
+                              isSubmittingComment[post.id] ||
+                              !commentText[post.id]?.trim()
+                            }
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="Send comment"
+                          >
+
+                            <Send size={17} />
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+                    )}
 
                   </article>
 
@@ -539,12 +840,11 @@ const HomePage = () => {
                   </Link>
 
                 </div>
+
               )}
 
           </div>
-
-
-          {/* ===================================== */}
+                    {/* ===================================== */}
           {/* RIGHT SIDEBAR */}
           {/* ===================================== */}
 
