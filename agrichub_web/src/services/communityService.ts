@@ -6,12 +6,10 @@ export interface CommunityPost {
   author: number;
   author_name: string;
   author_email: string;
+  author_photo: string | null;
+  author_connection_count: number;
   content: string;
-  post_type:
-    | "discussion"
-    | "knowledge"
-    | "announcement"
-    | "question";
+  post_type: "discussion" | "knowledge" | "announcement" | "question";
   location: string;
   image: string | null;
   created_at: string;
@@ -31,6 +29,18 @@ export interface CommunityComment {
 }
 
 
+export interface CommunityConnection {
+  id: number;
+  follower: number;
+  follower_name: string;
+  following: number;
+  following_name: string;
+  status: "pending" | "accepted" | "rejected";
+  created_at: string;
+  updated_at: string;
+}
+
+
 interface CommunityPostsResponse {
   count: number;
   next: string | null;
@@ -44,6 +54,14 @@ interface CommunityCommentsResponse {
   next: string | null;
   previous: string | null;
   results: CommunityComment[];
+}
+
+
+interface CommunityConnectionsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CommunityConnection[];
 }
 
 
@@ -92,16 +110,69 @@ export const createCommunityComment = async (
 
 
 /**
- * Connect with the author of a community post
+ * Send a connection request to another user
  */
 export const connectWithUser = async (
   userId: number
-) => {
-  const response = await api.post(
+): Promise<CommunityConnection> => {
+  const response = await api.post<CommunityConnection>(
     "/community/connections/",
     {
       following: userId,
     }
+  );
+
+  return response.data;
+};
+
+
+/**
+ * Get accepted connections for the current user
+ */
+export const getConnections = async (): Promise<CommunityConnectionsResponse> => {
+  const response = await api.get<CommunityConnectionsResponse>(
+    "/community/connections/"
+  );
+
+  return response.data;
+};
+
+
+/**
+ * Get incoming pending connection requests
+ */
+export const getConnectionRequests =
+  async (): Promise<CommunityConnectionsResponse> => {
+    const response = await api.get<CommunityConnectionsResponse>(
+      "/community/connections/requests/"
+    );
+
+    return response.data;
+  };
+
+
+/**
+ * Accept a connection request
+ */
+export const acceptConnectionRequest = async (
+  connectionId: number
+): Promise<CommunityConnection> => {
+  const response = await api.post<CommunityConnection>(
+    `/community/connections/${connectionId}/accept/`
+  );
+
+  return response.data;
+};
+
+
+/**
+ * Reject a connection request
+ */
+export const rejectConnectionRequest = async (
+  connectionId: number
+): Promise<CommunityConnection> => {
+  const response = await api.post<CommunityConnection>(
+    `/community/connections/${connectionId}/reject/`
   );
 
   return response.data;

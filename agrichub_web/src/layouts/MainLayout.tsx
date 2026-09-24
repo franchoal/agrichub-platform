@@ -17,6 +17,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { logoIcon } from "../assets/logo";
 
 import { useAuthStore } from "../store/authStore";
 // import { useCartStore } from "../store/cartStore";
@@ -69,9 +70,11 @@ const MainLayout = () => {
             onClick={closeMobileMenu}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-700">
-              <span className="text-lg font-black text-white">
-                A
-              </span>
+              <img
+  src={logoIcon}
+  alt="AgricWise Africa"
+  className="h-9 w-9 object-contain"
+/>
             </div>
 
             <div className="hidden sm:block">
@@ -281,15 +284,24 @@ const MainLayout = () => {
               )}
 
               {!user && (
-                <Link
-                  to="/register"
-                  onClick={closeMobileMenu}
-                  className="mt-2 flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white"
-                >
-                  Join AgricWise
-                </Link>
-              )}
+  <div className="mt-2 space-y-2">
+    <Link
+      to="/login/buyer"
+      onClick={closeMobileMenu}
+      className="flex items-center justify-center rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+    >
+      Login
+    </Link>
 
+    <Link
+      to="/register"
+      onClick={closeMobileMenu}
+      className="flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-800"
+    >
+      Join AgricWise
+    </Link>
+  </div>
+)}
             </div>
 
           </div>

@@ -25,6 +25,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import FarmerRoute from "./FarmerRoute";
 import NotificationsPage from "../pages/Notifications/NotificationsPage";
 import CreatePostPage from "../pages/Community/CreatePostPage";
+import ProfilePage from "../pages/Profile/ProfilePage";
 
 export const router = createBrowserRouter([
   /*
@@ -189,6 +190,10 @@ export const router = createBrowserRouter([
             path: "/farmer/products/:id/edit",
             element: <EditProductPage />,
           },
+         {
+            path: "/profile",
+            element: <ProfilePage />,
+         },
         ],
       },
 

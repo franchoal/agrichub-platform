@@ -29,7 +29,10 @@ import {
   livestock,
 } from "../../assets/images";
 
-import { useCommunityPosts } from "../../hooks/useCommunityPosts";
+import {
+  useCommunityPosts,
+  useConnections,
+} from "../../hooks/useCommunityPosts";
 
 import {
   connectWithUser,
@@ -57,17 +60,20 @@ const HomePage = () => {
   const [isSubmittingComment, setIsSubmittingComment] =
     useState<Record<number, boolean>>({});
 
-  const [connectedUsers, setConnectedUsers] =
-    useState<Record<number, boolean>>({});
+  const [connectionStatus, setConnectionStatus] =
+  useState<Record<number, "pending" | "connected">>({});
 
-  const [isConnecting, setIsConnecting] =
-    useState<Record<number, boolean>>({});
+const [isConnecting, setIsConnecting] =
+  useState<Record<number, boolean>>({});
 
   const {
     data: communityPosts = [],
     isLoading: isLoadingPosts,
     isError: isPostsError,
   } = useCommunityPosts();
+  const {
+  data: connections = [],
+} = useConnections();
 
 
   const formatPostDate = (date: string) => {
@@ -176,38 +182,64 @@ const HomePage = () => {
       }));
     }
   };
+ 
+  const getConnectionStatus = (userId: number) => {
+  if (connectionStatus[userId]) {
+    return connectionStatus[userId];
+  }
 
+  const connection = connections.find(
+    (item) =>
+      item.follower === userId ||
+      item.following === userId
+  );
 
-  const handleConnect = async (userId: number) => {
-    if (connectedUsers[userId]) {
-      return;
-    }
+  if (!connection) {
+    return null;
+  }
 
+  if (connection.status === "accepted") {
+    return "connected";
+  }
+
+  if (connection.status === "pending") {
+    return "pending";
+  }
+
+  return null;
+};
+
+const handleConnect = async (userId: number) => {
+  const status = getConnectionStatus(userId);
+
+  if (status === "connected" || connectionStatus[userId] === "pending") {
+    return;
+  }
+
+  setIsConnecting((previous) => ({
+    ...previous,
+    [userId]: true,
+  }));
+
+  try {
+    await connectWithUser(userId);
+
+    setConnectionStatus((previous) => ({
+      ...previous,
+      [userId]: "pending",
+    }));
+  } catch (error) {
+    console.error(
+      "Failed to send connection request:",
+      error
+    );
+  } finally {
     setIsConnecting((previous) => ({
       ...previous,
-      [userId]: true,
+      [userId]: false,
     }));
-
-    try {
-      await connectWithUser(userId);
-
-      setConnectedUsers((previous) => ({
-        ...previous,
-        [userId]: true,
-      }));
-    } catch (error) {
-      console.error(
-        "Failed to connect with user:",
-        error
-      );
-    } finally {
-      setIsConnecting((previous) => ({
-        ...previous,
-        [userId]: false,
-      }));
-    }
-  };
-
+  }
+};
 
   return (
     <main className="min-h-screen bg-slate-50 pb-24">
@@ -546,7 +578,8 @@ const HomePage = () => {
                 const authorInitials =
                   `${post.author_name?.charAt(0) || ""}${post.author_name?.split(" ")[1]?.charAt(0) || ""}`
                     .toUpperCase();
-
+                const authorConnectionStatus =
+                  getConnectionStatus(post.author);
                 return (
 
                   <article
@@ -562,9 +595,17 @@ const HomePage = () => {
 
                       <div className="flex items-start gap-3">
 
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-black text-green-700">
-                          {authorInitials || "A"}
-                        </div>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-green-100 text-sm font-black text-green-700">
+  {post.author_photo ? (
+    <img
+      src={post.author_photo}
+      alt={post.author_name || "AgricWise Member"}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    authorInitials || "A"
+  )}
+</div>
 
                         <div className="min-w-0 flex-1">
 
@@ -581,6 +622,20 @@ const HomePage = () => {
                             <span className="text-xs text-gray-500">
                               {formatPostDate(post.created_at)}
                             </span>
+                            {post.author_connection_count > 0 && (
+  <>
+    <span className="text-gray-300">
+      •
+    </span>
+
+    <span className="text-xs text-gray-500">
+      {post.author_connection_count}{" "}
+      {post.author_connection_count === 1
+        ? "connection"
+        : "connections"}
+    </span>
+  </>
+)}
 
                           </div>
 
@@ -657,32 +712,30 @@ const HomePage = () => {
 
                       </button>
 
+                     <button
+  type="button"
+  onClick={() => handleConnect(post.author)}
+  disabled={
+    isConnecting[post.author] ||
+    authorConnectionStatus === "connected" ||
+    authorConnectionStatus === "pending"
+  }
+  className={`inline-flex items-center gap-1.5 transition ${
+    authorConnectionStatus
+      ? "text-green-700"
+      : "hover:text-green-700"
+  } disabled:cursor-not-allowed`}
+>
+  <Send size={16} />
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleConnect(post.author)
-                        }
-                        disabled={
-                          isConnecting[post.author] ||
-                          connectedUsers[post.author]
-                        }
-                        className={`inline-flex items-center gap-1.5 transition ${
-                          connectedUsers[post.author]
-                            ? "text-green-700"
-                            : "hover:text-green-700"
-                        } disabled:cursor-not-allowed`}
-                      >
-
-                        <Send size={16} />
-
-                        {isConnecting[post.author]
-                          ? "Connecting..."
-                          : connectedUsers[post.author]
-                            ? "Connected"
-                            : "Connect"}
-
-                      </button>
+  {isConnecting[post.author]
+    ? "Sending..."
+    : authorConnectionStatus === "connected"
+      ? "Connected"
+      : authorConnectionStatus === "pending"
+        ? "Pending"
+        : "Connect"}
+</button>
 
                     </div>
 
