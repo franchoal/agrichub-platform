@@ -8,7 +8,6 @@ import {
   Bell,
   Package,
   LayoutDashboard,
-  Tractor,
   User,
 } from "lucide-react";
 
@@ -40,10 +39,7 @@ const MainLayout = () => {
       (notification) => !notification.is_read
     ).length ?? 0;
 
-  const cartCount =
-    user?.role === "buyer"
-      ? cart?.items.length ?? 0
-      : 0;
+  const cartCount = cart?.items.length ?? 0;
 
   const handleLogout = () => {
     logout();
@@ -58,7 +54,7 @@ const MainLayout = () => {
 
       {/* ================= HEADER ================= */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-lg shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-lg">
 
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
 
@@ -68,37 +64,39 @@ const MainLayout = () => {
             to="/"
             className="flex items-center gap-3"
           >
-          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
-           <img
-           src={logoIcon}
-           alt="AgricHub"
-          className="h-full w-full object-contain"
-            />
-       </div>
-            <div>
-  <h1 className="text-xl font-extrabold text-green-700">
-    AgricHub Africa
-  </h1>
+            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
+              <img
+                src={logoIcon}
+                alt="AgricWise"
+                className="h-full w-full object-contain"
+              />
+            </div>
 
-  <p className="text-[11px] text-gray-500">
-    Africa's Smart Agricultural Ecosystem
-  </p>
-</div>
+            <div>
+              <h1 className="text-xl font-extrabold text-green-700">
+                AgricWise Africa
+              </h1>
+
+              <p className="text-[11px] text-gray-500">
+                Connect. Trade. Grow.
+              </p>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
 
           <nav className="hidden items-center gap-8 lg:flex">
-    
+
             <Link
               to="/"
               className="font-medium text-gray-700 transition hover:text-green-700"
             >
               Home
             </Link>
+
             <Link
-                to="/about"
-                className="font-medium text-gray-700 transition hover:text-green-700"
+              to="/about"
+              className="font-medium text-gray-700 transition hover:text-green-700"
             >
               About
             </Link>
@@ -107,95 +105,61 @@ const MainLayout = () => {
               to="/products"
               className="font-medium text-gray-700 transition hover:text-green-700"
             >
-              Marketplace
+              Explore
             </Link>
 
             {!isAuthenticated ? (
               <>
                 <Link
-                  to="/login/buyer"
+                  to="/login"
                   className="font-medium text-gray-700 transition hover:text-green-700"
                 >
-                  Buyer Login
+                  Sign In
                 </Link>
 
                 <Link
-                  to="/farmer"
+                  to="/register"
                   className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
                 >
-                  Farmer Portal
+                  Join AgricWise
                 </Link>
               </>
             ) : (
               <>
-                              {/* ================= BUYER ================= */}
+                {/* ================= COMMON USER ACTIONS ================= */}
 
-                {user?.role === "buyer" && (
-                  <>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
-                      Buyer
+                <Link
+                  to="/products"
+                  className="relative flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
+                >
+                  <ShoppingCart size={20} />
+
+                  Cart
+
+                  {cartCount > 0 && (
+                    <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-bold text-white">
+                      {cartCount}
                     </span>
+                  )}
+                </Link>
 
-                    <Link
-                      to="/cart"
-                      className="relative flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                    >
-                      <ShoppingCart size={20} />
+                <Link
+                  to="/orders"
+                  className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
+                >
+                  <Package size={20} />
+                  Orders
+                </Link>
 
-                      Cart
+                {/* Legacy seller workspace */}
 
-                      {cartCount > 0 && (
-                        <span className="absolute -right-3 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-bold text-white">
-                          {cartCount}
-                        </span>
-                      )}
-                    </Link>
-
-                    <Link
-                      to="/orders"
-                      className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                    >
-                      <Package size={20} />
-                      Orders
-                    </Link>
-                  </>
-                )}
-
-                {/* ================= FARMER ================= */}
-
-                {user?.role === "farmer" && (
-                  <>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
-                      Farmer
-                    </span>
-
-                    <Link
-                      to="/farmer/dashboard"
-                      className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                    >
-                      <LayoutDashboard size={20} />
-                      Dashboard
-                    </Link>
-
-                    <Link
-                      to="/farmer/products"
-                      className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                    >
-                      <Tractor size={20} />
-                      Products
-                    </Link>
-
-                    <Link
-                      to="/farmer/orders"
-                      className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
-                    >
-                      <Package size={20} />
-                      Orders
-                    </Link>
-                  </>
-                )}
-
-                {/* ================= NOTIFICATIONS ================= */}
+                <Link
+                  to="/farmer/dashboard"
+                  className="flex items-center gap-2 font-medium text-gray-700 transition hover:text-green-700"
+                >
+                  <LayoutDashboard size={20} />
+                  My Activity
+                </Link>
 
                 <Link
                   to="/notifications"
@@ -228,8 +192,8 @@ const MainLayout = () => {
                       {user?.first_name} {user?.last_name}
                     </p>
 
-                    <p className="text-xs capitalize text-gray-500">
-                      {user?.role}
+                    <p className="text-xs text-gray-500">
+                      AgricWise Member
                     </p>
                   </div>
 
@@ -241,7 +205,6 @@ const MainLayout = () => {
                 >
                   Logout
                 </button>
-
               </>
             )}
 
@@ -265,7 +228,8 @@ const MainLayout = () => {
       <main className="flex-1">
         <Outlet />
       </main>
-            {/* ================= MOBILE DRAWER ================= */}
+
+      {/* ================= MOBILE DRAWER ================= */}
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
@@ -287,32 +251,30 @@ const MainLayout = () => {
 
               <img
                 src={heroFarm}
-                alt="AgricHub"
+                alt="AgricWise"
                 className="absolute inset-0 h-full w-full object-cover"
               />
 
               <div className="absolute inset-0 bg-gradient-to-br from-green-900/80 to-green-700/70" />
 
-              <div className="relative flex h-full items-center justify-between px-6">
+              <div className="relative flex h-full items-center px-6">
 
                 <div>
 
-                <div className="mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white shadow">
-
-  <img
-    src={logoIcon}
-    alt="AgricHub Logo"
-    className="h-full w-full object-contain"
-  />
-
-</div>
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white shadow">
+                    <img
+                      src={logoIcon}
+                      alt="AgricWise Logo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
 
                   <h2 className="text-2xl font-bold text-white">
-                    AgricHub Africa
+                    AgricWise
                   </h2>
 
                   <p className="text-sm text-green-100">
-                    Africa's Smart Agricultural Ecosystem
+                    Connect. Trade. Grow.
                   </p>
 
                 </div>
@@ -332,92 +294,68 @@ const MainLayout = () => {
               >
                 🏠 Home
               </Link>
+
               <Link
-  to="/about"
-  onClick={() => setMobileMenuOpen(false)}
-  className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
->
-  ℹ️ About
-</Link>
+                to="/about"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+              >
+                ℹ️ About
+              </Link>
+
               <Link
                 to="/products"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
               >
-                🌾 Marketplace
+                🌾 Explore
               </Link>
 
               {!isAuthenticated ? (
                 <>
                   <Link
-                    to="/login/buyer"
+                    to="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
                   >
-                    👤 Buyer Login
+                    👤 Sign In
                   </Link>
 
                   <Link
-                    to="/farmer"
+                    to="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block rounded-xl bg-green-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-green-700"
                   >
-                    🚜 Farmer Portal
+                    🌱 Join AgricWise
                   </Link>
                 </>
               ) : (
                 <>
-                  {user?.role === "buyer" && (
-                    <>
-                      <hr className="my-4" />
+                  <hr className="my-4" />
 
-                      <Link
-                        to="/cart"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                      >
-                        🛒 Cart ({cartCount})
-                      </Link>
+                  <Link
+                    to="/products"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                  >
+                    🛒 Cart ({cartCount})
+                  </Link>
 
-                      <Link
-                        to="/orders"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                      >
-                        📦 Orders
-                      </Link>
-                    </>
-                  )}
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                  >
+                    📦 Orders
+                  </Link>
 
-                  {user?.role === "farmer" && (
-                    <>
-                      <hr className="my-4" />
-
-                      <Link
-                        to="/farmer/dashboard"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                      >
-                        📊 Dashboard
-                      </Link>
-
-                      <Link
-                        to="/farmer/products"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                      >
-                        🌾 Products
-                      </Link>
-
-                      <Link
-                        to="/farmer/orders"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
-                      >
-                        📦 Orders
-                      </Link>
-                    </>
-                  )}
+                  <Link
+                    to="/farmer/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-xl px-4 py-3 transition hover:bg-green-50"
+                  >
+                    📊 My Activity
+                  </Link>
 
                   <Link
                     to="/notifications"
@@ -448,8 +386,8 @@ const MainLayout = () => {
                     {user?.first_name} {user?.last_name}
                   </p>
 
-                  <p className="text-sm capitalize text-gray-500">
-                    {user?.role}
+                  <p className="text-sm text-gray-500">
+                    AgricWise Member
                   </p>
 
                 </div>
@@ -479,7 +417,7 @@ const MainLayout = () => {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row">
 
           <p>
-            © {new Date().getFullYear()} AgricHub Africa. Built by Franchoal_Dev Technologies.
+            © {new Date().getFullYear()} AgricWise Africa. Built by Franchoal_Dev Technologies.
           </p>
 
           <div className="flex items-center gap-6">
@@ -495,8 +433,9 @@ const MainLayout = () => {
               to="/products"
               className="transition hover:text-green-700"
             >
-              Marketplace
+              Explore
             </Link>
+
             <Link
               to="/about"
               className="transition hover:text-green-700"
@@ -508,7 +447,7 @@ const MainLayout = () => {
               to="/farmer"
               className="transition hover:text-green-700"
             >
-              Farmer Portal
+              My Activity
             </Link>
 
           </div>

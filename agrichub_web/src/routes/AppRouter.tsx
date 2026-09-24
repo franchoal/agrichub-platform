@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import CheckoutPage from "../pages/Checkout/CheckoutPage";
@@ -28,7 +28,7 @@ import NotificationsPage from "../pages/Notifications/NotificationsPage";
 export const router = createBrowserRouter([
   /*
   ==========================================
-  PUBLIC MARKETPLACE
+  PUBLIC AGRICWISE ECOSYSTEM
   ==========================================
   */
 
@@ -41,16 +41,11 @@ export const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
+
       {
         path: "about",
         element: <AboutPage />,
       },
-
-      /*
-      ======================================
-      PUBLIC MARKETPLACE
-      ======================================
-      */
 
       {
         path: "products",
@@ -64,16 +59,12 @@ export const router = createBrowserRouter([
 
       /*
       ======================================
-      FARMER LANDING PORTAL
+      TRANSITIONAL SELLER ENTRY
       ======================================
 
-      Public entry point for farmers.
-
-      Existing farmers can log in.
-
-      New farmers can register.
-
-      ======================================
+      The existing farmer portal is retained
+      temporarily while the seller/business
+      workspace is being migrated.
       */
 
       {
@@ -85,44 +76,55 @@ export const router = createBrowserRouter([
 
   /*
   ==========================================
-  BUYER AUTHENTICATION
+  AUTHENTICATION
   ==========================================
+
+  AgricWise uses one account for everyone.
+
+  No buyer/farmer account type is required.
   */
 
   {
     path: "/login",
-    element: <LoginPage accountType="buyer" />,
-  },
-
-  {
-    path: "/login/buyer",
-    element: <LoginPage accountType="buyer" />,
+    element: <LoginPage />,
   },
 
   {
     path: "/register",
-    element: <RegisterPage accountType="buyer" />,
-  },
-
-  {
-    path: "/register/buyer",
-    element: <RegisterPage accountType="buyer" />,
+    element: <RegisterPage />,
   },
 
   /*
   ==========================================
-  FARMER AUTHENTICATION
+  LEGACY AUTH URL COMPATIBILITY
   ==========================================
+
+  These routes are retained so existing links
+  to the former buyer/farmer authentication
+  URLs continue to work.
+
+  They now lead to the single AgricWise
+  authentication experience.
   */
 
   {
+    path: "/login/buyer",
+    element: <Navigate to="/login" replace />,
+  },
+
+  {
+    path: "/register/buyer",
+    element: <Navigate to="/register" replace />,
+  },
+
+  {
     path: "/login/farmer",
-    element: <LoginPage accountType="farmer" />,
+    element: <Navigate to="/login" replace />,
   },
 
   {
     path: "/register/farmer",
-    element: <RegisterPage accountType="farmer" />,
+    element: <Navigate to="/register" replace />,
   },
 
   /*
@@ -137,8 +139,15 @@ export const router = createBrowserRouter([
     children: [
       /*
       ======================================
-      FARMER MODULE
+      TRANSITIONAL SELLER WORKSPACE
       ======================================
+
+      These routes remain temporarily because
+      the existing Product/Order models still
+      use FarmerProfile as the seller capability.
+
+      They will later evolve into the broader
+      AgricWise Seller & Business Workspace.
       */
 
       {
@@ -151,13 +160,13 @@ export const router = createBrowserRouter([
           },
 
           {
-           path: "/farmer/orders",
-          element: <FarmerOrdersPage />,
+            path: "/farmer/orders",
+            element: <FarmerOrdersPage />,
           },
 
           {
-           path: "/farmer/orders/:id",
-           element: <FarmerOrderDetailsPage />,
+            path: "/farmer/orders/:id",
+            element: <FarmerOrderDetailsPage />,
           },
 
           {
@@ -174,70 +183,38 @@ export const router = createBrowserRouter([
             path: "/farmer/products/:id/edit",
             element: <EditProductPage />,
           },
-
-          /*
-          Future Farmer Routes
-
-          /farmer/products
-
-          /farmer/products/:id
-
-          /farmer/orders
-
-          /farmer/orders/:id
-
-          /farmer/analytics
-
-          /farmer/settings
-          */
         ],
       },
 
       /*
       ======================================
-      BUYER MODULE
-
-      Buyers intentionally do not have
-      a dashboard.
-
-      Future:
-    
-      /cart
-
-      /checkout
-
-      /orders
-
-      /orders/:id
-
-      /account
-
-      /wishlist
-
+      COMMON AGRICWISE ACTIVITY
       ======================================
       */
+
       {
         path: "/cart",
         element: <CartPage />,
       },
+
       {
-       path: "/checkout",
-       element: <CheckoutPage />,
+        path: "/checkout",
+        element: <CheckoutPage />,
       },
 
       {
-       path: "/orders",
-       element: <OrdersPage />,
+        path: "/orders",
+        element: <OrdersPage />,
       },
 
       {
-       path: "/orders/:id",
-       element: <OrderDetailsPage />,
+        path: "/orders/:id",
+        element: <OrderDetailsPage />,
       },
 
       {
-       path: "/notifications",
-       element: <NotificationsPage />,
+        path: "/notifications",
+        element: <NotificationsPage />,
       },
     ],
   },
@@ -250,6 +227,6 @@ export const router = createBrowserRouter([
 
   {
     path: "*",
-    element: <HomePage />,
+    element: <Navigate to="/" replace />,
   },
 ]);
