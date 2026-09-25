@@ -12,6 +12,7 @@ class Notification(models.Model):
     NEW_ORDER = "new_order"
     PAYMENT_UPDATE = "payment_update"
     DELIVERY_UPDATE = "delivery_update"
+    CONNECTION = "connection"
 
     NOTIFICATION_TYPE_CHOICES = [
         (REGISTRATION, "Registration"),
@@ -19,6 +20,7 @@ class Notification(models.Model):
         (NEW_ORDER, "New Order"),
         (PAYMENT_UPDATE, "Payment Update"),
         (DELIVERY_UPDATE, "Delivery Update"),
+        (CONNECTION, "Connection"),
     ]
 
     user = models.ForeignKey(

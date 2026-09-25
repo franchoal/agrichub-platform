@@ -4,6 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from notifications.models import Notification
+
 from .models import Post, Comment, Reaction, Connection
 from .serializers import (
     PostSerializer,
@@ -11,6 +13,13 @@ from .serializers import (
     ReactionSerializer,
     ConnectionSerializer,
 )
+
+
+def require_complete_profile(user):
+    if not hasattr(user, "profile") or not user.profile.is_complete:
+        raise permissions.PermissionDenied(
+            "Please complete your profile before participating in the community."
+        )
 
 
 class PostListCreateView(generics.ListCreateAPIView):
@@ -24,7 +33,11 @@ class PostListCreateView(generics.ListCreateAPIView):
         return [permissions.AllowAny()]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        require_complete_profile(self.request.user)
+
+        serializer.save(
+            author=self.request.user
+        )
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -42,6 +55,8 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise permissions.PermissionDenied(
                 "You can only edit your own posts."
             )
+
+        require_complete_profile(self.request.user)
 
         serializer.save()
 
@@ -64,6 +79,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         ).select_related("author")
 
     def perform_create(self, serializer):
+        require_complete_profile(self.request.user)
+
         serializer.save(
             author=self.request.user,
             post_id=self.kwargs["post_id"],
@@ -80,6 +97,8 @@ class ReactionListCreateView(generics.ListCreateAPIView):
         ).select_related("user")
 
     def perform_create(self, serializer):
+        require_complete_profile(self.request.user)
+
         serializer.save(
             user=self.request.user,
             post_id=self.kwargs["post_id"],
@@ -106,6 +125,8 @@ class ConnectionListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        require_complete_profile(self.request.user)
+
         following = serializer.validated_data["following"]
 
         if following == self.request.user:
@@ -126,18 +147,13 @@ class ConnectionListCreateView(generics.ListCreateAPIView):
 
         if existing:
             if existing.status == Connection.ACCEPTED:
-                raise permissions.ValidationError(
+                raise ValidationError(
                     "You are already connected with this user."
-                )
-
-            if existing.status == Connection.PENDING:
-                raise permissions.ValidationError(
-                    "A connection request already exists."
                 )
 
             existing.follower = self.request.user
             existing.following = following
-            existing.status = Connection.PENDING
+            existing.status = Connection.ACCEPTED
             existing.save(
                 update_fields=[
                     "follower",
@@ -146,11 +162,24 @@ class ConnectionListCreateView(generics.ListCreateAPIView):
                     "updated_at",
                 ]
             )
-            return
 
-        serializer.save(
-            follower=self.request.user,
-            status=Connection.PENDING,
+            connection = existing
+
+        else:
+            connection = serializer.save(
+                follower=self.request.user,
+                status=Connection.ACCEPTED,
+            )
+
+        Notification.objects.create(
+            user=following,
+            title="New connection",
+            message=(
+                f"{self.request.user.first_name} "
+                f"{self.request.user.last_name}".strip()
+                + " connected with you on AgricWise."
+            ),
+            notification_type="connection",
         )
 
 
@@ -188,7 +217,12 @@ class ConnectionAcceptView(APIView):
             )
 
         connection.status = Connection.ACCEPTED
-        connection.save(update_fields=["status", "updated_at"])
+        connection.save(
+            update_fields=[
+                "status",
+                "updated_at",
+            ]
+        )
 
         return Response(
             ConnectionSerializer(connection).data
@@ -212,7 +246,12 @@ class ConnectionRejectView(APIView):
             )
 
         connection.status = Connection.REJECTED
-        connection.save(update_fields=["status", "updated_at"])
+        connection.save(
+            update_fields=[
+                "status",
+                "updated_at",
+            ]
+        )
 
         return Response(
             ConnectionSerializer(connection).data

@@ -190,6 +190,11 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
-
+    @property
+    def is_complete(self):
+        return bool(
+            self.location.strip()
+            and self.bio.strip()
+        )
     def __str__(self):
         return f"{self.user.get_full_name()} Profile"
