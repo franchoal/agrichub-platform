@@ -64,11 +64,12 @@ class CommentSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
-            "author",
-            "created_at",
-            "updated_at",
-        ]
+    read_only_fields = [
+    "post",
+    "author",
+    "created_at",
+    "updated_at",
+]
 
     def get_author_name(self, obj):
         return f"{obj.author.first_name} {obj.author.last_name}".strip()
