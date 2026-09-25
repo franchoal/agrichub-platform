@@ -1,4 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -28,7 +32,8 @@ import {
 } from "../../services/communityService";
 
 const ProfilePage = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] =
+    useState<UserProfile | null>(null);
 
   const [connections, setConnections] = useState<
     CommunityConnection[]
@@ -40,7 +45,6 @@ const ProfilePage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
   const [isEditing, setIsEditing] = useState(false);
 
   const [error, setError] = useState("");
@@ -56,7 +60,8 @@ const ProfilePage = () => {
   const [selectedPhoto, setSelectedPhoto] =
     useState<File | null>(null);
 
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef =
+    useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -81,12 +86,17 @@ const ProfilePage = () => {
         setForm({
           first_name: profileResponse.first_name || "",
           last_name: profileResponse.last_name || "",
-          phone_number: profileResponse.phone_number || "",
+          phone_number:
+            profileResponse.phone_number || "",
           location: profileResponse.location || "",
           bio: profileResponse.bio || "",
         });
       } catch (err) {
-        console.error("Failed to load profile:", err);
+        console.error(
+          "Failed to load profile:",
+          err
+        );
+
         setError(
           "We couldn't load your profile. Please try again."
         );
@@ -106,6 +116,16 @@ const ProfilePage = () => {
     `${profile?.first_name?.charAt(0) || ""}${profile?.last_name?.charAt(0) || ""}`
       .toUpperCase() || "A";
 
+  const profileIsComplete = Boolean(
+    profile?.location?.trim() &&
+      profile?.bio?.trim()
+  );
+
+  const formIsComplete = Boolean(
+    form.location.trim() &&
+      form.bio.trim()
+  );
+
   const handlePhotoChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -121,7 +141,9 @@ const ProfilePage = () => {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("Profile photo must be smaller than 5MB.");
+      setError(
+        "Profile photo must be smaller than 5MB."
+      );
       return;
     }
 
@@ -138,14 +160,31 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
+    if (!form.location.trim()) {
+      setError(
+        "Location is required to complete your profile."
+      );
+      return;
+    }
+
+    if (!form.bio.trim()) {
+      setError(
+        "Please add a short bio to complete your profile."
+      );
+      return;
+    }
+
     try {
       setIsSaving(true);
       setError("");
 
-      const updatedProfile = await updateProfile({
-        ...form,
-        photo: selectedPhoto,
-      });
+      const updatedProfile =
+        await updateProfile({
+          ...form,
+          location: form.location.trim(),
+          bio: form.bio.trim(),
+          photo: selectedPhoto,
+        });
 
       setProfile(updatedProfile);
       setSelectedPhoto(null);
@@ -155,7 +194,11 @@ const ProfilePage = () => {
         photoInputRef.current.value = "";
       }
     } catch (err) {
-      console.error("Failed to update profile:", err);
+      console.error(
+        "Failed to update profile:",
+        err
+      );
+
       setError(
         "We couldn't update your profile. Please try again."
       );
@@ -172,7 +215,8 @@ const ProfilePage = () => {
     setForm({
       first_name: profile.first_name || "",
       last_name: profile.last_name || "",
-      phone_number: profile.phone_number || "",
+      phone_number:
+        profile.phone_number || "",
       location: profile.location || "",
       bio: profile.bio || "",
     });
@@ -190,13 +234,15 @@ const ProfilePage = () => {
     connectionId: number
   ) => {
     try {
-      const accepted = await acceptConnectionRequest(
-        connectionId
-      );
+      const accepted =
+        await acceptConnectionRequest(
+          connectionId
+        );
 
       setRequests((previous) =>
         previous.filter(
-          (request) => request.id !== connectionId
+          (request) =>
+            request.id !== connectionId
         )
       );
 
@@ -209,6 +255,7 @@ const ProfilePage = () => {
         "Failed to accept connection request:",
         err
       );
+
       setError(
         "We couldn't accept the connection request."
       );
@@ -219,11 +266,14 @@ const ProfilePage = () => {
     connectionId: number
   ) => {
     try {
-      await rejectConnectionRequest(connectionId);
+      await rejectConnectionRequest(
+        connectionId
+      );
 
       setRequests((previous) =>
         previous.filter(
-          (request) => request.id !== connectionId
+          (request) =>
+            request.id !== connectionId
         )
       );
     } catch (err) {
@@ -231,6 +281,7 @@ const ProfilePage = () => {
         "Failed to reject connection request:",
         err
       );
+
       setError(
         "We couldn't reject the connection request."
       );
@@ -261,14 +312,18 @@ const ProfilePage = () => {
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 text-center shadow-sm">
-          <Users className="mx-auto text-green-700" size={32} />
+          <Users
+            className="mx-auto text-green-700"
+            size={32}
+          />
 
           <h1 className="mt-4 text-xl font-black text-gray-900">
             Profile unavailable
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            {error || "Please try again later."}
+            {error ||
+              "Please try again later."}
           </p>
 
           <Link
@@ -321,11 +376,15 @@ const ProfilePage = () => {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                disabled={
+                  isSaving || !formIsComplete
+                }
+                className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save size={16} />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving
+                  ? "Saving..."
+                  : "Save"}
               </button>
             </div>
           )}
@@ -380,7 +439,9 @@ const ProfilePage = () => {
                       ref={photoInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handlePhotoChange}
+                      onChange={
+                        handlePhotoChange
+                      }
                       className="hidden"
                     />
                   </>
@@ -413,6 +474,22 @@ const ProfilePage = () => {
                     {profile.location}
                   </p>
                 )}
+
+                {/* PROFILE STATUS */}
+
+                <div className="mt-3">
+                  {profileIsComplete ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700">
+                      <Check size={13} />
+                      Profile complete
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+                      <Edit3 size={13} />
+                      Complete your profile
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -443,17 +520,55 @@ const ProfilePage = () => {
         </div>
       </section>
 
+      {/* PROFILE COMPLETION NOTICE */}
+
+      {!profileIsComplete && !isEditing && (
+        <section className="mx-auto max-w-4xl px-4 pt-5">
+          <div className="rounded-2xl border border-green-100 bg-green-50 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-black text-green-900">
+                  Complete your AgricWise profile
+                </h2>
+
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-green-800">
+                  Add your location and a short bio before
+                  participating in the AgricWise community.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setIsEditing(true)
+                }
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-800"
+              >
+                <Edit3 size={16} />
+                Complete Profile
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* PROFILE DETAILS */}
 
       <section className="mx-auto max-w-4xl px-4 pt-5">
         <div className="rounded-2xl bg-white p-5 shadow-sm sm:p-7">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-gray-900">
-              About
-            </h2>
+            <div>
+              <h2 className="font-black text-gray-900">
+                About
+              </h2>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Tell the AgricWise community who you are.
+              </p>
+            </div>
 
             <span className="text-xs font-semibold text-green-700">
-              AgricWise Member
+              Personal Profile
             </span>
           </div>
 
@@ -470,7 +585,8 @@ const ProfilePage = () => {
                     onChange={(event) =>
                       setForm((previous) => ({
                         ...previous,
-                        first_name: event.target.value,
+                        first_name:
+                          event.target.value,
                       }))
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
@@ -487,7 +603,8 @@ const ProfilePage = () => {
                     onChange={(event) =>
                       setForm((previous) => ({
                         ...previous,
-                        last_name: event.target.value,
+                        last_name:
+                          event.target.value,
                       }))
                     }
                     className="mt-1.5 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
@@ -505,7 +622,8 @@ const ProfilePage = () => {
                   onChange={(event) =>
                     setForm((previous) => ({
                       ...previous,
-                      phone_number: event.target.value,
+                      phone_number:
+                        event.target.value,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
@@ -514,7 +632,10 @@ const ProfilePage = () => {
 
               <div>
                 <label className="text-xs font-bold text-gray-600">
-                  Location
+                  Location{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
                 </label>
 
                 <input
@@ -522,16 +643,26 @@ const ProfilePage = () => {
                   onChange={(event) =>
                     setForm((previous) => ({
                       ...previous,
-                      location: event.target.value,
+                      location:
+                        event.target.value,
                     }))
                   }
+                  placeholder="City, state or region"
                   className="mt-1.5 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
+
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Your location helps people discover and
+                  connect with relevant members.
+                </p>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-gray-600">
-                  Bio
+                  Bio{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
                 </label>
 
                 <textarea
@@ -546,7 +677,19 @@ const ProfilePage = () => {
                   placeholder="Tell the AgricWise community about yourself..."
                   className="mt-1.5 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
+
+                <p className="mt-1.5 text-xs text-gray-400">
+                  A short introduction helps other members
+                  know who they are connecting with.
+                </p>
               </div>
+
+              {!formIsComplete && (
+                <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-800">
+                  Location and bio are required before you
+                  can participate in the AgricWise community.
+                </div>
+              )}
             </div>
           ) : (
             <div className="mt-4">
@@ -581,7 +724,7 @@ const ProfilePage = () => {
                 </h2>
 
                 <p className="text-xs text-gray-500">
-                  People who want to connect with you.
+                  Older connection requests awaiting a response.
                 </p>
               </div>
             </div>
@@ -607,7 +750,9 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        handleAcceptRequest(request.id)
+                        handleAcceptRequest(
+                          request.id
+                        )
                       }
                       className="rounded-lg bg-green-700 px-4 py-2 text-xs font-bold text-white"
                     >
@@ -617,7 +762,9 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        handleRejectRequest(request.id)
+                        handleRejectRequest(
+                          request.id
+                        )
                       }
                       className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600"
                     >
@@ -673,7 +820,8 @@ const ProfilePage = () => {
 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-gray-900">
-                        {otherUser || "AgricWise Member"}
+                        {otherUser ||
+                          "AgricWise Member"}
                       </p>
 
                       <p className="text-xs text-green-700">

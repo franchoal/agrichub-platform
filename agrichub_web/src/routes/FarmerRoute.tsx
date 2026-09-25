@@ -1,20 +1,15 @@
 import {
   Navigate,
   Outlet,
-  useLocation,
 } from "react-router-dom";
 
 import { useAuthStore } from "../store/authStore";
 import { useFarmerProfile } from "../hooks/useFarmerProfile";
 
-
 const FarmerRoute = () => {
-  const location = useLocation();
-
   const user = useAuthStore(
     (state) => state.user
   );
-
 
   /*
   ==========================================
@@ -31,27 +26,27 @@ const FarmerRoute = () => {
     );
   }
 
-
   /*
   ==========================================
-  Check Existing Seller/Farmer Profile
+  Existing Farmer/Seller Workspace
   ==========================================
 
-  Transitional architecture:
+  AgricWise no longer assigns permanent
+  Buyer/Farmer account roles.
 
-  AgricWise does not assign permanent roles.
+  FarmerProfile is retained as a transitional
+  capability/workspace for users who want to
+  operate as agricultural sellers/farmers.
 
-  The existing FarmerProfile currently
-  represents the person's agricultural
-  seller/farmer capability.
+  This is separate from the universal
+  AgricWise personal profile.
   */
 
   const {
     isLoading,
     isError,
-    data: profile,
+    data: farmerProfile,
   } = useFarmerProfile();
-
 
   /*
   ==========================================
@@ -61,77 +56,56 @@ const FarmerRoute = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
         <div className="text-center">
-
           <div className="mb-4 text-5xl">
             🌾
           </div>
 
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-gray-900">
             Loading AgricWise Workspace...
           </h2>
 
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm text-gray-600">
             Please wait.
           </p>
-
         </div>
       </div>
     );
   }
 
-
   /*
   ==========================================
-  No Farmer/Seller Profile Yet
-
-  Redirect to profile onboarding.
+  No Farmer/Seller Workspace
   ==========================================
+
+  Do NOT redirect to /farmer/profile.
+
+  /profile is now the universal personal
+  profile for every AgricWise member.
+
+  A FarmerProfile will be created later when
+  the user chooses to become a seller/farmer
+  through the appropriate agricultural
+  activity flow.
   */
 
-  if (
-    (isError || !profile) &&
-    location.pathname !== "/farmer/profile"
-  ) {
+  if (isError || !farmerProfile) {
     return (
       <Navigate
-        to="/farmer/profile"
+        to="/profile"
         replace
       />
     );
   }
 
-
   /*
   ==========================================
-  Profile Exists
-
-  Prevent returning to onboarding.
-  ==========================================
-  */
-
-  if (
-    profile &&
-    location.pathname === "/farmer/profile"
-  ) {
-    return (
-      <Navigate
-        to="/farmer/dashboard"
-        replace
-      />
-    );
-  }
-
-
-  /*
-  ==========================================
-  Allow Access
+  Farmer/Seller Workspace Exists
   ==========================================
   */
 
   return <Outlet />;
 };
-
 
 export default FarmerRoute;
