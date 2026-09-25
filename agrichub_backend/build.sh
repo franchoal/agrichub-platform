@@ -6,4 +6,6 @@ python manage.py showmigrations products
 
 python manage.py migrate --verbosity 3
 
+python manage.py create_admin
+
 python manage.py collectstatic --noinput
