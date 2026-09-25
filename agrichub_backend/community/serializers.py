@@ -41,13 +41,17 @@ class PostSerializer(serializers.ModelSerializer):
         return f"{obj.author.first_name} {obj.author.last_name}".strip()
 
     def get_author_connection_count(self, obj):
-        return Connection.objects.filter(
-            follower=obj.author,
-            status=Connection.ACCEPTED,
-        ).count() + Connection.objects.filter(
-            following=obj.author,
-            status=Connection.ACCEPTED,
-        ).count()
+        return (
+            Connection.objects.filter(
+                follower=obj.author,
+                status=Connection.ACCEPTED,
+            ).count()
+            + Connection.objects.filter(
+                following=obj.author,
+                status=Connection.ACCEPTED,
+            ).count()
+        )
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author_name = serializers.SerializerMethodField()
@@ -64,23 +68,27 @@ class CommentSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-    read_only_fields = [
-    "post",
-    "author",
-    "created_at",
-    "updated_at",
-]
+        read_only_fields = [
+            "id",
+            "post",
+            "author",
+            "author_name",
+            "created_at",
+            "updated_at",
+        ]
 
     def get_author_name(self, obj):
         return f"{obj.author.first_name} {obj.author.last_name}".strip()
 
     def validate_content(self, value):
-        if not value.strip():
+        value = value.strip()
+
+        if not value:
             raise serializers.ValidationError(
                 "Comment cannot be empty."
             )
 
-        return value.strip()
+        return value
 
 
 class ReactionSerializer(serializers.ModelSerializer):
@@ -94,6 +102,7 @@ class ReactionSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = [
+            "id",
             "user",
             "created_at",
         ]
@@ -116,6 +125,7 @@ class ConnectionSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = [
+            "id",
             "follower",
             "follower_name",
             "status",
