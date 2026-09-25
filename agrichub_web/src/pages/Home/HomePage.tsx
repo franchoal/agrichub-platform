@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   ArrowRight,
@@ -43,6 +44,8 @@ import {
 
 
 const HomePage = () => {
+  const queryClient = useQueryClient();
+
   const [openComments, setOpenComments] =
     useState<number | null>(null);
 
@@ -61,19 +64,20 @@ const HomePage = () => {
     useState<Record<number, boolean>>({});
 
   const [connectionStatus, setConnectionStatus] =
-  useState<Record<number, "pending" | "connected">>({});
+    useState<Record<number, "connected">>({});
 
-const [isConnecting, setIsConnecting] =
-  useState<Record<number, boolean>>({});
+  const [isConnecting, setIsConnecting] =
+    useState<Record<number, boolean>>({});
 
   const {
     data: communityPosts = [],
     isLoading: isLoadingPosts,
     isError: isPostsError,
   } = useCommunityPosts();
+
   const {
-  data: connections = [],
-} = useConnections();
+    data: connections = [],
+  } = useConnections();
 
 
   const formatPostDate = (date: string) => {
@@ -182,64 +186,67 @@ const [isConnecting, setIsConnecting] =
       }));
     }
   };
- 
+
+
   const getConnectionStatus = (userId: number) => {
-  if (connectionStatus[userId]) {
-    return connectionStatus[userId];
-  }
+    if (connectionStatus[userId]) {
+      return connectionStatus[userId];
+    }
 
-  const connection = connections.find(
-    (item) =>
-      item.follower === userId ||
-      item.following === userId
-  );
-
-  if (!connection) {
-    return null;
-  }
-
-  if (connection.status === "accepted") {
-    return "connected";
-  }
-
-  if (connection.status === "pending") {
-    return "pending";
-  }
-
-  return null;
-};
-
-const handleConnect = async (userId: number) => {
-  const status = getConnectionStatus(userId);
-
-  if (status === "connected" || connectionStatus[userId] === "pending") {
-    return;
-  }
-
-  setIsConnecting((previous) => ({
-    ...previous,
-    [userId]: true,
-  }));
-
-  try {
-    await connectWithUser(userId);
-
-    setConnectionStatus((previous) => ({
-      ...previous,
-      [userId]: "pending",
-    }));
-  } catch (error) {
-    console.error(
-      "Failed to send connection request:",
-      error
+    const connection = connections.find(
+      (item) =>
+        item.follower === userId ||
+        item.following === userId
     );
-  } finally {
+
+    if (!connection) {
+      return null;
+    }
+
+    if (connection.status === "accepted") {
+      return "connected";
+    }
+
+    return null;
+  };
+
+
+  const handleConnect = async (userId: number) => {
+    const status = getConnectionStatus(userId);
+
+    if (status === "connected") {
+      return;
+    }
+
     setIsConnecting((previous) => ({
       ...previous,
-      [userId]: false,
+      [userId]: true,
     }));
-  }
-};
+
+    try {
+      await connectWithUser(userId);
+
+      setConnectionStatus((previous) => ({
+        ...previous,
+        [userId]: "connected",
+      }));
+
+      await queryClient.invalidateQueries({
+        queryKey: ["community-connections"],
+      });
+    } catch (error) {
+      console.error(
+        "Failed to connect with user:",
+        error
+      );
+    } finally {
+      setIsConnecting((previous) => ({
+        ...previous,
+        [userId]: false,
+      }));
+    }
+  };
+
 
   return (
     <main className="min-h-screen bg-slate-50 pb-24">
@@ -426,7 +433,9 @@ const handleConnect = async (userId: number) => {
         </div>
 
       </section>
-            {/* ========================================= */}
+
+
+      {/* ========================================= */}
       {/* MAIN COMMUNITY AREA */}
       {/* ========================================= */}
 
@@ -578,8 +587,10 @@ const handleConnect = async (userId: number) => {
                 const authorInitials =
                   `${post.author_name?.charAt(0) || ""}${post.author_name?.split(" ")[1]?.charAt(0) || ""}`
                     .toUpperCase();
+
                 const authorConnectionStatus =
                   getConnectionStatus(post.author);
+
                 return (
 
                   <article
@@ -596,23 +607,29 @@ const handleConnect = async (userId: number) => {
                       <div className="flex items-start gap-3">
 
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-green-100 text-sm font-black text-green-700">
-  {post.author_photo ? (
-    <img
-      src={post.author_photo}
-      alt={post.author_name || "AgricWise Member"}
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    authorInitials || "A"
-  )}
-</div>
+
+                          {post.author_photo ? (
+                            <img
+                              src={post.author_photo}
+                              alt={
+                                post.author_name ||
+                                "AgricWise Member"
+                              }
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            authorInitials || "A"
+                          )}
+
+                        </div>
 
                         <div className="min-w-0 flex-1">
 
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 
                             <h3 className="font-bold text-gray-900">
-                              {post.author_name || "AgricWise Member"}
+                              {post.author_name ||
+                                "AgricWise Member"}
                             </h3>
 
                             <span className="text-gray-300">
@@ -620,29 +637,38 @@ const handleConnect = async (userId: number) => {
                             </span>
 
                             <span className="text-xs text-gray-500">
-                              {formatPostDate(post.created_at)}
+                              {formatPostDate(
+                                post.created_at
+                              )}
                             </span>
-                            {post.author_connection_count > 0 && (
-  <>
-    <span className="text-gray-300">
-      •
-    </span>
 
-    <span className="text-xs text-gray-500">
-      {post.author_connection_count}{" "}
-      {post.author_connection_count === 1
-        ? "connection"
-        : "connections"}
-    </span>
-  </>
-)}
+                            {post.author_connection_count >
+                              0 && (
+                              <>
+                                <span className="text-gray-300">
+                                  •
+                                </span>
+
+                                <span className="text-xs text-gray-500">
+                                  {
+                                    post.author_connection_count
+                                  }{" "}
+                                  {post.author_connection_count ===
+                                  1
+                                    ? "connection"
+                                    : "connections"}
+                                </span>
+                              </>
+                            )}
 
                           </div>
 
                           <div className="mt-1 flex flex-wrap items-center gap-2">
 
                             <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
-                              {getPostTypeLabel(post.post_type)}
+                              {getPostTypeLabel(
+                                post.post_type
+                              )}
                             </span>
 
                             {post.location && (
@@ -712,30 +738,36 @@ const handleConnect = async (userId: number) => {
 
                       </button>
 
-                     <button
-  type="button"
-  onClick={() => handleConnect(post.author)}
-  disabled={
-    isConnecting[post.author] ||
-    authorConnectionStatus === "connected" ||
-    authorConnectionStatus === "pending"
-  }
-  className={`inline-flex items-center gap-1.5 transition ${
-    authorConnectionStatus
-      ? "text-green-700"
-      : "hover:text-green-700"
-  } disabled:cursor-not-allowed`}
->
-  <Send size={16} />
 
-  {isConnecting[post.author]
-    ? "Sending..."
-    : authorConnectionStatus === "connected"
-      ? "Connected"
-      : authorConnectionStatus === "pending"
-        ? "Pending"
-        : "Connect"}
-</button>
+                      {/* CONNECTION */}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleConnect(post.author)
+                        }
+                        disabled={
+                          isConnecting[post.author] ||
+                          authorConnectionStatus ===
+                            "connected"
+                        }
+                        className={`inline-flex items-center gap-1.5 transition ${
+                          authorConnectionStatus
+                            ? "text-green-700"
+                            : "hover:text-green-700"
+                        } disabled:cursor-not-allowed`}
+                      >
+
+                        <Send size={16} />
+
+                        {isConnecting[post.author]
+                          ? "Connecting..."
+                          : authorConnectionStatus ===
+                              "connected"
+                            ? "Connected"
+                            : "Connect"}
+
+                      </button>
 
                     </div>
 
@@ -768,7 +800,8 @@ const handleConnect = async (userId: number) => {
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-black text-green-700">
                                   {comment.author_name
                                     ?.charAt(0)
-                                    .toUpperCase() || "A"}
+                                    .toUpperCase() ||
+                                    "A"}
                                 </div>
 
                                 <div className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3">
@@ -793,7 +826,8 @@ const handleConnect = async (userId: number) => {
                         ) : (
 
                           <p className="text-sm text-gray-500">
-                            No comments yet. Start the conversation.
+                            No comments yet. Start the
+                            conversation.
                           </p>
 
                         )}
@@ -839,7 +873,9 @@ const handleConnect = async (userId: number) => {
                             }
                             disabled={
                               isSubmittingComment[post.id] ||
-                              !commentText[post.id]?.trim()
+                              !commentText[
+                                post.id
+                              ]?.trim()
                             }
                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
                             aria-label="Send comment"
@@ -897,7 +933,9 @@ const handleConnect = async (userId: number) => {
               )}
 
           </div>
-                    {/* ===================================== */}
+
+
+          {/* ===================================== */}
           {/* RIGHT SIDEBAR */}
           {/* ===================================== */}
 
@@ -919,7 +957,10 @@ const handleConnect = async (userId: number) => {
                   </h3>
                 </div>
 
-                <Search size={19} className="text-gray-400" />
+                <Search
+                  size={19}
+                  className="text-gray-400"
+                />
 
               </div>
 
@@ -1075,7 +1116,10 @@ const handleConnect = async (userId: number) => {
 
             <div className="rounded-2xl bg-green-900 p-5 text-white">
 
-              <Sparkles size={22} className="text-yellow-300" />
+              <Sparkles
+                size={22}
+                className="text-yellow-300"
+              />
 
               <h3 className="mt-3 font-black">
                 One account. Many possibilities.
