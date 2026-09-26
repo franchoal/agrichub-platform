@@ -8,9 +8,11 @@ import {
   MapPin,
   Send,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../services/api";
-
+import { useProfileCompletion } from "../../hooks/useProfileCompletion";
+import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionPrompt";
 
 type PostType =
   | "discussion"
@@ -18,9 +20,17 @@ type PostType =
   | "announcement"
   | "question";
 
-
 const CreatePostPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+  } = useProfileCompletion();
+
+  const [showProfilePrompt, setShowProfilePrompt] =
+    useState(false);
 
   const [content, setContent] = useState("");
   const [postType, setPostType] =
@@ -31,20 +41,33 @@ const CreatePostPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const profileIsComplete = Boolean(
+    profile?.location?.trim() &&
+      profile?.bio?.trim()
+  );
 
   const handleImageChange = (
     event: ChangeEvent<HTMLInputElement>
   ) => {
-    const selectedFile = event.target.files?.[0] || null;
+    const selectedFile =
+      event.target.files?.[0] || null;
 
     setImage(selectedFile);
   };
-
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+
+    if (isLoadingProfile) {
+      return;
+    }
+
+    if (!profileIsComplete) {
+      setShowProfilePrompt(true);
+      return;
+    }
 
     if (!content.trim()) {
       setError("Please write something before posting.");
@@ -61,7 +84,10 @@ const CreatePostPage = () => {
       formData.append("post_type", postType);
 
       if (location.trim()) {
-        formData.append("location", location.trim());
+        formData.append(
+          "location",
+          location.trim()
+        );
       }
 
       if (image) {
@@ -73,9 +99,16 @@ const CreatePostPage = () => {
         formData
       );
 
+      await queryClient.invalidateQueries({
+        queryKey: ["community-posts"],
+      });
+
       navigate("/");
     } catch (err) {
-      console.error("Failed to create community post:", err);
+      console.error(
+        "Failed to create community post:",
+        err
+      );
 
       setError(
         "We couldn't publish your post. Please try again."
@@ -85,6 +118,74 @@ const CreatePostPage = () => {
     }
   };
 
+  /*
+  =========================================
+  PROFILE COMPLETION GATE
+  =========================================
+
+  If a user directly visits /community/create
+  before completing their profile, show the
+  existing profile completion prompt instead
+  of allowing them to create a post.
+  */
+  if (
+    !isLoadingProfile &&
+    !profileIsComplete
+  ) {
+    return (
+      <main className="min-h-screen bg-slate-50">
+        <section className="border-b border-gray-100 bg-white">
+          <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-green-50 hover:text-green-700"
+                aria-label="Back to community"
+              >
+                <ArrowLeft size={19} />
+              </Link>
+
+              <div>
+                <p className="text-xs font-medium text-gray-500">
+                  AgricWise Community
+                </p>
+
+                <h1 className="text-lg font-black text-gray-900">
+                  Create a Post
+                </h1>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ProfileCompletionPrompt
+          onClose={() => navigate("/")}
+        />
+      </main>
+    );
+  }
+
+  /*
+  =========================================
+  LOADING PROFILE
+  =========================================
+  */
+
+  if (isLoadingProfile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="mb-4 text-4xl">
+            🌾
+          </div>
+
+          <p className="font-semibold text-green-700">
+            Checking your profile...
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 pb-24">
@@ -210,7 +311,9 @@ const CreatePostPage = () => {
                   key={type.value}
                   type="button"
                   onClick={() =>
-                    setPostType(type.value as PostType)
+                    setPostType(
+                      type.value as PostType
+                    )
                   }
                   className={`rounded-xl border px-3 py-3 text-xs font-bold transition ${
                     postType === type.value
@@ -236,8 +339,13 @@ const CreatePostPage = () => {
               htmlFor="post-location"
               className="flex items-center gap-2 text-sm font-bold text-gray-900"
             >
-              <MapPin size={16} className="text-green-700" />
+              <MapPin
+                size={16}
+                className="text-green-700"
+              />
+
               Location
+
               <span className="font-normal text-gray-400">
                 Optional
               </span>
@@ -341,9 +449,16 @@ const CreatePostPage = () => {
 
       </section>
 
+      {showProfilePrompt && (
+        <ProfileCompletionPrompt
+          onClose={() =>
+            setShowProfilePrompt(false)
+          }
+        />
+      )}
+
     </main>
   );
 };
-
 
 export default CreatePostPage;

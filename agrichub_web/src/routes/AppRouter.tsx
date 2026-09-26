@@ -38,6 +38,42 @@ import ProfilePage from "../pages/Profile/ProfilePage";
 import ProtectedRoute from "./ProtectedRoute";
 import FarmerRoute from "./FarmerRoute";
 
+import { useAuthStore } from "../store/authStore";
+
+
+/*
+==========================================
+HOME ENTRY
+==========================================
+
+The AgricWise community feed is for
+authenticated members.
+
+A new visitor must first create an
+AgricWise account.
+
+Returning authenticated users proceed
+directly to the community feed.
+*/
+
+const HomeEntry = () => {
+  const isAuthenticated = useAuthStore(
+    (state) => state.isAuthenticated
+  );
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/register"
+        replace
+      />
+    );
+  }
+
+  return <HomePage />;
+};
+
+
 export const router = createBrowserRouter([
   /*
   ==========================================
@@ -50,15 +86,37 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
 
     children: [
+      /*
+      ======================================
+      COMMUNITY HOME / FEED
+      ======================================
+
+      Visitors are redirected to registration.
+
+      Authenticated members see the feed.
+      */
+
       {
         index: true,
-        element: <HomePage />,
+        element: <HomeEntry />,
       },
+
+      /*
+      ======================================
+      PUBLIC INFORMATION
+      ======================================
+      */
 
       {
         path: "about",
         element: <AboutPage />,
       },
+
+      /*
+      ======================================
+      MARKETPLACE
+      ======================================
+      */
 
       {
         path: "products",
@@ -70,11 +128,6 @@ export const router = createBrowserRouter([
         element: <ProductDetailsPage />,
       },
 
-      {
-        path: "community/create",
-        element: <CreatePostPage />,
-      },
-
       /*
       ======================================
       TRANSITIONAL SELLER ENTRY
@@ -84,8 +137,9 @@ export const router = createBrowserRouter([
       temporarily while the seller/business
       workspace is being migrated.
 
-      The broader AgricWise architecture no
-      longer treats Farmer as an account type.
+      The broader AgricWise architecture does
+      not treat Farmer as a permanent account
+      type.
       */
 
       {
@@ -94,6 +148,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
 
   /*
   ==========================================
@@ -114,6 +169,7 @@ export const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
+
 
   /*
   ==========================================
@@ -167,6 +223,7 @@ export const router = createBrowserRouter([
     ),
   },
 
+
   /*
   ==========================================
   AUTHENTICATED AGRICWISE USERS
@@ -188,6 +245,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
 
     children: [
+
       /*
       ======================================
       UNIVERSAL PERSONAL PROFILE
@@ -203,6 +261,24 @@ export const router = createBrowserRouter([
         path: "/profile",
         element: <ProfilePage />,
       },
+
+
+      /*
+      ======================================
+      COMMUNITY PARTICIPATION
+      ======================================
+
+      Creating a post requires authentication.
+
+      Profile completion will be checked by
+      the community/profile participation gate.
+      */
+
+      {
+        path: "/community/create",
+        element: <CreatePostPage />,
+      },
+
 
       /*
       ======================================
@@ -235,6 +311,7 @@ export const router = createBrowserRouter([
         element: <NotificationsPage />,
       },
 
+
       /*
       ======================================
       TRANSITIONAL FARMER/SELLER WORKSPACE
@@ -253,6 +330,7 @@ export const router = createBrowserRouter([
         element: <FarmerRoute />,
 
         children: [
+
           {
             path: "/farmer/dashboard",
             element: <FarmerDashboardPage />,
@@ -282,10 +360,13 @@ export const router = createBrowserRouter([
             path: "/farmer/products/:id/edit",
             element: <EditProductPage />,
           },
+
         ],
       },
+
     ],
   },
+
 
   /*
   ==========================================

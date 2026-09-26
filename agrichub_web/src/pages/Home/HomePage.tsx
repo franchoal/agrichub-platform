@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+
+import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionPrompt";
+import { useProfileCompletion } from "../../hooks/useProfileCompletion";
 
 import {
   ArrowRight,
@@ -42,9 +45,21 @@ import {
   type CommunityComment,
 } from "../../services/communityService";
 
-
 const HomePage = () => {
   const queryClient = useQueryClient();
+
+  const [showProfilePrompt, setShowProfilePrompt] =
+    useState(false);
+
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+  } = useProfileCompletion();
+
+  const profileIsComplete = Boolean(
+    profile?.location?.trim() &&
+      profile?.bio?.trim()
+  );
 
   const [openComments, setOpenComments] =
     useState<number | null>(null);
@@ -79,7 +94,6 @@ const HomePage = () => {
     data: connections = [],
   } = useConnections();
 
-
   const formatPostDate = (date: string) => {
     return new Intl.DateTimeFormat("en-NG", {
       day: "numeric",
@@ -87,7 +101,6 @@ const HomePage = () => {
       year: "numeric",
     }).format(new Date(date));
   };
-
 
   const getPostTypeLabel = (postType: string) => {
     switch (postType) {
@@ -105,8 +118,34 @@ const HomePage = () => {
     }
   };
 
+  /*
+  ==========================================
+  PROFILE COMPLETION CHECK
+  ==========================================
+  */
 
-  const handleToggleComments = async (postId: number) => {
+  const requireCompleteProfile = () => {
+    // Do not interrupt the user while the profile
+    // information is still being loaded.
+    if (isLoadingProfile) {
+      return false;
+    }
+
+    if (!profileIsComplete) {
+      setShowProfilePrompt(true);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleToggleComments = async (
+    postId: number
+  ) => {
+    if (!requireCompleteProfile()) {
+      return;
+    }
+
     if (openComments === postId) {
       setOpenComments(null);
       return;
@@ -124,7 +163,8 @@ const HomePage = () => {
     }));
 
     try {
-      const response = await getCommunityComments(postId);
+      const response =
+        await getCommunityComments(postId);
 
       setComments((previous) => ({
         ...previous,
@@ -143,9 +183,49 @@ const HomePage = () => {
     }
   };
 
+  useEffect(() => {
+    if (openComments === null) {
+      return;
+    }
 
-  const handleSubmitComment = async (postId: number) => {
-    const content = commentText[postId]?.trim();
+    const postId = openComments;
+
+    const refreshComments = async () => {
+      try {
+        const response =
+          await getCommunityComments(postId);
+
+        setComments((previous) => ({
+          ...previous,
+          [postId]: response.results,
+        }));
+      } catch (error) {
+        console.error(
+          "Failed to refresh community comments:",
+          error
+        );
+      }
+    };
+
+    const interval = window.setInterval(
+      refreshComments,
+      10000
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [openComments]);
+
+  const handleSubmitComment = async (
+    postId: number
+  ) => {
+    if (!requireCompleteProfile()) {
+      return;
+    }
+
+    const content =
+      commentText[postId]?.trim();
 
     if (!content) {
       return;
@@ -157,10 +237,11 @@ const HomePage = () => {
     }));
 
     try {
-      const newComment = await createCommunityComment(
-        postId,
-        content
-      );
+      const newComment =
+        await createCommunityComment(
+          postId,
+          content
+        );
 
       setComments((previous) => ({
         ...previous,
@@ -187,8 +268,9 @@ const HomePage = () => {
     }
   };
 
-
-  const getConnectionStatus = (userId: number) => {
+  const getConnectionStatus = (
+    userId: number
+  ) => {
     if (connectionStatus[userId]) {
       return connectionStatus[userId];
     }
@@ -210,9 +292,15 @@ const HomePage = () => {
     return null;
   };
 
+  const handleConnect = async (
+    userId: number
+  ) => {
+    if (!requireCompleteProfile()) {
+      return;
+    }
 
-  const handleConnect = async (userId: number) => {
-    const status = getConnectionStatus(userId);
+    const status =
+      getConnectionStatus(userId);
 
     if (status === "connected") {
       return;
@@ -247,6 +335,19 @@ const HomePage = () => {
     }
   };
 
+  /*
+  ==========================================
+  CREATE POST NAVIGATION
+  ==========================================
+  */
+
+  const handleCreatePostClick = (
+    event: React.MouseEvent<HTMLAnchorElement>
+  ) => {
+    if (!requireCompleteProfile()) {
+      event.preventDefault();
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 pb-24">
@@ -305,7 +406,6 @@ const HomePage = () => {
 
       </section>
 
-
       {/* ========================================= */}
       {/* COMMUNITY HERO */}
       {/* ========================================= */}
@@ -348,7 +448,6 @@ const HomePage = () => {
 
       </section>
 
-
       {/* ========================================= */}
       {/* CREATE / PARTICIPATE */}
       {/* ========================================= */}
@@ -365,6 +464,7 @@ const HomePage = () => {
 
             <Link
               to="/community/create"
+              onClick={handleCreatePostClick}
               className="flex-1 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500 transition hover:bg-green-50"
             >
               What is happening in agriculture?
@@ -372,6 +472,7 @@ const HomePage = () => {
 
             <Link
               to="/community/create"
+              onClick={handleCreatePostClick}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white transition hover:bg-green-800"
               aria-label="Create post"
             >
@@ -384,9 +485,11 @@ const HomePage = () => {
 
             <Link
               to="/community/create"
+              onClick={handleCreatePostClick}
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <ImageIcon size={16} />
+
               <span className="hidden sm:inline">
                 Post
               </span>
@@ -397,6 +500,7 @@ const HomePage = () => {
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <ShoppingBasket size={16} />
+
               <span className="hidden sm:inline">
                 Sell
               </span>
@@ -407,6 +511,7 @@ const HomePage = () => {
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <Wrench size={16} />
+
               <span className="hidden sm:inline">
                 Service
               </span>
@@ -422,6 +527,7 @@ const HomePage = () => {
 
             <Link
               to="/community/create"
+              onClick={handleCreatePostClick}
               className="hidden items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700 sm:flex"
             >
               <MessageCircle size={16} />
@@ -433,7 +539,6 @@ const HomePage = () => {
         </div>
 
       </section>
-
 
       {/* ========================================= */}
       {/* MAIN COMMUNITY AREA */}
@@ -470,7 +575,6 @@ const HomePage = () => {
               </button>
 
             </div>
-
 
             {/* =================================== */}
             {/* LOADING */}
@@ -513,7 +617,6 @@ const HomePage = () => {
 
             )}
 
-
             {/* =================================== */}
             {/* ERROR */}
             {/* =================================== */}
@@ -538,7 +641,6 @@ const HomePage = () => {
               </div>
 
             )}
-
 
             {/* =================================== */}
             {/* EMPTY STATE */}
@@ -566,6 +668,7 @@ const HomePage = () => {
 
                   <Link
                     to="/community/create"
+                    onClick={handleCreatePostClick}
                     className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-800"
                   >
                     Create a Post
@@ -574,7 +677,6 @@ const HomePage = () => {
 
                 </div>
               )}
-
 
             {/* =================================== */}
             {/* REAL COMMUNITY POSTS */}
@@ -589,7 +691,9 @@ const HomePage = () => {
                     .toUpperCase();
 
                 const authorConnectionStatus =
-                  getConnectionStatus(post.author);
+                  getConnectionStatus(
+                    post.author
+                  );
 
                 return (
 
@@ -683,7 +787,6 @@ const HomePage = () => {
 
                       </div>
 
-
                       {/* CONTENT */}
 
                       <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-gray-700">
@@ -691,7 +794,6 @@ const HomePage = () => {
                       </p>
 
                     </div>
-
 
                     {/* IMAGE */}
 
@@ -709,7 +811,6 @@ const HomePage = () => {
 
                     )}
 
-
                     {/* ACTIONS */}
 
                     <div className="flex items-center gap-6 border-t border-gray-100 px-5 py-4 text-xs font-semibold text-gray-500 sm:px-6">
@@ -717,7 +818,9 @@ const HomePage = () => {
                       <button
                         type="button"
                         onClick={() =>
-                          handleToggleComments(post.id)
+                          handleToggleComments(
+                            post.id
+                          )
                         }
                         className={`inline-flex items-center gap-1.5 transition ${
                           openComments === post.id
@@ -738,16 +841,19 @@ const HomePage = () => {
 
                       </button>
 
-
                       {/* CONNECTION */}
 
                       <button
                         type="button"
                         onClick={() =>
-                          handleConnect(post.author)
+                          handleConnect(
+                            post.author
+                          )
                         }
                         disabled={
-                          isConnecting[post.author] ||
+                          isConnecting[
+                            post.author
+                          ] ||
                           authorConnectionStatus ===
                             "connected"
                         }
@@ -760,7 +866,9 @@ const HomePage = () => {
 
                         <Send size={16} />
 
-                        {isConnecting[post.author]
+                        {isConnecting[
+                          post.author
+                        ]
                           ? "Connecting..."
                           : authorConnectionStatus ===
                               "connected"
@@ -771,7 +879,6 @@ const HomePage = () => {
 
                     </div>
 
-
                     {/* COMMENTS */}
 
                     {openComments === post.id && (
@@ -780,17 +887,23 @@ const HomePage = () => {
 
                         {/* COMMENT LIST */}
 
-                        {isLoadingComments[post.id] ? (
+                        {isLoadingComments[
+                          post.id
+                        ] ? (
 
                           <p className="text-sm text-gray-500">
                             Loading comments...
                           </p>
 
-                        ) : comments[post.id]?.length > 0 ? (
+                        ) : comments[
+                            post.id
+                          ]?.length > 0 ? (
 
                           <div className="space-y-4">
 
-                            {comments[post.id].map((comment) => (
+                            {comments[
+                              post.id
+                            ].map((comment) => (
 
                               <div
                                 key={comment.id}
@@ -832,7 +945,6 @@ const HomePage = () => {
 
                         )}
 
-
                         {/* COMMENT INPUT */}
 
                         <div className="mt-4 flex gap-2">
@@ -840,18 +952,25 @@ const HomePage = () => {
                           <input
                             type="text"
                             value={
-                              commentText[post.id] || ""
+                              commentText[
+                                post.id
+                              ] || ""
                             }
                             onChange={(event) =>
-                              setCommentText((previous) => ({
-                                ...previous,
-                                [post.id]:
-                                  event.target.value,
-                              }))
+                              setCommentText(
+                                (previous) => ({
+                                  ...previous,
+                                  [post.id]:
+                                    event.target.value,
+                                })
+                              )
                             }
                             onKeyDown={(event) => {
 
-                              if (event.key === "Enter") {
+                              if (
+                                event.key ===
+                                "Enter"
+                              ) {
                                 event.preventDefault();
 
                                 handleSubmitComment(
@@ -872,7 +991,9 @@ const HomePage = () => {
                               )
                             }
                             disabled={
-                              isSubmittingComment[post.id] ||
+                              isSubmittingComment[
+                                post.id
+                              ] ||
                               !commentText[
                                 post.id
                               ]?.trim()
@@ -895,7 +1016,6 @@ const HomePage = () => {
 
                 );
               })}
-
 
             {/* =================================== */}
             {/* START CONVERSATION */}
@@ -922,6 +1042,7 @@ const HomePage = () => {
 
                   <Link
                     to="/community/create"
+                    onClick={handleCreatePostClick}
                     className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-800"
                   >
                     Create a Post
@@ -929,11 +1050,9 @@ const HomePage = () => {
                   </Link>
 
                 </div>
-
               )}
 
           </div>
-
 
           {/* ===================================== */}
           {/* RIGHT SIDEBAR */}
@@ -1034,7 +1153,6 @@ const HomePage = () => {
 
             </div>
 
-
             {/* MARKETPLACE CATEGORIES */}
 
             <div className="rounded-2xl bg-white p-5 shadow-sm">
@@ -1111,7 +1229,6 @@ const HomePage = () => {
 
             </div>
 
-
             {/* PARTICIPATE */}
 
             <div className="rounded-2xl bg-green-900 p-5 text-white">
@@ -1146,9 +1263,20 @@ const HomePage = () => {
 
       </section>
 
+      {/* ========================================= */}
+      {/* PROFILE COMPLETION PROMPT */}
+      {/* ========================================= */}
+
+      {showProfilePrompt && (
+        <ProfileCompletionPrompt
+          onClose={() =>
+            setShowProfilePrompt(false)
+          }
+        />
+      )}
+
     </main>
   );
 };
-
 
 export default HomePage;
