@@ -18,6 +18,18 @@ export const useCommunityPosts = () => {
 
       return response.results;
     },
+
+    // Refresh new posts automatically every 10 seconds
+    refetchInterval: 10000,
+
+    // Refresh when the user returns to the browser/tab
+    refetchOnWindowFocus: true,
+
+    // Refresh after the network reconnects
+    refetchOnReconnect: true,
+
+    // Don't keep polling while the tab is hidden
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -31,6 +43,13 @@ export const useConnections = () => {
 
       return response.results;
     },
+
+    // Keep connection status reasonably fresh
+    refetchInterval: 15000,
+
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -44,5 +63,12 @@ export const useConnectionRequests = () => {
 
       return response.results;
     },
+
+    // Keep requests fresh as well
+    refetchInterval: 15000,
+
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 };
