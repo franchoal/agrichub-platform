@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import logoIcon from "../assets/logo/logo-icon.png";
+
 import { getProfile } from "../services/profileService";
 import { useAuthStore } from "../store/authStore";
 
@@ -69,16 +71,12 @@ const AuthProvider = ({
     isCheckingSession
   ) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-green-50">
-        <div className="text-center">
-          <div className="mb-4 text-4xl">
-            🌾
-          </div>
-
-          <p className="font-semibold text-green-700">
-            Loading AgricWise...
-          </p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <img
+          src={logoIcon}
+          alt="AgricWise"
+          className="h-28 w-28 object-contain"
+        />
       </div>
     );
   }

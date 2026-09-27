@@ -46,6 +46,19 @@ class CartItemSerializer(serializers.ModelSerializer):
         ]
 
 
+class CartItemCreateSerializer(serializers.Serializer):
+    """
+    Serializer for adding a product to the cart.
+    """
+
+    product = serializers.IntegerField()
+
+    quantity = serializers.IntegerField(
+        min_value=1,
+        default=1,
+    )
+
+
 class CartItemUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating cart item quantity.

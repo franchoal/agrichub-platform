@@ -387,7 +387,7 @@ const ProductsPage = () => {
             Join thousands of Nigerian farmers selling directly to buyers
             across Nigeria. Upload products, receive orders, grow your
             customer base and increase your farm income with
-            AgricHub Marketplace.
+            AgricWise Marketplace.
 
           </p>
 

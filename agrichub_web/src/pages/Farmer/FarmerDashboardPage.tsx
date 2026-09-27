@@ -725,7 +725,7 @@ const FarmerDashboardPage = () => {
         </h2>
 
         <p className="mx-auto mt-4 max-w-2xl text-gray-600">
-          AgricHub is building digital tools that help Nigerian
+          AgricWise is building digital tools that help Nigerian
           farmers sell, manage, and grow with confidence.
         </p>
 

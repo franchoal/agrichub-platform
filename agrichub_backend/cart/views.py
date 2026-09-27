@@ -5,21 +5,15 @@ from products.models import Product
 
 from .models import Cart, CartItem
 from .serializers import (
+    CartItemCreateSerializer,
     CartItemUpdateSerializer,
     CartSerializer,
 )
 
 
 class CartDetailView(generics.RetrieveAPIView):
-    """
-    View current buyer cart.
-    """
-
     serializer_class = CartSerializer
-
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         cart, created = Cart.objects.get_or_create(
@@ -30,30 +24,27 @@ class CartDetailView(generics.RetrieveAPIView):
 
 
 class CartItemCreateView(generics.CreateAPIView):
-    """
-    Add product to buyer cart.
-    """
-
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
+    serializer_class = CartItemCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data
+        )
 
-        product_id = request.data.get("product")
-        quantity = request.data.get("quantity", 1)
+        serializer.is_valid(raise_exception=True)
+
+        product_id = serializer.validated_data["product"]
+        quantity = serializer.validated_data["quantity"]
 
         try:
             product = Product.objects.get(
                 id=product_id,
                 is_available=True,
             )
-
         except Product.DoesNotExist:
             return Response(
-                {
-                    "detail": "Product not found."
-                },
+                {"detail": "Product not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -69,47 +60,30 @@ class CartItemCreateView(generics.CreateAPIView):
         if created:
             cart_item.quantity = quantity
         else:
-            cart_item.quantity += int(quantity)
+            cart_item.quantity += quantity
 
         cart_item.save()
 
         return Response(
-            {
-                "detail": "Product added to cart."
-            },
+            {"detail": "Product added to cart."},
             status=status.HTTP_201_CREATED,
         )
 
 
 class CartItemUpdateView(generics.UpdateAPIView):
-    """
-    Update cart item quantity.
-    """
-
     serializer_class = CartItemUpdateSerializer
-
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-
         return CartItem.objects.filter(
             cart__buyer=self.request.user
         )
 
 
 class CartItemDeleteView(generics.DestroyAPIView):
-    """
-    Remove item from cart.
-    """
-
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-
         return CartItem.objects.filter(
             cart__buyer=self.request.user
         )

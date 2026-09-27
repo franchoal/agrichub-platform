@@ -6,6 +6,7 @@ from cart.models import Cart
 from delivery.models import Delivery
 from notifications.models import Notification
 from payments.models import Payment
+from products.models import Product
 
 from .models import Order, OrderItem
 
@@ -19,11 +20,17 @@ def checkout(buyer, delivery_address, payment_method):
 
     Cart
         ↓
+    Lock cart
+        ↓
+    Lock products and validate stock
+        ↓
     Group items by farmer
         ↓
     Create Order per farmer
         ↓
     Create Order Items
+        ↓
+    Deduct product stock
         ↓
     Create Payment per order
         ↓
@@ -34,25 +41,61 @@ def checkout(buyer, delivery_address, payment_method):
     Clear Cart
     """
 
-    cart = Cart.objects.prefetch_related(
-        "items__product__farmer"
-    ).get(
-        buyer=buyer
+    cart = (
+        Cart.objects
+        .select_for_update()
+        .get(buyer=buyer)
     )
 
-    cart_items = cart.items.all()
+    cart_items = list(
+        cart.items.select_related(
+            "product"
+        ).all()
+    )
 
-    if not cart_items.exists():
+    if not cart_items:
         raise ValueError(
             "Your cart is empty."
         )
 
-    # Group cart items by farmer profile
+    # Lock every product involved in this checkout.
+    #
+    # This prevents two concurrent checkouts from
+    # consuming the same remaining stock.
+    locked_items = []
+
+    for cart_item in cart_items:
+        product = (
+            Product.objects
+            .select_for_update()
+            .select_related("farmer")
+            .get(pk=cart_item.product_id)
+        )
+
+        if not product.is_available:
+            raise ValueError(
+                f"'{product.name}' is no longer available."
+            )
+
+        if cart_item.quantity > product.quantity:
+            raise ValueError(
+                f"Insufficient stock for '{product.name}'. "
+                f"Available quantity: {product.quantity}."
+            )
+
+        locked_items.append(
+            {
+                "cart_item": cart_item,
+                "product": product,
+            }
+        )
+
+    # Group validated items by farmer profile.
     farmer_orders = {}
 
-    for item in cart_items:
-
-        farmer = item.product.farmer
+    for item in locked_items:
+        product = item["product"]
+        farmer = product.farmer
 
         if farmer not in farmer_orders:
             farmer_orders[farmer] = []
@@ -72,17 +115,33 @@ def checkout(buyer, delivery_address, payment_method):
         total_amount = Decimal("0.00")
 
         for item in items:
+            cart_item = item["cart_item"]
+            product = item["product"]
 
             OrderItem.objects.create(
                 order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price,
+                product=product,
+                quantity=cart_item.quantity,
+                price=product.price,
             )
 
             total_amount += (
-                item.product.price *
-                item.quantity
+                product.price *
+                cart_item.quantity
+            )
+
+            # Deduct stock while the product row is locked.
+            product.quantity -= cart_item.quantity
+
+            if product.quantity == 0:
+                product.is_available = False
+
+            product.save(
+                update_fields=[
+                    "quantity",
+                    "is_available",
+                    "updated_at",
+                ]
             )
 
         payment = Payment.objects.create(
@@ -98,7 +157,7 @@ def checkout(buyer, delivery_address, payment_method):
             status=Delivery.PENDING,
         )
 
-        # Notify buyer
+        # Notify buyer.
         Notification.objects.create(
             user=buyer,
             title="Order Created",
@@ -110,7 +169,7 @@ def checkout(buyer, delivery_address, payment_method):
             notification_type=Notification.NEW_ORDER,
         )
 
-        # Notify farmer
+        # Notify farmer.
         Notification.objects.create(
             user=farmer.user,
             title="New Order Received",
@@ -129,7 +188,8 @@ def checkout(buyer, delivery_address, payment_method):
             }
         )
 
-    # Clear cart after successful checkout
+    # Clear cart only after all orders, payments,
+    # deliveries and stock updates have succeeded.
     cart.items.all().delete()
 
     return created_orders

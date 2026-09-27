@@ -404,7 +404,7 @@ if (isLoading) {
               Respond promptly to customer orders, prepare products carefully,
               and keep buyers informed throughout the fulfillment process.
               Consistent service leads to positive reviews, repeat customers,
-              and increased visibility across the AgricHub Marketplace.
+              and increased visibility across the AgricWise Marketplace.
 
             </p>
 

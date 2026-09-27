@@ -37,6 +37,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             "order_id",
             "buyer",
             "status",
+            "amount",
             "created_at",
             "updated_at",
         ]

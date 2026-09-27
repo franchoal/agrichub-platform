@@ -89,7 +89,7 @@ const OrdersPage = () => {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-green-100">
 
               Track your purchases, monitor delivery progress and
-              review your complete order history from the AgricHub
+              review your complete order history from the AgricWise
               Marketplace.
 
             </p>

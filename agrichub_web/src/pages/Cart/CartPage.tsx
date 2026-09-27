@@ -477,7 +477,7 @@ const CartPage = () => {
 
                 <p className="mt-6 max-w-3xl text-lg leading-8 text-green-100">
 
-                  AgricHub connects buyers directly with verified farmers,
+                  AgricWise connects buyers directly with verified farmers,
                   creating a transparent agricultural marketplace built
                   around quality, trust and fair pricing.
 
@@ -495,7 +495,7 @@ const CartPage = () => {
 
                 <h3 className="text-2xl font-bold">
 
-                  Why AgricHub?
+                  Why AgricWise?
 
                 </h3>
 

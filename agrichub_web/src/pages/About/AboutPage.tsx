@@ -33,7 +33,7 @@ const AboutPage = () => {
 
           <p className="mt-8 max-w-3xl text-xl leading-9 text-green-100">
 
-            AgricHub Africa is creating one connected ecosystem where
+            AgricWise Africa is creating one connected ecosystem where
             farmers, buyers, transporters, suppliers, financial institutions,
             extension officers and governments can interact seamlessly.
 
@@ -57,7 +57,7 @@ const AboutPage = () => {
               to="/farmer"
               className="rounded-2xl border border-white px-8 py-4 font-bold transition hover:bg-white hover:text-green-800"
             >
-              Join AgricHub
+              Join AgricWise
             </Link>
 
           </div>
@@ -82,12 +82,12 @@ const AboutPage = () => {
 
           <p className="mt-8 text-lg leading-9 text-gray-600">
 
-            AgricHub Africa is more than an online marketplace.
+            AgricWise Africa is more than an online marketplace.
 
             We are building Africa's digital agricultural ecosystem.
 
             While many platforms stop at connecting buyers and sellers,
-            AgricHub connects every stakeholder within the agricultural value chain.
+            AgricWise connects every stakeholder within the agricultural value chain.
 
             Farmers gain access to verified markets.
 
@@ -373,7 +373,7 @@ const AboutPage = () => {
             Whether you're a farmer, buyer,
             logistics provider, supplier,
             investor or government agency,
-            AgricHub Africa provides the platform
+            AgricWise Africa provides the platform
             to build Africa's agricultural future.
 
           </p>

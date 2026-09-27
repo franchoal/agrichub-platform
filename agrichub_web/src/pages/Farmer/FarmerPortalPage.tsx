@@ -9,7 +9,7 @@ const FarmerPortalPage = () => {
 
           <div>
             <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
-              AgricHub Marketplace
+              AgricWise Marketplace
             </span>
 
             <h1 className="mt-6 text-5xl font-bold leading-tight text-gray-900">
@@ -94,7 +94,7 @@ const FarmerPortalPage = () => {
 
             <p className="mt-4 text-center text-gray-600">
               Access your farmer account or create one to begin selling on
-              AgricHub Marketplace.
+              AgricWise Marketplace.
             </p>
 
             <div className="mt-10 space-y-4">
@@ -128,7 +128,7 @@ const FarmerPortalPage = () => {
 
             <div className="mt-8 rounded-xl bg-green-50 p-5">
               <h3 className="font-semibold text-green-800">
-                Why Join AgricHub?
+                Why Join AgricWise?
               </h3>
 
               <ul className="mt-3 space-y-2 text-sm text-gray-700">

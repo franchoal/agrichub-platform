@@ -15,7 +15,7 @@ const FarmerProfilePage = () => {
         </h1>
 
         <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-600">
-          Before you can start selling on AgricHub Marketplace,
+          Before you can start selling on AgricWise Marketplace,
           tell buyers about your farm. A complete farm profile
           builds trust, improves visibility and unlocks your
           farmer dashboard.

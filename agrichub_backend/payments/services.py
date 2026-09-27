@@ -1,8 +1,5 @@
-import uuid
-
 from django.db import transaction
 
-from delivery.models import Delivery
 from notifications.models import Notification
 from orders.models import Order
 
@@ -13,7 +10,7 @@ from .models import Payment
 def confirm_payment(payment):
     """
     Confirm a pending payment and update
-    marketplace workflow.
+    the marketplace order workflow.
     """
 
     if payment.status != Payment.PENDING:
@@ -30,7 +27,6 @@ def confirm_payment(payment):
         ]
     )
 
-
     order = payment.order
 
     order.status = Order.ACCEPTED
@@ -42,34 +38,6 @@ def confirm_payment(payment):
         ]
     )
 
-
-    delivery, created = Delivery.objects.get_or_create(
-        order=order,
-        defaults={
-            "address": "",
-            "status": Delivery.PENDING,
-        },
-    )
-
-
-    if not delivery.tracking_number:
-
-        delivery.tracking_number = (
-            f"OJA-{uuid.uuid4().hex[:10].upper()}"
-        )
-
-
-    delivery.status = Delivery.ASSIGNED
-
-    delivery.save(
-        update_fields=[
-            "tracking_number",
-            "status",
-            "updated_at",
-        ]
-    )
-
-
     Notification.objects.create(
         user=order.buyer,
         title="Payment Successful",
@@ -79,6 +47,5 @@ def confirm_payment(payment):
         ),
         notification_type=Notification.PAYMENT_UPDATE,
     )
-
 
     return payment

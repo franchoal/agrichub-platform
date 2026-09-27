@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from notifications.models import Notification
 from payments.models import Payment
 
 from .models import Order, OrderItem
@@ -8,7 +7,7 @@ from .models import Order, OrderItem
 
 class OrderItemSerializer(serializers.ModelSerializer):
     """
-    Serializer for products inside an order.
+    Serializer for items belonging to an order.
     """
 
     product_name = serializers.CharField(
@@ -43,7 +42,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     """
-    Serializer for buyer and farmer order operations.
+    Serializer for order information.
     """
 
     items = OrderItemSerializer(
@@ -89,7 +88,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def validate_status(self, value):
         """
-        Validate order status progression.
+        Validate the allowed order status progression.
         """
 
         order = self.instance
@@ -140,37 +139,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
         return value
 
-
-    def update(self, instance, validated_data):
-        """
-        Update order and notify buyer when status changes.
-        """
-
-        old_status = instance.status
-
-        order = super().update(
-            instance,
-            validated_data,
-        )
-
-        new_status = order.status
-
-        if old_status != new_status:
-
-            Notification.objects.create(
-                user=order.buyer,
-                title="Order Status Updated",
-                message=(
-                    f"Your order #{order.id} "
-                    f"status has changed to "
-                    f"{new_status.replace('_', ' ').title()}."
-                ),
-                notification_type=Notification.NEW_ORDER,
-            )
-
-        return order
-
-
     def get_total(self, obj):
         """
         Calculate the total value of the order.
@@ -184,7 +152,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class CheckoutSerializer(serializers.Serializer):
     """
-    Serializer for buyer checkout.
+    Serializer for checkout input.
     """
 
     delivery_address = serializers.CharField(

@@ -181,7 +181,7 @@ const NotificationsPage = () => {
 
         Receive real-time updates about orders, payments,
         deliveries, product approvals and important account
-        activities from across AgricHub Marketplace.
+        activities from across AgricWise Marketplace.
 
       </p>
 

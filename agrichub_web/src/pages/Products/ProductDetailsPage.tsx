@@ -505,7 +505,7 @@ const ProductDetailsPage = () => {
     <div className="rounded-2xl bg-white p-5 text-sm leading-7 text-gray-600 shadow-sm">
 
       <p>
-        ✔ Secure ordering through the AgricHub platform.
+        ✔ Secure ordering through the AgricWise platform.
       </p>
 
       <p className="mt-2">
