@@ -15,6 +15,32 @@ class PostSerializer(serializers.ModelSerializer):
     )
     author_connection_count = serializers.SerializerMethodField()
 
+    product_id = serializers.IntegerField(
+        source="product.id",
+        read_only=True,
+        allow_null=True,
+    )
+
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+        allow_null=True,
+    )
+
+    product_price = serializers.DecimalField(
+        source="product.price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
+
+    product_image = serializers.ImageField(
+        source="product.image",
+        read_only=True,
+        allow_null=True,
+    )
+
     class Meta:
         model = Post
         fields = [
@@ -26,6 +52,10 @@ class PostSerializer(serializers.ModelSerializer):
             "author_connection_count",
             "content",
             "post_type",
+            "product_id",
+            "product_name",
+            "product_price",
+            "product_image",
             "location",
             "image",
             "created_at",
@@ -33,12 +63,19 @@ class PostSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "author",
+            "product_id",
+            "product_name",
+            "product_price",
+            "product_image",
             "created_at",
             "updated_at",
         ]
 
     def get_author_name(self, obj):
-        return f"{obj.author.first_name} {obj.author.last_name}".strip()
+        return (
+            f"{obj.author.first_name} "
+            f"{obj.author.last_name}"
+        ).strip()
 
     def get_author_connection_count(self, obj):
         return (
@@ -78,7 +115,10 @@ class CommentSerializer(serializers.ModelSerializer):
         ]
 
     def get_author_name(self, obj):
-        return f"{obj.author.first_name} {obj.author.last_name}".strip()
+        return (
+            f"{obj.author.first_name} "
+            f"{obj.author.last_name}"
+        ).strip()
 
     def validate_content(self, value):
         value = value.strip()

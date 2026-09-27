@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -7,6 +7,7 @@ import {
   Leaf,
   MapPin,
   Send,
+  ShoppingBag,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -18,7 +19,15 @@ type PostType =
   | "discussion"
   | "knowledge"
   | "announcement"
-  | "question";
+  | "question"
+  | "for_sale"
+  | "service";
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 const CreatePostPage = () => {
   const navigate = useNavigate();
@@ -38,13 +47,74 @@ const CreatePostPage = () => {
   const [location, setLocation] = useState("");
   const [image, setImage] = useState<File | null>(null);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  /* =========================================
+     FOR SALE PRODUCT FIELDS
+  ========================================= */
+
+  const [categories, setCategories] =
+    useState<Category[]>([]);
+  const [category, setCategory] = useState("");
+  const [productName, setProductName] =
+    useState("");
+  const [productDescription, setProductDescription] =
+    useState("");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] =
+    useState("1");
+  const [unit, setUnit] = useState("kg");
+
+  const [isLoadingCategories, setIsLoadingCategories] =
+    useState(false);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
   const [error, setError] = useState("");
 
   const profileIsComplete = Boolean(
     profile?.location?.trim() &&
       profile?.bio?.trim()
   );
+
+  /* =========================================
+     LOAD PRODUCT CATEGORIES
+  ========================================= */
+
+  useEffect(() => {
+    if (postType !== "for_sale") {
+      return;
+    }
+
+    const loadCategories = async () => {
+      setIsLoadingCategories(true);
+
+      try {
+        const response =
+          await api.get<Category[]>(
+            "/products/categories/"
+          );
+
+        setCategories(response.data);
+      } catch (err) {
+        console.error(
+          "Failed to load product categories:",
+          err
+        );
+
+        setError(
+          "We couldn't load product categories. Please try again."
+        );
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, [postType]);
+
+  /* =========================================
+     IMAGE
+  ========================================= */
 
   const handleImageChange = (
     event: ChangeEvent<HTMLInputElement>
@@ -54,6 +124,21 @@ const CreatePostPage = () => {
 
     setImage(selectedFile);
   };
+
+  /* =========================================
+     POST TYPE
+  ========================================= */
+
+  const handlePostTypeChange = (
+    type: PostType
+  ) => {
+    setPostType(type);
+    setError("");
+  };
+
+  /* =========================================
+     SUBMIT
+  ========================================= */
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
@@ -70,8 +155,57 @@ const CreatePostPage = () => {
     }
 
     if (!content.trim()) {
-      setError("Please write something before posting.");
+      setError(
+        "Please write something before posting."
+      );
       return;
+    }
+
+    /* =========================================
+       FOR SALE VALIDATION
+    ========================================= */
+
+    if (postType === "for_sale") {
+      if (!category) {
+        setError(
+          "Please select a product category."
+        );
+        return;
+      }
+
+      if (!productName.trim()) {
+        setError(
+          "Please enter the product name."
+        );
+        return;
+      }
+
+      if (!productDescription.trim()) {
+        setError(
+          "Please enter a product description."
+        );
+        return;
+      }
+
+      if (
+        !price ||
+        Number(price) <= 0
+      ) {
+        setError(
+          "Please enter a valid product price."
+        );
+        return;
+      }
+
+      if (
+        !quantity ||
+        Number(quantity) < 1
+      ) {
+        setError(
+          "Quantity must be at least 1."
+        );
+        return;
+      }
     }
 
     setError("");
@@ -80,8 +214,15 @@ const CreatePostPage = () => {
     try {
       const formData = new FormData();
 
-      formData.append("content", content.trim());
-      formData.append("post_type", postType);
+      formData.append(
+        "content",
+        content.trim()
+      );
+
+      formData.append(
+        "post_type",
+        postType
+      );
 
       if (location.trim()) {
         formData.append(
@@ -90,44 +231,122 @@ const CreatePostPage = () => {
         );
       }
 
-      if (image) {
-        formData.append("image", image);
-      }
+      /* =========================================
+         FOR SALE
+      ========================================= */
 
-      await api.post(
-        "/community/posts/",
-        formData
-      );
+      if (postType === "for_sale") {
+        formData.append(
+          "category",
+          category
+        );
+
+        formData.append(
+          "name",
+          productName.trim()
+        );
+
+        formData.append(
+          "description",
+          productDescription.trim()
+        );
+
+        formData.append(
+          "price",
+          price
+        );
+
+        formData.append(
+          "quantity",
+          quantity
+        );
+
+        formData.append(
+          "unit",
+          unit
+        );
+
+        if (image) {
+          formData.append(
+            "image",
+            image
+          );
+        }
+
+        await api.post(
+          "/community/posts/for-sale/",
+          formData
+        );
+      } else {
+        /* =========================================
+           NORMAL COMMUNITY POST
+        ========================================= */
+
+        if (image) {
+          formData.append(
+            "image",
+            image
+          );
+        }
+
+        await api.post(
+          "/community/posts/",
+          formData
+        );
+      }
 
       await queryClient.invalidateQueries({
         queryKey: ["community-posts"],
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+
       navigate("/");
-    } catch (err) {
+    } catch (err: any) {
       console.error(
         "Failed to create community post:",
         err
       );
 
+      const responseData =
+        err?.response?.data;
+
+      if (
+        responseData &&
+        typeof responseData === "object"
+      ) {
+        const firstError =
+          Object.values(responseData)
+            .flat()
+            .find(
+              (value) =>
+                typeof value === "string"
+            );
+
+        if (firstError) {
+          setError(
+            firstError as string
+          );
+          return;
+        }
+      }
+
       setError(
-        "We couldn't publish your post. Please try again."
+        postType === "for_sale"
+          ? "We couldn't create your marketplace listing. Please check your details and try again."
+          : "We couldn't publish your post. Please try again."
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /*
-  =========================================
-  PROFILE COMPLETION GATE
-  =========================================
+  /* =========================================
+     PROFILE COMPLETION GATE
+  ========================================= */
 
-  If a user directly visits /community/create
-  before completing their profile, show the
-  existing profile completion prompt instead
-  of allowing them to create a post.
-  */
   if (
     !isLoadingProfile &&
     !profileIsComplete
@@ -165,11 +384,9 @@ const CreatePostPage = () => {
     );
   }
 
-  /*
-  =========================================
-  LOADING PROFILE
-  =========================================
-  */
+  /* =========================================
+     LOADING PROFILE
+  ========================================= */
 
   if (isLoadingProfile) {
     return (
@@ -195,9 +412,7 @@ const CreatePostPage = () => {
       {/* ========================================= */}
 
       <section className="border-b border-gray-100 bg-white">
-
         <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
-
           <div className="flex items-center gap-3">
 
             <Link
@@ -219,11 +434,8 @@ const CreatePostPage = () => {
             </div>
 
           </div>
-
         </div>
-
       </section>
-
 
       {/* ========================================= */}
       {/* FORM */}
@@ -236,14 +448,20 @@ const CreatePostPage = () => {
           className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
         >
 
+          {/* ========================================= */}
           {/* POST CONTENT */}
+          {/* ========================================= */}
 
           <div className="p-5 sm:p-6">
 
             <div className="flex items-start gap-3">
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                <Leaf size={20} />
+                {postType === "for_sale" ? (
+                  <ShoppingBag size={20} />
+                ) : (
+                  <Leaf size={20} />
+                )}
               </div>
 
               <div className="min-w-0 flex-1">
@@ -252,16 +470,28 @@ const CreatePostPage = () => {
                   htmlFor="post-content"
                   className="text-sm font-bold text-gray-900"
                 >
-                  What is happening in agriculture?
+                  {postType === "for_sale"
+                    ? "Tell the community about what you're selling"
+                    : postType === "service"
+                    ? "Tell the community about your service"
+                    : "What is happening in agriculture?"}
                 </label>
 
                 <textarea
                   id="post-content"
                   value={content}
                   onChange={(event) =>
-                    setContent(event.target.value)
+                    setContent(
+                      event.target.value
+                    )
                   }
-                  placeholder="Share an update, ask a question, share knowledge or start a discussion..."
+                  placeholder={
+                    postType === "for_sale"
+                      ? "Describe your offer, availability, location or any important details..."
+                      : postType === "service"
+                      ? "Describe the service you offer and how it can help other members..."
+                      : "Share an update, ask a question, share knowledge or start a discussion..."
+                  }
                   rows={7}
                   maxLength={5000}
                   className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100"
@@ -277,8 +507,9 @@ const CreatePostPage = () => {
 
           </div>
 
-
+          {/* ========================================= */}
           {/* POST TYPE */}
+          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
@@ -286,7 +517,7 @@ const CreatePostPage = () => {
               Post type
             </label>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
 
               {[
                 {
@@ -305,13 +536,21 @@ const CreatePostPage = () => {
                   value: "announcement",
                   label: "Announcement",
                 },
+                {
+                  value: "for_sale",
+                  label: "For Sale",
+                },
+                {
+                  value: "service",
+                  label: "Service",
+                },
               ].map((type) => (
 
                 <button
                   key={type.value}
                   type="button"
                   onClick={() =>
-                    setPostType(
+                    handlePostTypeChange(
                       type.value as PostType
                     )
                   }
@@ -330,8 +569,228 @@ const CreatePostPage = () => {
 
           </div>
 
+          {/* ========================================= */}
+          {/* FOR SALE PRODUCT DETAILS */}
+          {/* ========================================= */}
 
+          {postType === "for_sale" && (
+            <div className="border-t border-gray-100 bg-green-50/40 px-5 py-5 sm:px-6">
+
+              <div className="mb-5">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag
+                    size={18}
+                    className="text-green-700"
+                  />
+
+                  <h2 className="text-sm font-black text-gray-900">
+                    Marketplace Listing
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  Your listing will also be created in the AgricWise marketplace.
+                </p>
+              </div>
+
+              {/* PRODUCT NAME */}
+
+              <div>
+                <label
+                  htmlFor="product-name"
+                  className="text-sm font-bold text-gray-900"
+                >
+                  Product name
+                </label>
+
+                <input
+                  id="product-name"
+                  type="text"
+                  value={productName}
+                  onChange={(event) =>
+                    setProductName(
+                      event.target.value
+                    )
+                  }
+                  placeholder="e.g. Fresh Maize"
+                  maxLength={200}
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+
+              {/* CATEGORY */}
+
+              <div className="mt-4">
+                <label
+                  htmlFor="product-category"
+                  className="text-sm font-bold text-gray-900"
+                >
+                  Category
+                </label>
+
+                <select
+                  id="product-category"
+                  value={category}
+                  onChange={(event) =>
+                    setCategory(
+                      event.target.value
+                    )
+                  }
+                  disabled={isLoadingCategories}
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+                >
+                  <option value="">
+                    {isLoadingCategories
+                      ? "Loading categories..."
+                      : "Select a category"}
+                  </option>
+
+                  {categories.map(
+                    (item) => (
+                      <option
+                        key={item.id}
+                        value={item.id}
+                      >
+                        {item.name}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              {/* DESCRIPTION */}
+
+              <div className="mt-4">
+                <label
+                  htmlFor="product-description"
+                  className="text-sm font-bold text-gray-900"
+                >
+                  Product description
+                </label>
+
+                <textarea
+                  id="product-description"
+                  value={productDescription}
+                  onChange={(event) =>
+                    setProductDescription(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Describe the product, quality, condition, availability and other useful details..."
+                  rows={4}
+                  className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm leading-6 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+
+              {/* PRICE / QUANTITY */}
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label
+                    htmlFor="product-price"
+                    className="text-sm font-bold text-gray-900"
+                  >
+                    Price (₦)
+                  </label>
+
+                  <input
+                    id="product-price"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={price}
+                    onChange={(event) =>
+                      setPrice(
+                        event.target.value
+                      )
+                    }
+                    placeholder="e.g. 50000"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="product-quantity"
+                    className="text-sm font-bold text-gray-900"
+                  >
+                    Quantity
+                  </label>
+
+                  <input
+                    id="product-quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={quantity}
+                    onChange={(event) =>
+                      setQuantity(
+                        event.target.value
+                      )
+                    }
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                  />
+                </div>
+
+              </div>
+
+              {/* UNIT */}
+
+              <div className="mt-4">
+                <label
+                  htmlFor="product-unit"
+                  className="text-sm font-bold text-gray-900"
+                >
+                  Unit
+                </label>
+
+                <select
+                  id="product-unit"
+                  value={unit}
+                  onChange={(event) =>
+                    setUnit(
+                      event.target.value
+                    )
+                  }
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="kg">
+                    Kilogram
+                  </option>
+
+                  <option value="bag">
+                    Bag
+                  </option>
+
+                  <option value="basket">
+                    Basket
+                  </option>
+
+                  <option value="crate">
+                    Crate
+                  </option>
+
+                  <option value="bunch">
+                    Bunch
+                  </option>
+
+                  <option value="piece">
+                    Piece
+                  </option>
+
+                  <option value="ton">
+                    Ton
+                  </option>
+                </select>
+              </div>
+
+            </div>
+          )}
+
+          {/* ========================================= */}
           {/* LOCATION */}
+          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
@@ -356,7 +815,9 @@ const CreatePostPage = () => {
               type="text"
               value={location}
               onChange={(event) =>
-                setLocation(event.target.value)
+                setLocation(
+                  event.target.value
+                )
               }
               placeholder="e.g. Abeokuta, Ogun State"
               maxLength={255}
@@ -365,8 +826,9 @@ const CreatePostPage = () => {
 
           </div>
 
-
+          {/* ========================================= */}
           {/* IMAGE */}
+          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
@@ -383,11 +845,15 @@ const CreatePostPage = () => {
 
                 <span>
                   <span className="block text-sm font-bold text-gray-800">
-                    Add an image
+                    {postType === "for_sale"
+                      ? "Product image"
+                      : "Add an image"}
                   </span>
 
                   <span className="block text-xs text-gray-500">
-                    Share a photo with the community
+                    {postType === "for_sale"
+                      ? "Add a clear photo of the product"
+                      : "Share a photo with the community"}
                   </span>
                 </span>
 
@@ -415,32 +881,46 @@ const CreatePostPage = () => {
 
           </div>
 
-
+          {/* ========================================= */}
           {/* ERROR */}
+          {/* ========================================= */}
 
           {error && (
-
             <div className="mx-5 mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 sm:mx-6">
               {error}
             </div>
-
           )}
 
-
+          {/* ========================================= */}
           {/* SUBMIT */}
+          {/* ========================================= */}
 
           <div className="border-t border-gray-100 bg-gray-50 px-5 py-4 sm:px-6">
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                (postType === "for_sale" &&
+                  isLoadingCategories)
+              }
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Send size={17} />
+
+              {postType === "for_sale" ? (
+                <ShoppingBag size={17} />
+              ) : (
+                <Send size={17} />
+              )}
 
               {isSubmitting
-                ? "Publishing..."
+                ? postType === "for_sale"
+                  ? "Creating Listing..."
+                  : "Publishing..."
+                : postType === "for_sale"
+                ? "Create Listing"
                 : "Publish Post"}
+
             </button>
 
           </div>

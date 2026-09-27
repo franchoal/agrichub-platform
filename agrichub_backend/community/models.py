@@ -2,18 +2,24 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
+from products.models import Product
+
 
 class Post(models.Model):
     DISCUSSION = "discussion"
     KNOWLEDGE = "knowledge"
     ANNOUNCEMENT = "announcement"
     QUESTION = "question"
+    FOR_SALE = "for_sale"
+    SERVICE = "service"
 
     POST_TYPE_CHOICES = [
         (DISCUSSION, "Discussion"),
         (KNOWLEDGE, "Knowledge"),
         (ANNOUNCEMENT, "Announcement"),
         (QUESTION, "Question"),
+        (FOR_SALE, "For Sale"),
+        (SERVICE, "Service"),
     ]
 
     author = models.ForeignKey(
@@ -28,6 +34,14 @@ class Post(models.Model):
         max_length=20,
         choices=POST_TYPE_CHOICES,
         default=DISCUSSION,
+    )
+
+    product = models.OneToOneField(
+        Product,
+        on_delete=models.SET_NULL,
+        related_name="community_post",
+        blank=True,
+        null=True,
     )
 
     location = models.CharField(
