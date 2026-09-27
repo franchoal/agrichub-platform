@@ -113,6 +113,12 @@ const HomePage = () => {
       case "question":
         return "Question";
 
+      case "for_sale":
+        return "For Sale";
+
+      case "service":
+        return "Service";
+
       default:
         return "Discussion";
     }
@@ -495,8 +501,9 @@ const HomePage = () => {
               </span>
             </Link>
 
+            {/* SELL → FARMER WORKSPACE */}
             <Link
-              to="/products"
+              to="/farmer"
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <ShoppingBasket size={16} />
@@ -506,8 +513,10 @@ const HomePage = () => {
               </span>
             </Link>
 
+            {/* SERVICE REMAINS SEPARATE FROM PRODUCT SALES */}
             <Link
-              to="/products"
+              to="/community/create"
+              onClick={handleCreatePostClick}
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <Wrench size={16} />
@@ -695,6 +704,9 @@ const HomePage = () => {
                     post.author
                   );
 
+                const isForSale =
+                  post.post_type === "for_sale";
+
                 return (
 
                   <article
@@ -769,7 +781,13 @@ const HomePage = () => {
 
                           <div className="mt-1 flex flex-wrap items-center gap-2">
 
-                            <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                isForSale
+                                  ? "bg-yellow-50 text-yellow-700"
+                                  : "bg-green-50 text-green-700"
+                              }`}
+                            >
                               {getPostTypeLabel(
                                 post.post_type
                               )}
@@ -793,23 +811,87 @@ const HomePage = () => {
                         {post.content}
                       </p>
 
+                      {/* MARKETPLACE LISTING SUMMARY */}
+
+                      {isForSale &&
+                        post.product_id && (
+
+                          <div className="mt-5 rounded-2xl border border-green-100 bg-green-50/60 p-4">
+
+                            <div className="flex flex-col gap-4 sm:flex-row">
+
+                              {post.product_image && (
+                                <div className="h-28 w-full shrink-0 overflow-hidden rounded-xl bg-white sm:h-28 sm:w-36">
+                                  <img
+                                    src={post.product_image}
+                                    alt={
+                                      post.product_name ||
+                                      "Product listing"
+                                    }
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="min-w-0 flex-1">
+
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-green-700">
+                                  Marketplace Listing
+                                </p>
+
+                                <h4 className="mt-1 text-lg font-black text-gray-900">
+                                  {post.product_name ||
+                                    "Product"}
+                                </h4>
+
+                                {post.product_price && (
+                                  <p className="mt-1 text-base font-bold text-green-800">
+                                    ₦
+                                    {Number(
+                                      post.product_price
+                                    ).toLocaleString(
+                                      "en-NG",
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      }
+                                    )}
+                                  </p>
+                                )}
+
+                                <Link
+                                  to={`/products/${post.product_id}`}
+                                  className="mt-3 inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-green-800"
+                                >
+                                  View Listing
+                                  <ArrowRight size={15} />
+                                </Link>
+
+                              </div>
+
+                            </div>
+
+                          </div>
+                        )}
+
                     </div>
 
                     {/* IMAGE */}
 
-                    {post.image && (
+                    {!isForSale &&
+                      post.image && (
 
-                      <div className="overflow-hidden border-y border-gray-100 bg-gray-50">
+                        <div className="overflow-hidden border-y border-gray-100 bg-gray-50">
 
-                        <img
-                          src={post.image}
-                          alt="Community post"
-                          className="max-h-[520px] w-full object-cover"
-                        />
+                          <img
+                            src={post.image}
+                            alt="Community post"
+                            className="max-h-[520px] w-full object-cover"
+                          />
 
-                      </div>
+                        </div>
 
-                    )}
+                      )}
 
                     {/* ACTIONS */}
 
@@ -1094,7 +1176,7 @@ const HomePage = () => {
                   {
                     icon: Wrench,
                     label: "Services",
-                    href: "/products",
+                    href: "/community/create",
                   },
                   {
                     icon: Tractor,
@@ -1109,12 +1191,12 @@ const HomePage = () => {
                   {
                     icon: BookOpen,
                     label: "Knowledge",
-                    href: "/products",
+                    href: "/community/create",
                   },
                   {
                     icon: BriefcaseBusiness,
                     label: "Opportunities",
-                    href: "/products",
+                    href: "/community/create",
                   },
                 ].map((item) => {
 

@@ -8,10 +8,31 @@ export interface CommunityPost {
   author_email: string;
   author_photo: string | null;
   author_connection_count: number;
+
   content: string;
-  post_type: "discussion" | "knowledge" | "announcement" | "question";
+
+  post_type:
+    | "discussion"
+    | "knowledge"
+    | "announcement"
+    | "question"
+    | "for_sale"
+    | "service";
+
+  /*
+   * Marketplace connection.
+   *
+   * These fields are populated by the backend for
+   * For Sale community posts.
+   */
+  product_id: number | null;
+  product_name: string | null;
+  product_price: string | null;
+  product_image: string | null;
+
   location: string;
   image: string | null;
+
   created_at: string;
   updated_at: string;
 }
@@ -35,7 +56,10 @@ export interface CommunityConnection {
   follower_name: string;
   following: number;
   following_name: string;
-  status: "pending" | "accepted" | "rejected";
+  status:
+    | "pending"
+    | "accepted"
+    | "rejected";
   created_at: string;
   updated_at: string;
 }
@@ -68,74 +92,84 @@ interface CommunityConnectionsResponse {
 /**
  * Get community posts
  */
-export const getCommunityPosts = async (): Promise<CommunityPostsResponse> => {
-  const response = await api.get<CommunityPostsResponse>(
-    "/community/posts/"
-  );
+export const getCommunityPosts =
+  async (): Promise<CommunityPostsResponse> => {
+    const response =
+      await api.get<CommunityPostsResponse>(
+        "/community/posts/"
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
  * Get comments for a community post
  */
-export const getCommunityComments = async (
-  postId: number
-): Promise<CommunityCommentsResponse> => {
-  const response = await api.get<CommunityCommentsResponse>(
-    `/community/posts/${postId}/comments/`
-  );
+export const getCommunityComments =
+  async (
+    postId: number
+  ): Promise<CommunityCommentsResponse> => {
+    const response =
+      await api.get<CommunityCommentsResponse>(
+        `/community/posts/${postId}/comments/`
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
  * Create a comment on a community post
  */
-export const createCommunityComment = async (
-  postId: number,
-  content: string
-): Promise<CommunityComment> => {
-  const response = await api.post<CommunityComment>(
-    `/community/posts/${postId}/comments/`,
-    {
-      content,
-    }
-  );
+export const createCommunityComment =
+  async (
+    postId: number,
+    content: string
+  ): Promise<CommunityComment> => {
+    const response =
+      await api.post<CommunityComment>(
+        `/community/posts/${postId}/comments/`,
+        {
+          content,
+        }
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
  * Send a connection request to another user
  */
-export const connectWithUser = async (
-  userId: number
-): Promise<CommunityConnection> => {
-  const response = await api.post<CommunityConnection>(
-    "/community/connections/",
-    {
-      following: userId,
-    }
-  );
+export const connectWithUser =
+  async (
+    userId: number
+  ): Promise<CommunityConnection> => {
+    const response =
+      await api.post<CommunityConnection>(
+        "/community/connections/",
+        {
+          following: userId,
+        }
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
  * Get accepted connections for the current user
  */
-export const getConnections = async (): Promise<CommunityConnectionsResponse> => {
-  const response = await api.get<CommunityConnectionsResponse>(
-    "/community/connections/"
-  );
+export const getConnections =
+  async (): Promise<CommunityConnectionsResponse> => {
+    const response =
+      await api.get<CommunityConnectionsResponse>(
+        "/community/connections/"
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
@@ -143,9 +177,10 @@ export const getConnections = async (): Promise<CommunityConnectionsResponse> =>
  */
 export const getConnectionRequests =
   async (): Promise<CommunityConnectionsResponse> => {
-    const response = await api.get<CommunityConnectionsResponse>(
-      "/community/connections/requests/"
-    );
+    const response =
+      await api.get<CommunityConnectionsResponse>(
+        "/community/connections/requests/"
+      );
 
     return response.data;
   };
@@ -154,26 +189,30 @@ export const getConnectionRequests =
 /**
  * Accept a connection request
  */
-export const acceptConnectionRequest = async (
-  connectionId: number
-): Promise<CommunityConnection> => {
-  const response = await api.post<CommunityConnection>(
-    `/community/connections/${connectionId}/accept/`
-  );
+export const acceptConnectionRequest =
+  async (
+    connectionId: number
+  ): Promise<CommunityConnection> => {
+    const response =
+      await api.post<CommunityConnection>(
+        `/community/connections/${connectionId}/accept/`
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 
 /**
  * Reject a connection request
  */
-export const rejectConnectionRequest = async (
-  connectionId: number
-): Promise<CommunityConnection> => {
-  const response = await api.post<CommunityConnection>(
-    `/community/connections/${connectionId}/reject/`
-  );
+export const rejectConnectionRequest =
+  async (
+    connectionId: number
+  ): Promise<CommunityConnection> => {
+    const response =
+      await api.post<CommunityConnection>(
+        `/community/connections/${connectionId}/reject/`
+      );
 
-  return response.data;
-};
+    return response.data;
+  };

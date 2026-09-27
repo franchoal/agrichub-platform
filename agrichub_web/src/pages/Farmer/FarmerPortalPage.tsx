@@ -1,6 +1,80 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import { useFarmerProfile } from "../../hooks/useFarmerProfile";
 
 const FarmerPortalPage = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+
+  const {
+    data: farmerProfile,
+    isLoading,
+    isError,
+  } = useFarmerProfile();
+
+  /*
+   * Wait for Zustand to restore the authentication state from storage.
+   * This prevents a logged-in user from briefly seeing the public
+   * farmer portal after refreshing the page.
+   */
+  if (!hasHydrated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-green-50 px-6">
+        <div className="text-center">
+          <div className="mb-4 text-5xl">🌾</div>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Loading AgricWise...
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Preparing your farmer workspace.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  /*
+   * Logged-in users should never remain on the public farmer portal.
+   * Check whether they already have a farmer profile.
+   */
+  if (isAuthenticated) {
+    if (isLoading) {
+      return (
+        <main className="flex min-h-screen items-center justify-center bg-green-50 px-6">
+          <div className="text-center">
+            <div className="mb-4 text-5xl">🌱</div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Checking Your Farmer Account...
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Please wait while we prepare your selling workspace.
+            </p>
+          </div>
+        </main>
+      );
+    }
+
+    /*
+     * Existing farmer → dashboard.
+     */
+    if (farmerProfile) {
+      return <Navigate to="/farmer/dashboard" replace />;
+    }
+
+    /*
+     * Authenticated but no farmer profile → onboarding.
+     *
+     * The API returns an error when the farmer profile does not exist,
+     * so both isError and missing data lead to onboarding.
+     */
+    if (isError || !farmerProfile) {
+      return <Navigate to="/farmer/profile" replace />;
+    }
+  }
+
+  /*
+   * Public farmer portal for users who are not authenticated.
+   */
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 to-white">
       <section className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
@@ -14,10 +88,7 @@ const FarmerPortalPage = () => {
 
             <h1 className="mt-6 text-5xl font-bold leading-tight text-gray-900">
               Farmer
-              <span className="text-green-700">
-                {" "}
-                Portal
-              </span>
+              <span className="text-green-700"> Portal</span>
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-gray-600">

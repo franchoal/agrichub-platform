@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import generics, permissions
 import logging
 
@@ -7,6 +8,7 @@ from rest_framework.exceptions import (
 )
 
 from products.models import Product
+from community.models import Post
 
 from .models import FarmerProfile
 from .permissions import IsFarmer
@@ -95,6 +97,10 @@ class FarmerProductListCreateView(
     """
     Farmers can list and create
     their own products.
+
+    Creating a product also automatically
+    creates its corresponding Community
+    For Sale post.
     """
 
     serializer_class = FarmerProductSerializer
@@ -117,6 +123,7 @@ class FarmerProductListCreateView(
             .order_by("-created_at")
         )
 
+    @transaction.atomic
     def perform_create(self, serializer):
 
         try:
@@ -124,9 +131,17 @@ class FarmerProductListCreateView(
                 user=self.request.user
             )
 
-            serializer.save(
+            product = serializer.save(
                 farmer=farmer_profile,
                 is_available=True,
+            )
+
+            Post.objects.create(
+                author=self.request.user,
+                content=product.description,
+                post_type=Post.FOR_SALE,
+                location=farmer_profile.farm_location,
+                product=product,
             )
 
         except FarmerProfile.DoesNotExist:
@@ -136,7 +151,7 @@ class FarmerProductListCreateView(
 
         except Exception:
             logger.exception(
-                "PRODUCT UPLOAD FAILED"
+                "PRODUCT AND COMMUNITY LISTING CREATION FAILED"
             )
             raise
 

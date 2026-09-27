@@ -14,7 +14,6 @@ import CreateProductPage from "../pages/Products/CreateProductPage";
 import EditProductPage from "../pages/Products/EditProductPage";
 
 import CartPage from "../pages/Cart/CartPage";
-
 import CheckoutPage from "../pages/Checkout/CheckoutPage";
 
 import OrdersPage from "../pages/Orders/OrdersPage";
@@ -74,78 +73,25 @@ const HomeEntry = () => {
 };
 
 
+/*
+==========================================
+AGRICWISE ROUTER
+==========================================
+
+MainLayout is the common application shell.
+
+ProtectedRoute controls authentication.
+
+FarmerRoute controls access to the existing
+farmer/seller workspace.
+
+FarmerProfilePage deliberately remains
+outside FarmerRoute because a normal
+authenticated user must be able to create
+their first FarmerProfile.
+*/
+
 export const router = createBrowserRouter([
-  /*
-  ==========================================
-  PUBLIC AGRICWISE ECOSYSTEM
-  ==========================================
-  */
-
-  {
-    path: "/",
-    element: <MainLayout />,
-
-    children: [
-      /*
-      ======================================
-      COMMUNITY HOME / FEED
-      ======================================
-      */
-
-      {
-        index: true,
-        element: <HomeEntry />,
-      },
-
-      /*
-      ======================================
-      PUBLIC INFORMATION
-      ======================================
-      */
-
-      {
-        path: "about",
-        element: <AboutPage />,
-      },
-
-      /*
-      ======================================
-      MARKETPLACE
-      ======================================
-      */
-
-      {
-        path: "products",
-        element: <ProductsPage />,
-      },
-
-      {
-        path: "products/:id",
-        element: <ProductDetailsPage />,
-      },
-
-      /*
-      ======================================
-      TRANSITIONAL SELLER ENTRY
-      ======================================
-
-      The existing farmer portal is retained
-      temporarily while the seller/business
-      workspace is being migrated.
-
-      The broader AgricWise architecture does
-      not treat Farmer as a permanent account
-      type.
-      */
-
-      {
-        path: "farmer",
-        element: <FarmerPortalPage />,
-      },
-    ],
-  },
-
-
   /*
   ==========================================
   AUTHENTICATION
@@ -212,147 +158,219 @@ export const router = createBrowserRouter([
 
   /*
   ==========================================
-  AUTHENTICATED AGRICWISE USERS
+  MAIN AGRICWISE APPLICATION
   ==========================================
-
-  Everything inside this section requires
-  authentication.
-
-  The universal /profile route is deliberately
-  outside FarmerRoute.
-
-  FarmerProfile onboarding is also outside
-  FarmerRoute because a user must be able to
-  CREATE a FarmerProfile before they can enter
-  the seller workspace.
   */
 
   {
-    element: <ProtectedRoute />,
+    path: "/",
+    element: <MainLayout />,
 
     children: [
 
       /*
-      ======================================
-      UNIVERSAL PERSONAL PROFILE
-      ======================================
+      ========================================
+      COMMUNITY HOME
+      ========================================
       */
 
       {
-        path: "/profile",
-        element: <ProfilePage />,
+        index: true,
+        element: <HomeEntry />,
       },
 
 
       /*
-      ======================================
-      FARMER/SELLER ONBOARDING
-      ======================================
-
-      This route is available to any
-      authenticated AgricWise user.
-
-      It creates the FarmerProfile capability
-      required by the existing marketplace
-      Product model.
-
-      It is intentionally NOT protected by
-      FarmerRoute because FarmerRoute requires
-      the FarmerProfile to already exist.
+      ========================================
+      PUBLIC INFORMATION
+      ========================================
       */
 
       {
-        path: "/farmer/profile",
-        element: <FarmerProfilePage />,
+        path: "about",
+        element: <AboutPage />,
       },
 
 
       /*
-      ======================================
-      COMMUNITY PARTICIPATION
-      ======================================
+      ========================================
+      MARKETPLACE
+      ========================================
       */
 
       {
-        path: "/community/create",
-        element: <CreatePostPage />,
+        path: "products",
+        element: <ProductsPage />,
+      },
+
+      {
+        path: "products/:id",
+        element: <ProductDetailsPage />,
       },
 
 
       /*
-      ======================================
-      COMMON AGRICWISE ACTIVITY
-      ======================================
+      ========================================
+      TRANSITIONAL FARMER ENTRY
+      ========================================
+
+      Existing farmer portal is retained
+      temporarily.
       */
 
       {
-        path: "/cart",
-        element: <CartPage />,
-      },
-
-      {
-        path: "/checkout",
-        element: <CheckoutPage />,
-      },
-
-      {
-        path: "/orders",
-        element: <OrdersPage />,
-      },
-
-      {
-        path: "/orders/:id",
-        element: <OrderDetailsPage />,
-      },
-
-      {
-        path: "/notifications",
-        element: <NotificationsPage />,
+        path: "farmer",
+        element: <FarmerPortalPage />,
       },
 
 
       /*
-      ======================================
-      TRANSITIONAL FARMER/SELLER WORKSPACE
-      ======================================
-
-      These routes remain protected by
-      FarmerRoute because they require an
-      existing FarmerProfile.
-
-      FarmerRoute does NOT define the user's
-      identity. It only verifies that the
-      agricultural seller capability exists.
+      ========================================
+      AUTHENTICATED AGRICWISE USERS
+      ========================================
       */
 
       {
-        element: <FarmerRoute />,
+        element: <ProtectedRoute />,
 
         children: [
 
+          /*
+          ====================================
+          UNIVERSAL PERSONAL PROFILE
+          ====================================
+          */
+
           {
-            path: "/farmer/dashboard",
-            element: <FarmerDashboardPage />,
+            path: "profile",
+            element: <ProfilePage />,
+          },
+
+
+          /*
+          ====================================
+          COMMUNITY POST CREATION
+          ====================================
+          */
+
+          {
+            path: "community/create",
+            element: <CreatePostPage />,
+          },
+
+
+          /*
+          ====================================
+          FARMER PROFILE ONBOARDING
+          ====================================
+
+          IMPORTANT:
+
+          This is intentionally outside
+          FarmerRoute.
+
+          A normal authenticated user must
+          be able to create their FarmerProfile
+          before accessing the farmer workspace.
+          */
+
+          {
+            path: "farmer/profile",
+            element: <FarmerProfilePage />,
+          },
+
+
+          /*
+          ====================================
+          SHOPPING
+          ====================================
+          */
+
+          {
+            path: "cart",
+            element: <CartPage />,
           },
 
           {
-            path: "/farmer/orders",
-            element: <FarmerOrdersPage />,
+            path: "checkout",
+            element: <CheckoutPage />,
+          },
+
+
+          /*
+          ====================================
+          ORDERS
+          ====================================
+          */
+
+          {
+            path: "orders",
+            element: <OrdersPage />,
           },
 
           {
-            path: "/farmer/orders/:id",
-            element: <FarmerOrderDetailsPage />,
+            path: "orders/:id",
+            element: <OrderDetailsPage />,
           },
 
-          {
-            path: "/farmer/products/create",
-            element: <CreateProductPage />,
-          },
+
+          /*
+          ====================================
+          NOTIFICATIONS
+          ====================================
+          */
 
           {
-            path: "/farmer/products/:id/edit",
-            element: <EditProductPage />,
+            path: "notifications",
+            element: <NotificationsPage />,
+          },
+
+
+          /*
+          ====================================
+          FARMER / SELLER WORKSPACE
+          ====================================
+
+          These routes require an existing
+          FarmerProfile.
+
+          FarmerRoute does not represent a
+          permanent user account type.
+          It only verifies that the user's
+          seller/farmer capability exists.
+          */
+
+          {
+            element: <FarmerRoute />,
+
+            children: [
+
+              {
+                path: "farmer/dashboard",
+                element: <FarmerDashboardPage />,
+              },
+
+              {
+                path: "farmer/orders",
+                element: <FarmerOrdersPage />,
+              },
+
+              {
+                path: "farmer/orders/:id",
+                element: <FarmerOrderDetailsPage />,
+              },
+
+              {
+                path: "farmer/products/create",
+                element: <CreateProductPage />,
+              },
+
+              {
+                path: "farmer/products/:id/edit",
+                element: <EditProductPage />,
+              },
+
+            ],
           },
 
         ],
