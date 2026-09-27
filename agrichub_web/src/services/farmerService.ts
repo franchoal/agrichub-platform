@@ -47,6 +47,7 @@ export interface CreateFarmerProductData {
   price: number;
   quantity: number;
   unit: string;
+  is_available: boolean;
   image?: File | null;
 }
 
@@ -57,6 +58,7 @@ export interface UpdateFarmerProductData {
   price?: number;
   quantity?: number;
   unit?: string;
+  is_available?: boolean;
   image?: File | null;
 }
 
@@ -162,6 +164,11 @@ export const farmerService = {
       data.unit
     );
 
+    formData.append(
+      "is_available",
+      String(data.is_available)
+    );
+
     if (data.image instanceof File) {
       formData.append(
         "image",
@@ -224,6 +231,13 @@ export const farmerService = {
       formData.append(
         "unit",
         data.unit
+      );
+    }
+
+    if (data.is_available !== undefined) {
+      formData.append(
+        "is_available",
+        String(data.is_available)
       );
     }
 

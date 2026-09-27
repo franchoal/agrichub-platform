@@ -8,6 +8,7 @@ import {
   MapPin,
   Send,
   ShoppingBag,
+  Wrench,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -18,9 +19,6 @@ import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionP
 
 type PostType =
   | "discussion"
-  | "knowledge"
-  | "announcement"
-  | "question"
   | "for_sale"
   | "service";
 
@@ -54,15 +52,24 @@ const CreatePostPage = () => {
 
   const [categories, setCategories] =
     useState<Category[]>([]);
-  const [category, setCategory] = useState("");
+
+  const [category, setCategory] =
+    useState("");
+
   const [productName, setProductName] =
     useState("");
+
   const [productDescription, setProductDescription] =
     useState("");
-  const [price, setPrice] = useState("");
+
+  const [price, setPrice] =
+    useState("");
+
   const [quantity, setQuantity] =
     useState("1");
-  const [unit, setUnit] = useState("kg");
+
+  const [unit, setUnit] =
+    useState("kg");
 
   const [isLoadingCategories, setIsLoadingCategories] =
     useState(false);
@@ -70,7 +77,8 @@ const CreatePostPage = () => {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   const profileIsComplete = Boolean(
     profile?.location?.trim() &&
@@ -96,7 +104,9 @@ const CreatePostPage = () => {
           );
 
         setCategories(response.data);
+
       } catch (err) {
+
         console.error(
           "Failed to load product categories:",
           err
@@ -105,12 +115,16 @@ const CreatePostPage = () => {
         setError(
           "We couldn't load product categories. Please try again."
         );
+
       } finally {
+
         setIsLoadingCategories(false);
+
       }
     };
 
     loadCategories();
+
   }, [postType]);
 
   /* =========================================
@@ -120,6 +134,7 @@ const CreatePostPage = () => {
   const handleImageChange = (
     event: ChangeEvent<HTMLInputElement>
   ) => {
+
     const selectedFile =
       event.target.files?.[0] || null;
 
@@ -133,6 +148,7 @@ const CreatePostPage = () => {
   const handlePostTypeChange = (
     type: PostType
   ) => {
+
     setPostType(type);
     setError("");
   };
@@ -144,6 +160,7 @@ const CreatePostPage = () => {
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
+
     event.preventDefault();
 
     if (isLoadingProfile) {
@@ -168,31 +185,25 @@ const CreatePostPage = () => {
 
     Users without a FarmerProfile are sent
     through the existing farmer onboarding
-    flow and returned here afterwards.
+    flow.
     */
 
     if (postType === "for_sale") {
+
       try {
+
         await farmerService.getProfile();
+
       } catch (err: any) {
+
         const status =
           err?.response?.status;
-
-        /*
-        The current FarmerProfile GET endpoint
-        uses IsFarmer. Therefore, an authenticated
-        user without a FarmerProfile currently
-        receives 403.
-
-        Send that user to the existing onboarding
-        page rather than allowing the listing
-        request to fail later.
-        */
 
         if (
           status === 403 ||
           status === 404
         ) {
+
           navigate(
             "/farmer/profile?returnTo=/community/create",
             {
@@ -217,9 +228,11 @@ const CreatePostPage = () => {
     }
 
     if (!content.trim()) {
+
       setError(
         "Please write something before posting."
       );
+
       return;
     }
 
@@ -228,24 +241,31 @@ const CreatePostPage = () => {
     ========================================= */
 
     if (postType === "for_sale") {
+
       if (!category) {
+
         setError(
           "Please select a product category."
         );
+
         return;
       }
 
       if (!productName.trim()) {
+
         setError(
           "Please enter the product name."
         );
+
         return;
       }
 
       if (!productDescription.trim()) {
+
         setError(
           "Please enter a product description."
         );
+
         return;
       }
 
@@ -253,9 +273,11 @@ const CreatePostPage = () => {
         !price ||
         Number(price) <= 0
       ) {
+
         setError(
           "Please enter a valid product price."
         );
+
         return;
       }
 
@@ -263,9 +285,11 @@ const CreatePostPage = () => {
         !quantity ||
         Number(quantity) < 1
       ) {
+
         setError(
           "Quantity must be at least 1."
         );
+
         return;
       }
     }
@@ -274,6 +298,7 @@ const CreatePostPage = () => {
     setIsSubmitting(true);
 
     try {
+
       const formData = new FormData();
 
       formData.append(
@@ -287,6 +312,7 @@ const CreatePostPage = () => {
       );
 
       if (location.trim()) {
+
         formData.append(
           "location",
           location.trim()
@@ -298,6 +324,7 @@ const CreatePostPage = () => {
       ========================================= */
 
       if (postType === "for_sale") {
+
         formData.append(
           "category",
           category
@@ -329,6 +356,7 @@ const CreatePostPage = () => {
         );
 
         if (image) {
+
           formData.append(
             "image",
             image
@@ -339,12 +367,15 @@ const CreatePostPage = () => {
           "/community/posts/for-sale/",
           formData
         );
+
       } else {
+
         /* =========================================
            NORMAL COMMUNITY POST
         ========================================= */
 
         if (image) {
+
           formData.append(
             "image",
             image
@@ -366,7 +397,9 @@ const CreatePostPage = () => {
       });
 
       navigate("/");
+
     } catch (err: any) {
+
       console.error(
         "Failed to create community post:",
         err
@@ -379,6 +412,7 @@ const CreatePostPage = () => {
         responseData &&
         typeof responseData === "object"
       ) {
+
         const firstError =
           Object.values(responseData)
             .flat()
@@ -388,9 +422,11 @@ const CreatePostPage = () => {
             );
 
         if (firstError) {
+
           setError(
             firstError as string
           );
+
           return;
         }
       }
@@ -400,8 +436,11 @@ const CreatePostPage = () => {
           ? "We couldn't create your marketplace listing. Please check your details and try again."
           : "We couldn't publish your post. Please try again."
       );
+
     } finally {
+
       setIsSubmitting(false);
+
     }
   };
 
@@ -413,11 +452,16 @@ const CreatePostPage = () => {
     !isLoadingProfile &&
     !profileIsComplete
   ) {
+
     return (
       <main className="min-h-screen bg-slate-50">
+
         <section className="border-b border-gray-100 bg-white">
+
           <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+
             <div className="flex items-center gap-3">
+
               <Link
                 to="/"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-green-50 hover:text-green-700"
@@ -427,6 +471,7 @@ const CreatePostPage = () => {
               </Link>
 
               <div>
+
                 <p className="text-xs font-medium text-gray-500">
                   AgricWise Community
                 </p>
@@ -434,14 +479,19 @@ const CreatePostPage = () => {
                 <h1 className="text-lg font-black text-gray-900">
                   Create a Post
                 </h1>
+
               </div>
+
             </div>
+
           </div>
+
         </section>
 
         <ProfileCompletionPrompt
           onClose={() => navigate("/")}
         />
+
       </main>
     );
   }
@@ -451,9 +501,12 @@ const CreatePostPage = () => {
   ========================================= */
 
   if (isLoadingProfile) {
+
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
+
         <div className="text-center">
+
           <div className="mb-4 text-4xl">
             🌾
           </div>
@@ -461,7 +514,9 @@ const CreatePostPage = () => {
           <p className="font-semibold text-green-700">
             Checking your profile...
           </p>
+
         </div>
+
       </main>
     );
   }
@@ -469,12 +524,12 @@ const CreatePostPage = () => {
   return (
     <main className="min-h-screen bg-slate-50 pb-24">
 
-      {/* ========================================= */}
       {/* HEADER */}
-      {/* ========================================= */}
 
       <section className="border-b border-gray-100 bg-white">
+
         <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+
           <div className="flex items-center gap-3">
 
             <Link
@@ -486,6 +541,7 @@ const CreatePostPage = () => {
             </Link>
 
             <div>
+
               <p className="text-xs font-medium text-gray-500">
                 AgricWise Community
               </p>
@@ -493,15 +549,16 @@ const CreatePostPage = () => {
               <h1 className="text-lg font-black text-gray-900">
                 Create a Post
               </h1>
+
             </div>
 
           </div>
+
         </div>
+
       </section>
 
-      {/* ========================================= */}
       {/* FORM */}
-      {/* ========================================= */}
 
       <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
 
@@ -510,20 +567,22 @@ const CreatePostPage = () => {
           className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
         >
 
-          {/* ========================================= */}
           {/* POST CONTENT */}
-          {/* ========================================= */}
 
           <div className="p-5 sm:p-6">
 
             <div className="flex items-start gap-3">
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+
                 {postType === "for_sale" ? (
                   <ShoppingBag size={20} />
+                ) : postType === "service" ? (
+                  <Wrench size={20} />
                 ) : (
                   <Leaf size={20} />
                 )}
+
               </div>
 
               <div className="min-w-0 flex-1">
@@ -569,77 +628,120 @@ const CreatePostPage = () => {
 
           </div>
 
-          {/* ========================================= */}
           {/* POST TYPE */}
-          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
             <label className="text-sm font-bold text-gray-900">
-              Post type
+              What do you want to post?
             </label>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
 
-              {[
-                {
-                  value: "discussion",
-                  label: "Discussion",
-                },
-                {
-                  value: "knowledge",
-                  label: "Knowledge",
-                },
-                {
-                  value: "question",
-                  label: "Question",
-                },
-                {
-                  value: "announcement",
-                  label: "Announcement",
-                },
-                {
-                  value: "for_sale",
-                  label: "For Sale",
-                },
-                {
-                  value: "service",
-                  label: "Service",
-                },
-              ].map((type) => (
+              <button
+                type="button"
+                onClick={() =>
+                  handlePostTypeChange(
+                    "discussion"
+                  )
+                }
+                className={`rounded-xl border px-4 py-4 text-left transition ${
+                  postType === "discussion"
+                    ? "border-green-600 bg-green-50 text-green-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
 
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() =>
-                    handlePostTypeChange(
-                      type.value as PostType
-                    )
-                  }
-                  className={`rounded-xl border px-3 py-3 text-xs font-bold transition ${
-                    postType === type.value
-                      ? "border-green-600 bg-green-50 text-green-700"
-                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {type.label}
-                </button>
+                <div className="flex items-center gap-2">
 
-              ))}
+                  <Leaf size={17} />
+
+                  <span className="text-sm font-bold">
+                    Discussion
+                  </span>
+
+                </div>
+
+                <p className="mt-2 text-xs leading-5 opacity-80">
+                  Share updates, ask questions, exchange knowledge or start a conversation.
+                </p>
+
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handlePostTypeChange(
+                    "for_sale"
+                  )
+                }
+                className={`rounded-xl border px-4 py-4 text-left transition ${
+                  postType === "for_sale"
+                    ? "border-green-600 bg-green-50 text-green-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <ShoppingBag size={17} />
+
+                  <span className="text-sm font-bold">
+                    For Sale
+                  </span>
+
+                </div>
+
+                <p className="mt-2 text-xs leading-5 opacity-80">
+                  List agricultural products and connect the post directly to the marketplace.
+                </p>
+
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handlePostTypeChange(
+                    "service"
+                  )
+                }
+                className={`rounded-xl border px-4 py-4 text-left transition ${
+                  postType === "service"
+                    ? "border-green-600 bg-green-50 text-green-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <Wrench size={17} />
+
+                  <span className="text-sm font-bold">
+                    Service
+                  </span>
+
+                </div>
+
+                <p className="mt-2 text-xs leading-5 opacity-80">
+                  Offer or promote an agricultural service to other community members.
+                </p>
+
+              </button>
 
             </div>
 
           </div>
 
-          {/* ========================================= */}
           {/* FOR SALE PRODUCT DETAILS */}
-          {/* ========================================= */}
 
           {postType === "for_sale" && (
+
             <div className="border-t border-gray-100 bg-green-50/40 px-5 py-5 sm:px-6">
 
               <div className="mb-5">
+
                 <div className="flex items-center gap-2">
+
                   <ShoppingBag
                     size={18}
                     className="text-green-700"
@@ -648,16 +750,17 @@ const CreatePostPage = () => {
                   <h2 className="text-sm font-black text-gray-900">
                     Marketplace Listing
                   </h2>
+
                 </div>
 
                 <p className="mt-1 text-xs leading-5 text-gray-500">
                   Your listing will also be created in the AgricWise marketplace.
                 </p>
+
               </div>
 
-              {/* PRODUCT NAME */}
-
               <div>
+
                 <label
                   htmlFor="product-name"
                   className="text-sm font-bold text-gray-900"
@@ -678,11 +781,11 @@ const CreatePostPage = () => {
                   maxLength={200}
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
+
               </div>
 
-              {/* CATEGORY */}
-
               <div className="mt-4">
+
                 <label
                   htmlFor="product-category"
                   className="text-sm font-bold text-gray-900"
@@ -701,6 +804,7 @@ const CreatePostPage = () => {
                   disabled={isLoadingCategories}
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:bg-gray-100"
                 >
+
                   <option value="">
                     {isLoadingCategories
                       ? "Loading categories..."
@@ -709,20 +813,23 @@ const CreatePostPage = () => {
 
                   {categories.map(
                     (item) => (
+
                       <option
                         key={item.id}
                         value={item.id}
                       >
                         {item.name}
                       </option>
+
                     )
                   )}
+
                 </select>
+
               </div>
 
-              {/* DESCRIPTION */}
-
               <div className="mt-4">
+
                 <label
                   htmlFor="product-description"
                   className="text-sm font-bold text-gray-900"
@@ -742,13 +849,13 @@ const CreatePostPage = () => {
                   rows={4}
                   className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm leading-6 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
-              </div>
 
-              {/* PRICE / QUANTITY */}
+              </div>
 
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                 <div>
+
                   <label
                     htmlFor="product-price"
                     className="text-sm font-bold text-gray-900"
@@ -770,9 +877,11 @@ const CreatePostPage = () => {
                     placeholder="e.g. 50000"
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                   />
+
                 </div>
 
                 <div>
+
                   <label
                     htmlFor="product-quantity"
                     className="text-sm font-bold text-gray-900"
@@ -793,13 +902,13 @@ const CreatePostPage = () => {
                     }
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                   />
+
                 </div>
 
               </div>
 
-              {/* UNIT */}
-
               <div className="mt-4">
+
                 <label
                   htmlFor="product-unit"
                   className="text-sm font-bold text-gray-900"
@@ -817,6 +926,7 @@ const CreatePostPage = () => {
                   }
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 >
+
                   <option value="kg">
                     Kilogram
                   </option>
@@ -844,15 +954,15 @@ const CreatePostPage = () => {
                   <option value="ton">
                     Ton
                   </option>
+
                 </select>
+
               </div>
 
             </div>
           )}
 
-          {/* ========================================= */}
           {/* LOCATION */}
-          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
@@ -860,6 +970,7 @@ const CreatePostPage = () => {
               htmlFor="post-location"
               className="flex items-center gap-2 text-sm font-bold text-gray-900"
             >
+
               <MapPin
                 size={16}
                 className="text-green-700"
@@ -870,6 +981,7 @@ const CreatePostPage = () => {
               <span className="font-normal text-gray-400">
                 Optional
               </span>
+
             </label>
 
             <input
@@ -888,9 +1000,7 @@ const CreatePostPage = () => {
 
           </div>
 
-          {/* ========================================= */}
           {/* IMAGE */}
-          {/* ========================================= */}
 
           <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
 
@@ -906,6 +1016,7 @@ const CreatePostPage = () => {
                 </span>
 
                 <span>
+
                   <span className="block text-sm font-bold text-gray-800">
                     {postType === "for_sale"
                       ? "Product image"
@@ -917,6 +1028,7 @@ const CreatePostPage = () => {
                       ? "Add a clear photo of the product"
                       : "Share a photo with the community"}
                   </span>
+
                 </span>
 
               </span>
@@ -936,26 +1048,26 @@ const CreatePostPage = () => {
             />
 
             {image && (
+
               <div className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
                 Selected: {image.name}
               </div>
+
             )}
 
           </div>
 
-          {/* ========================================= */}
           {/* ERROR */}
-          {/* ========================================= */}
 
           {error && (
+
             <div className="mx-5 mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 sm:mx-6">
               {error}
             </div>
+
           )}
 
-          {/* ========================================= */}
           {/* SUBMIT */}
-          {/* ========================================= */}
 
           <div className="border-t border-gray-100 bg-gray-50 px-5 py-4 sm:px-6">
 
@@ -963,14 +1075,18 @@ const CreatePostPage = () => {
               type="submit"
               disabled={
                 isSubmitting ||
-                (postType === "for_sale" &&
-                  isLoadingCategories)
+                (
+                  postType === "for_sale" &&
+                  isLoadingCategories
+                )
               }
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
 
               {postType === "for_sale" ? (
                 <ShoppingBag size={17} />
+              ) : postType === "service" ? (
+                <Wrench size={17} />
               ) : (
                 <Send size={17} />
               )}
@@ -992,11 +1108,13 @@ const CreatePostPage = () => {
       </section>
 
       {showProfilePrompt && (
+
         <ProfileCompletionPrompt
           onClose={() =>
             setShowProfilePrompt(false)
           }
         />
+
       )}
 
     </main>

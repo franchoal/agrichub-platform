@@ -13,9 +13,6 @@ export interface CommunityPost {
 
   post_type:
     | "discussion"
-    | "knowledge"
-    | "announcement"
-    | "question"
     | "for_sale"
     | "service";
 

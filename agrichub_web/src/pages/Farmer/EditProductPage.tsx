@@ -47,6 +47,7 @@ const EditProductPage = () => {
         price: Number(data.price),
         quantity: Number(data.quantity),
         unit: data.unit,
+        is_available: data.is_available,
         image: data.image ?? undefined,
       },
     });
@@ -142,6 +143,8 @@ const EditProductPage = () => {
 
           <li>✓ Update available stock quantity.</li>
 
+          <li>✓ Update product availability when necessary.</li>
+
           <li>✓ Replace outdated product images if necessary.</li>
 
           <li>✓ Ensure your description accurately reflects the product.</li>
@@ -175,6 +178,7 @@ const EditProductPage = () => {
             quantity: product.quantity,
             unit:
               product.unit as ProductFormData["unit"],
+            is_available: product.is_available,
           }}
           onSubmit={handleSubmit}
           isSubmitting={isPending}

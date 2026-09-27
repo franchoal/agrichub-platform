@@ -39,10 +39,22 @@ const FarmerDashboardPage = () => {
   const orders =
     ordersData?.results ?? [];
 
+  const inStockProducts =
+    products.filter(
+      (product) =>
+        product.quantity > 0 &&
+        product.is_available
+    );
+
+  const unavailableProducts =
+    products.filter(
+      (product) =>
+        !product.is_available
+    );
+
   /**
    * Only authenticated users with an existing
-   * FarmerProfile can access this transitional
-   * agricultural workspace.
+   * FarmerProfile can access this workspace.
    */
   if (!user) {
     return (
@@ -66,7 +78,7 @@ const FarmerDashboardPage = () => {
   if (!profile) {
     return (
       <Navigate
-        to="/products"
+        to="/farmer/profile"
         replace
       />
     );
@@ -91,9 +103,7 @@ const FarmerDashboardPage = () => {
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
 
-      {/* Header */}
-
-      {/* Hero Section */}
+      {/* Hero */}
 
       <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white shadow-xl">
 
@@ -112,7 +122,7 @@ const FarmerDashboardPage = () => {
             <h1 className="mt-3 text-4xl font-bold leading-tight">
               Welcome back,
               <br />
-              {profile?.farm_name || "Your Farm"}
+              {profile.farm_name || "Your Farm"}
             </h1>
 
             <p className="mt-4 max-w-2xl text-green-100">
@@ -145,9 +155,12 @@ const FarmerDashboardPage = () => {
 
       </section>
 
+      {/* Business Overview */}
+
       <section className="mb-10">
 
         <div className="mb-6">
+
           <h2 className="text-2xl font-bold text-gray-900">
             Business Overview
           </h2>
@@ -155,6 +168,7 @@ const FarmerDashboardPage = () => {
           <p className="text-gray-500">
             A snapshot of your farm business today.
           </p>
+
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -172,7 +186,25 @@ const FarmerDashboardPage = () => {
             </h2>
 
             <p className="mt-3 text-sm text-gray-500">
-              Available in the marketplace
+              Products in your farm inventory
+            </p>
+
+          </div>
+
+          {/* In Stock */}
+
+          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+
+            <p className="text-sm text-gray-500">
+              In Stock
+            </p>
+
+            <h2 className="mt-3 text-4xl font-bold text-emerald-600">
+              {inStockProducts.length}
+            </h2>
+
+            <p className="mt-3 text-sm text-gray-500">
+              Products currently available for sale
             </p>
 
           </div>
@@ -207,7 +239,8 @@ const FarmerDashboardPage = () => {
 
               {
                 orders.filter(
-                  order => order.status === "pending"
+                  (order) =>
+                    order.status === "pending"
                 ).length
               }
 
@@ -219,65 +252,45 @@ const FarmerDashboardPage = () => {
 
           </div>
 
-          {/* Estimated Revenue */}
-
-          <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-
-            <p className="text-sm text-gray-500">
-              Estimated Revenue
-            </p>
-
-            <h2 className="mt-3 text-4xl font-bold text-emerald-600">
-              ₦0
-            </h2>
-
-            <p className="mt-3 text-sm text-gray-500">
-              Revenue analytics coming soon
-            </p>
-
-          </div>
-
         </div>
 
       </section>
 
       {/* Verification Status */}
 
-      {profile && (
-        <div
-          className={`mb-10 rounded-xl border p-5 ${
+      <div
+        className={`mb-10 rounded-xl border p-5 ${
+          profile.is_verified
+            ? "border-green-200 bg-green-50"
+            : "border-yellow-200 bg-yellow-50"
+        }`}
+      >
+
+        <h2
+          className={`text-lg font-semibold ${
             profile.is_verified
-              ? "border-green-200 bg-green-50"
-              : "border-yellow-200 bg-yellow-50"
+              ? "text-green-700"
+              : "text-yellow-700"
           }`}
         >
+          {profile.is_verified
+            ? "✅ Farmer Verified"
+            : "⏳ Verification Pending"}
+        </h2>
 
-          <h2
-            className={`text-lg font-semibold ${
-              profile.is_verified
-                ? "text-green-700"
-                : "text-yellow-700"
-            }`}
-          >
-            {profile.is_verified
-              ? "✅ Farmer Verified"
-              : "⏳ Verification Pending"}
-          </h2>
+        <p
+          className={`mt-2 text-sm ${
+            profile.is_verified
+              ? "text-green-700"
+              : "text-yellow-700"
+          }`}
+        >
+          {profile.is_verified
+            ? "Your account has been verified. Products marked as available can appear in the marketplace."
+            : "Your profile is awaiting administrator approval. You can continue adding and managing products, but they won't appear in the marketplace until your account has been verified."}
+        </p>
 
-          <p
-            className={`mt-2 text-sm ${
-              profile.is_verified
-                ? "text-green-700"
-                : "text-yellow-700"
-            }`}
-          >
-            {profile.is_verified
-              ? "Your account has been verified. Any product marked as available will be visible in the marketplace."
-              : "Your profile is awaiting administrator approval. You can continue adding and managing products, but they won't appear in the marketplace until your account has been verified."}
-          </p>
-
-        </div>
-      )}
+      </div>
 
       {/* Dashboard Statistics */}
 
@@ -417,6 +430,8 @@ const FarmerDashboardPage = () => {
 
       </div>
 
+      {/* Business Performance / Insights */}
+
       <section className="mb-10 grid gap-6 lg:grid-cols-2">
 
         <div className="rounded-3xl border bg-white p-8 shadow-sm">
@@ -452,19 +467,36 @@ const FarmerDashboardPage = () => {
 
           <div className="mt-6 space-y-4">
 
-            <div>✓ {products.length} Products Listed</div>
+            <div>
+              ✓ {products.length} Products Listed
+            </div>
 
-            <div>✓ {orders.length} Customer Orders</div>
+            <div>
+              ✓ {inStockProducts.length} Products In Stock
+            </div>
+
+            <div>
+              ✓ {unavailableProducts.length} Unavailable Listings
+            </div>
+
+            <div>
+              ✓ {orders.length} Customer Orders
+            </div>
 
             <div>
               ✓ {
                 orders.filter(
-                  o => o.status === "pending"
+                  (order) =>
+                    order.status === "pending"
                 ).length
               } Pending Orders
             </div>
 
-            <div>✓ Verified Farm Business</div>
+            <div>
+              {profile.is_verified
+                ? "✓ Verified Farm Business"
+                : "⏳ Farm Verification Pending"}
+            </div>
 
           </div>
 
@@ -542,6 +574,8 @@ const FarmerDashboardPage = () => {
 
       </section>
 
+      {/* Growth Services */}
+
       <section className="mb-10">
 
         <h2 className="mb-6 text-3xl font-bold">
@@ -582,6 +616,8 @@ const FarmerDashboardPage = () => {
 
       </section>
 
+      {/* Business Tip */}
+
       <section className="mb-10 rounded-3xl bg-gradient-to-r from-green-600 to-emerald-700 p-8 text-white">
 
         <h2 className="text-2xl font-bold">
@@ -601,9 +637,17 @@ const FarmerDashboardPage = () => {
 
         <div className="mb-6 flex items-center justify-between">
 
-          <h2 className="text-2xl font-semibold">
-            My Products
-          </h2>
+          <div>
+
+            <h2 className="text-2xl font-semibold">
+              My Products
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Manage your products, stock and marketplace availability.
+            </p>
+
+          </div>
 
           <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700">
 
@@ -619,16 +663,16 @@ const FarmerDashboardPage = () => {
         <div className="mb-8 grid gap-5 md:grid-cols-2">
 
           <Link
-            to="/farmer/products"
+            to="/farmer/products/create"
             className="rounded-xl bg-gray-50 p-6 transition hover:bg-green-50"
           >
 
             <h2 className="text-xl font-semibold text-green-700">
-              📦 My Products
+              ➕ Add Product
             </h2>
 
             <p className="mt-2 text-sm text-gray-600">
-              View and manage all products.
+              Add a new product to your farm inventory.
             </p>
 
           </Link>
@@ -647,6 +691,48 @@ const FarmerDashboardPage = () => {
             </p>
 
           </Link>
+
+        </div>
+
+        {/* Stock Summary */}
+
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+
+          <div className="rounded-xl border border-green-100 bg-green-50 p-5">
+
+            <p className="text-sm text-green-700">
+              Products
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-green-800">
+              {products.length}
+            </p>
+
+          </div>
+
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-5">
+
+            <p className="text-sm text-emerald-700">
+              In Stock
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-emerald-800">
+              {inStockProducts.length}
+            </p>
+
+          </div>
+
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+
+            <p className="text-sm text-gray-600">
+              Unavailable
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-gray-800">
+              {unavailableProducts.length}
+            </p>
+
+          </div>
 
         </div>
 
@@ -717,6 +803,8 @@ const FarmerDashboardPage = () => {
         )}
 
       </section>
+
+      {/* Footer */}
 
       <section className="mt-12 rounded-3xl border bg-white p-8 text-center shadow-sm">
 

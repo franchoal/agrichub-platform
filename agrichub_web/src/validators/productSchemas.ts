@@ -35,6 +35,8 @@ export const productSchema = z.object({
     "ton",
   ]),
 
+  is_available: z.boolean().default(true),
+
   image: z
     .instanceof(File)
     .optional()

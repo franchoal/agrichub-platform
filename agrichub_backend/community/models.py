@@ -7,17 +7,11 @@ from products.models import Product
 
 class Post(models.Model):
     DISCUSSION = "discussion"
-    KNOWLEDGE = "knowledge"
-    ANNOUNCEMENT = "announcement"
-    QUESTION = "question"
     FOR_SALE = "for_sale"
     SERVICE = "service"
 
     POST_TYPE_CHOICES = [
         (DISCUSSION, "Discussion"),
-        (KNOWLEDGE, "Knowledge"),
-        (ANNOUNCEMENT, "Announcement"),
-        (QUESTION, "Question"),
         (FOR_SALE, "For Sale"),
         (SERVICE, "Service"),
     ]

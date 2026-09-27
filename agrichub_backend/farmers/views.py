@@ -133,7 +133,6 @@ class FarmerProductListCreateView(
 
             product = serializer.save(
                 farmer=farmer_profile,
-                is_available=True,
             )
 
             Post.objects.create(
@@ -183,3 +182,20 @@ class FarmerProductDetailView(
                 "farmer",
             )
         )
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        """
+        Delete the linked Community For Sale post
+        before deleting the marketplace Product.
+
+        This keeps the marketplace and community
+        listing synchronized.
+        """
+
+        Post.objects.filter(
+            product=instance,
+            post_type=Post.FOR_SALE,
+        ).delete()
+
+        instance.delete()

@@ -20,6 +20,7 @@ const CreateProductPage = () => {
       price: Number(data.price),
       quantity: Number(data.quantity),
       unit: data.unit,
+      is_available: data.is_available,
       image: data.image ?? null,
     });
   };
@@ -72,6 +73,8 @@ const CreateProductPage = () => {
           <li>✓ Ensure your quantity and price are up to date.</li>
 
           <li>✓ Choose the correct category for better visibility.</li>
+
+          <li>✓ Confirm the product is available for sale before publishing.</li>
 
         </ul>
 

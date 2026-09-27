@@ -16,6 +16,9 @@ const FarmerProductCard = ({
   onDelete,
 }: FarmerProductCardProps) => {
 
+  const isInStock =
+    product.quantity > 0 && product.is_available;
+
   return (
 
     <Card className="overflow-hidden p-0">
@@ -62,33 +65,55 @@ const FarmerProductCard = ({
           {product.description}
         </p>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-end justify-between gap-4">
 
-          <span className="text-2xl font-bold text-green-700">
-            ₦{product.price}
-          </span>
+          <div>
 
-          <span className="text-sm text-gray-500">
-            {product.quantity} {product.unit}
-          </span>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Price
+            </p>
+
+            <span className="text-2xl font-bold text-green-700">
+              ₦{product.price}
+            </span>
+
+          </div>
+
+          <div className="text-right">
+
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Stock
+            </p>
+
+            <span className="text-sm font-semibold text-gray-900">
+              {product.quantity} {product.unit}
+            </span>
+
+          </div>
 
         </div>
 
         {/* Availability */}
 
-        <div>
+        <div className="flex items-center justify-between gap-3">
 
           <span
             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-              product.is_available
+              isInStock
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {product.is_available
-              ? "Available"
+            {isInStock
+              ? "Available for sale"
               : "Unavailable"}
           </span>
+
+          {!product.is_available && (
+            <span className="text-xs text-gray-500">
+              Listing disabled
+            </span>
+          )}
 
         </div>
 
