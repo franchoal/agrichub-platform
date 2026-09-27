@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from rest_framework import generics, permissions
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,7 +25,7 @@ def require_complete_profile(user):
         not hasattr(user, "profile")
         or not user.profile.is_complete
     ):
-        raise permissions.PermissionDenied(
+        raise PermissionDenied(
             "Please complete your profile before participating "
             "in the community."
         )
@@ -103,7 +103,7 @@ class ForSalePostCreateView(APIView):
         ).first()
 
         if farmer_profile is None:
-            raise permissions.PermissionDenied(
+            raise PermissionDenied(
                 "Please create your farmer profile "
                 "before creating a For Sale listing."
             )
@@ -229,7 +229,7 @@ class PostDetailView(
             self.get_object().author
             != self.request.user
         ):
-            raise permissions.PermissionDenied(
+            raise PermissionDenied(
                 "You can only edit your own posts."
             )
 
@@ -241,7 +241,7 @@ class PostDetailView(
 
     def perform_destroy(self, instance):
         if instance.author != self.request.user:
-            raise permissions.PermissionDenied(
+            raise PermissionDenied(
                 "You can only delete your own posts."
             )
 
