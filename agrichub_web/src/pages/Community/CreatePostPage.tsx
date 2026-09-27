@@ -12,6 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../services/api";
+import { farmerService } from "../../services/farmerService";
 import { useProfileCompletion } from "../../hooks/useProfileCompletion";
 import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionPrompt";
 
@@ -152,6 +153,67 @@ const CreatePostPage = () => {
     if (!profileIsComplete) {
       setShowProfilePrompt(true);
       return;
+    }
+
+    /* =========================================
+       FARMER PROFILE CHECK
+    =========================================
+
+    A For Sale post creates both:
+
+    1. A marketplace Product
+    2. A linked Community Post
+
+    The Product requires a FarmerProfile.
+
+    Users without a FarmerProfile are sent
+    through the existing farmer onboarding
+    flow and returned here afterwards.
+    */
+
+    if (postType === "for_sale") {
+      try {
+        await farmerService.getProfile();
+      } catch (err: any) {
+        const status =
+          err?.response?.status;
+
+        /*
+        The current FarmerProfile GET endpoint
+        uses IsFarmer. Therefore, an authenticated
+        user without a FarmerProfile currently
+        receives 403.
+
+        Send that user to the existing onboarding
+        page rather than allowing the listing
+        request to fail later.
+        */
+
+        if (
+          status === 403 ||
+          status === 404
+        ) {
+          navigate(
+            "/farmer/profile?returnTo=/community/create",
+            {
+              replace: true,
+            }
+          );
+
+          return;
+        }
+
+        console.error(
+          "Failed to check farmer profile:",
+          err
+        );
+
+        setError(
+          "We couldn't verify your seller profile. Please try again."
+        );
+
+        return;
+      }
     }
 
     if (!content.trim()) {

@@ -1,4 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,25 +23,58 @@ const FarmerProfileForm = () => {
 
   const navigate = useNavigate();
 
+  const [
+    searchParams,
+  ] = useSearchParams();
+
+
+  /*
+  ==========================================
+  RETURN DESTINATION
+  ==========================================
+
+  When a user reaches Farmer Profile
+  onboarding from another AgricWise activity,
+  that activity can provide a returnTo query
+  parameter.
+
+  Example:
+
+  /farmer/profile?returnTo=/community/create
+
+  Normal farmer-profile onboarding continues
+  to the existing farmer dashboard.
+  */
+
+  const requestedReturnTo =
+    searchParams.get(
+      "returnTo"
+    );
+
+  const returnTo =
+    requestedReturnTo &&
+    requestedReturnTo.startsWith("/")
+      ? requestedReturnTo
+      : "/farmer/dashboard";
+
 
   const createProfile =
     useCreateFarmerProfile(() => {
 
       navigate(
-        "/farmer/dashboard",
+        returnTo,
         {
-          replace:true,
+          replace: true,
         }
       );
 
     });
 
 
-
   const {
     register,
     handleSubmit,
-    formState:{
+    formState: {
       errors,
     },
 
@@ -48,24 +85,24 @@ const FarmerProfileForm = () => {
         farmerProfileSchema
       ),
 
-    defaultValues:{
-      farm_name:"",
-      farm_location:"",
-      farm_description:"",
-    }
+    defaultValues: {
+      farm_name: "",
+      farm_location: "",
+      farm_description: "",
+    },
 
   });
-
 
 
   const onSubmit = (
     data: FarmerProfileFormData
   ) => {
 
-    createProfile.mutate(data);
+    createProfile.mutate(
+      data
+    );
 
   };
-
 
 
   return (
@@ -73,13 +110,14 @@ const FarmerProfileForm = () => {
     <form
 
       onSubmit={
-        handleSubmit(onSubmit)
+        handleSubmit(
+          onSubmit
+        )
       }
 
       className="space-y-6 rounded-2xl bg-white p-8 shadow"
 
     >
-
 
       <Input
 
@@ -98,7 +136,6 @@ const FarmerProfileForm = () => {
       />
 
 
-
       <Input
 
         label="Farm Location"
@@ -114,7 +151,6 @@ const FarmerProfileForm = () => {
         }
 
       />
-
 
 
       <div>
@@ -151,7 +187,9 @@ const FarmerProfileForm = () => {
             <p className="mt-2 text-sm text-red-500">
 
               {
-                errors.farm_description.message
+                errors
+                  .farm_description
+                  .message
               }
 
             </p>
@@ -161,7 +199,6 @@ const FarmerProfileForm = () => {
 
 
       </div>
-
 
 
       <Button
@@ -176,12 +213,9 @@ const FarmerProfileForm = () => {
 
         {
           createProfile.isPending
-          ?
-          "Creating Farm Profile..."
-          :
-          "Create Farm Profile"
+            ? "Creating Farm Profile..."
+            : "Create Farm Profile"
         }
-
 
       </Button>
 

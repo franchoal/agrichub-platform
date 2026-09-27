@@ -90,10 +90,6 @@ export const router = createBrowserRouter([
       ======================================
       COMMUNITY HOME / FEED
       ======================================
-
-      Visitors are redirected to registration.
-
-      Authenticated members see the feed.
       */
 
       {
@@ -154,10 +150,6 @@ export const router = createBrowserRouter([
   ==========================================
   AUTHENTICATION
   ==========================================
-
-  AgricWise uses one account for everyone.
-
-  No buyer/farmer account type is required.
   */
 
   {
@@ -175,12 +167,6 @@ export const router = createBrowserRouter([
   ==========================================
   LEGACY AUTH URL COMPATIBILITY
   ==========================================
-
-  Existing links to former buyer/farmer
-  authentication URLs continue to work.
-
-  They now lead to the single AgricWise
-  authentication experience.
   */
 
   {
@@ -235,10 +221,10 @@ export const router = createBrowserRouter([
   The universal /profile route is deliberately
   outside FarmerRoute.
 
-  Every AgricWise person has a personal profile,
-  regardless of whether they sell, buy, farm,
-  offer services, or simply participate in
-  the community.
+  FarmerProfile onboarding is also outside
+  FarmerRoute because a user must be able to
+  CREATE a FarmerProfile before they can enter
+  the seller workspace.
   */
 
   {
@@ -250,11 +236,6 @@ export const router = createBrowserRouter([
       ======================================
       UNIVERSAL PERSONAL PROFILE
       ======================================
-
-      This is the primary profile for every
-      AgricWise member.
-
-      It is NOT a FarmerProfile.
       */
 
       {
@@ -265,13 +246,31 @@ export const router = createBrowserRouter([
 
       /*
       ======================================
-      COMMUNITY PARTICIPATION
+      FARMER/SELLER ONBOARDING
       ======================================
 
-      Creating a post requires authentication.
+      This route is available to any
+      authenticated AgricWise user.
 
-      Profile completion will be checked by
-      the community/profile participation gate.
+      It creates the FarmerProfile capability
+      required by the existing marketplace
+      Product model.
+
+      It is intentionally NOT protected by
+      FarmerRoute because FarmerRoute requires
+      the FarmerProfile to already exist.
+      */
+
+      {
+        path: "/farmer/profile",
+        element: <FarmerProfilePage />,
+      },
+
+
+      /*
+      ======================================
+      COMMUNITY PARTICIPATION
+      ======================================
       */
 
       {
@@ -317,13 +316,13 @@ export const router = createBrowserRouter([
       TRANSITIONAL FARMER/SELLER WORKSPACE
       ======================================
 
-      These routes remain temporarily because
-      the existing Product and Order models still
-      use FarmerProfile as the seller capability.
+      These routes remain protected by
+      FarmerRoute because they require an
+      existing FarmerProfile.
 
-      FarmerRoute only protects this workspace.
-
-      It does NOT define the user's identity.
+      FarmerRoute does NOT define the user's
+      identity. It only verifies that the
+      agricultural seller capability exists.
       */
 
       {
@@ -344,11 +343,6 @@ export const router = createBrowserRouter([
           {
             path: "/farmer/orders/:id",
             element: <FarmerOrderDetailsPage />,
-          },
-
-          {
-            path: "/farmer/profile",
-            element: <FarmerProfilePage />,
           },
 
           {

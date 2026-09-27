@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions
 import logging
+
 from rest_framework.exceptions import (
     NotFound,
     PermissionDenied,
@@ -13,6 +14,8 @@ from .serializers import (
     FarmerProfileSerializer,
     FarmerProductSerializer,
 )
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,17 +54,25 @@ class FarmerProfileView(generics.RetrieveUpdateAPIView):
 
 class FarmerProfileCreateView(generics.CreateAPIView):
     """
-    Create authenticated farmer profile.
+    Create an authenticated user's FarmerProfile.
+
+    A FarmerProfile represents the agricultural
+    seller/farmer capability and is separate from
+    the user's universal AgricWise personal profile.
 
     URL:
         POST /api/farmers/profile/create/
+
+    Any authenticated AgricWise user can create
+    their first FarmerProfile.
+
+    An existing FarmerProfile cannot be created again.
     """
 
     serializer_class = FarmerProfileSerializer
 
     permission_classes = [
         permissions.IsAuthenticated,
-        IsFarmer,
     ]
 
     def perform_create(self, serializer):
@@ -78,7 +89,9 @@ class FarmerProfileCreateView(generics.CreateAPIView):
         )
 
 
-class FarmerProductListCreateView(generics.ListCreateAPIView):
+class FarmerProductListCreateView(
+    generics.ListCreateAPIView
+):
     """
     Farmers can list and create
     their own products.
@@ -106,24 +119,26 @@ class FarmerProductListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
 
-     try:
-        farmer_profile = FarmerProfile.objects.get(
-            user=self.request.user
-        )
+        try:
+            farmer_profile = FarmerProfile.objects.get(
+                user=self.request.user
+            )
 
-        serializer.save(
-            farmer=farmer_profile,
-            is_available=True,
-        )
+            serializer.save(
+                farmer=farmer_profile,
+                is_available=True,
+            )
 
-     except FarmerProfile.DoesNotExist:
-        raise PermissionDenied(
-            "Please create your farmer profile before adding products."
-        )
+        except FarmerProfile.DoesNotExist:
+            raise PermissionDenied(
+                "Please create your farmer profile before adding products."
+            )
 
-     except Exception:
-        logger.exception("PRODUCT UPLOAD FAILED")
-        raise
+        except Exception:
+            logger.exception(
+                "PRODUCT UPLOAD FAILED"
+            )
+            raise
 
 
 class FarmerProductDetailView(
