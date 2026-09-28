@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -102,26 +103,12 @@ const HomePage = () => {
     }).format(new Date(date));
   };
 
-  const getPostTypeLabel = (postType: string) => {
-    switch (postType) {
-      case "knowledge":
-        return "Knowledge";
-
-      case "announcement":
-        return "Announcement";
-
-      case "question":
-        return "Question";
-
-      case "for_sale":
-        return "For Sale";
-
-      case "service":
-        return "Service";
-
-      default:
-        return "Discussion";
-    }
+  const getPostTypeLabel = (
+    postType: string
+  ) => {
+    return postType === "marketplace"
+      ? "Marketplace"
+      : "Discussion";
   };
 
   /*
@@ -131,8 +118,6 @@ const HomePage = () => {
   */
 
   const requireCompleteProfile = () => {
-    // Do not interrupt the user while the profile
-    // information is still being loaded.
     if (isLoadingProfile) {
       return false;
     }
@@ -144,6 +129,12 @@ const HomePage = () => {
 
     return true;
   };
+
+  /*
+  ==========================================
+  COMMENTS
+  ==========================================
+  */
 
   const handleToggleComments = async (
     postId: number
@@ -274,6 +265,12 @@ const HomePage = () => {
     }
   };
 
+  /*
+  ==========================================
+  CONNECTIONS
+  ==========================================
+  */
+
   const getConnectionStatus = (
     userId: number
   ) => {
@@ -348,7 +345,7 @@ const HomePage = () => {
   */
 
   const handleCreatePostClick = (
-    event: React.MouseEvent<HTMLAnchorElement>
+    event: MouseEvent<HTMLAnchorElement>
   ) => {
     if (!requireCompleteProfile()) {
       event.preventDefault();
@@ -501,7 +498,6 @@ const HomePage = () => {
               </span>
             </Link>
 
-            {/* SELL → FARMER WORKSPACE */}
             <Link
               to="/farmer"
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
@@ -513,16 +509,15 @@ const HomePage = () => {
               </span>
             </Link>
 
-            {/* SERVICE REMAINS SEPARATE FROM PRODUCT SALES */}
             <Link
               to="/community/create"
               onClick={handleCreatePostClick}
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
-              <Wrench size={16} />
+              <ShoppingBasket size={16} />
 
               <span className="hidden sm:inline">
-                Service
+                Marketplace
               </span>
             </Link>
 
@@ -704,8 +699,8 @@ const HomePage = () => {
                     post.author
                   );
 
-                const isForSale =
-                  post.post_type === "for_sale";
+                const isMarketplace =
+                  post.post_type === "marketplace";
 
                 return (
 
@@ -783,7 +778,7 @@ const HomePage = () => {
 
                             <span
                               className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                isForSale
+                                isMarketplace
                                   ? "bg-yellow-50 text-yellow-700"
                                   : "bg-green-50 text-green-700"
                               }`}
@@ -813,7 +808,7 @@ const HomePage = () => {
 
                       {/* MARKETPLACE LISTING SUMMARY */}
 
-                      {isForSale &&
+                      {isMarketplace &&
                         post.product_id && (
 
                           <div className="mt-5 rounded-2xl border border-green-100 bg-green-50/60 p-4">
@@ -876,9 +871,9 @@ const HomePage = () => {
 
                     </div>
 
-                    {/* IMAGE */}
+                    {/* COMMUNITY IMAGE */}
 
-                    {!isForSale &&
+                    {!isMarketplace &&
                       post.image && (
 
                         <div className="overflow-hidden border-y border-gray-100 bg-gray-50">
@@ -892,6 +887,26 @@ const HomePage = () => {
                         </div>
 
                       )}
+
+                    {/* COMMUNITY VIDEO */}
+
+                    {post.video && (
+
+                      <div className="overflow-hidden border-y border-gray-100 bg-black">
+
+                        <video
+                          src={post.video}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="max-h-[560px] w-full object-contain"
+                        >
+                          Your browser does not support video playback.
+                        </video>
+
+                      </div>
+
+                    )}
 
                     {/* ACTIONS */}
 

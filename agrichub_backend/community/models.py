@@ -7,13 +7,11 @@ from products.models import Product
 
 class Post(models.Model):
     DISCUSSION = "discussion"
-    FOR_SALE = "for_sale"
-    SERVICE = "service"
+    MARKETPLACE = "marketplace"
 
     POST_TYPE_CHOICES = [
         (DISCUSSION, "Discussion"),
-        (FOR_SALE, "For Sale"),
-        (SERVICE, "Service"),
+        (MARKETPLACE, "Marketplace"),
     ]
 
     author = models.ForeignKey(
@@ -45,6 +43,12 @@ class Post(models.Model):
 
     image = models.ImageField(
         upload_to="community/posts/",
+        blank=True,
+        null=True,
+    )
+
+    video = models.FileField(
+        upload_to="community/posts/videos/",
         blank=True,
         null=True,
     )

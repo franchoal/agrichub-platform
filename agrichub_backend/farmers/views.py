@@ -100,7 +100,7 @@ class FarmerProductListCreateView(
 
     Creating a product also automatically
     creates its corresponding Community
-    For Sale post.
+    Marketplace post.
     """
 
     serializer_class = FarmerProductSerializer
@@ -138,7 +138,7 @@ class FarmerProductListCreateView(
             Post.objects.create(
                 author=self.request.user,
                 content=product.description,
-                post_type=Post.FOR_SALE,
+                post_type=Post.MARKETPLACE,
                 location=farmer_profile.farm_location,
                 product=product,
             )
@@ -186,7 +186,7 @@ class FarmerProductDetailView(
     @transaction.atomic
     def perform_destroy(self, instance):
         """
-        Delete the linked Community For Sale post
+        Delete the linked Community Marketplace post
         before deleting the marketplace Product.
 
         This keeps the marketplace and community
@@ -195,7 +195,7 @@ class FarmerProductDetailView(
 
         Post.objects.filter(
             product=instance,
-            post_type=Post.FOR_SALE,
+            post_type=Post.MARKETPLACE,
         ).delete()
 
         instance.delete()

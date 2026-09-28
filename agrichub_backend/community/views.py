@@ -1,5 +1,12 @@
+import json
+import os
+import subprocess
+import tempfile
+
 from django.db import transaction
 from django.db.models import Q
+
+import imageio_ffmpeg
 
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -8,7 +15,6 @@ from rest_framework.views import APIView
 
 from farmers.models import FarmerProfile
 from notifications.models import Notification
-from products.models import Product
 from farmers.serializers import FarmerProductSerializer
 
 from .models import Post, Comment, Reaction, Connection
@@ -19,17 +25,167 @@ from .serializers import (
     ConnectionSerializer,
 )
 
+MAX_VIDEO_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_VIDEO_DURATION = 10.0  # seconds
 
-def require_complete_profile(user):
-    if (
-        not hasattr(user, "profile")
-        or not user.profile.is_complete
-    ):
-        raise PermissionDenied(
-            "Please complete your profile before participating "
-            "in the community."
+ALLOWED_VIDEO_TYPES = {
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+    "video/x-matroska",
+}
+
+
+def validate_community_video(video):
+    """
+    Validate community videos before they are stored in Cloudinary.
+
+    Rules:
+    - Supported video MIME type
+    - Maximum file size of 25 MB
+    - Maximum duration of 10 seconds
+    """
+
+    if video is None:
+        return
+
+    content_type = getattr(video, "content_type", None)
+
+    if content_type not in ALLOWED_VIDEO_TYPES:
+        raise ValidationError(
+            {
+                "video": (
+                    "Please upload a supported video format. "
+                    "MP4, WebM, MOV or MKV videos are supported."
+                )
+            }
         )
 
+    if video.size > MAX_VIDEO_SIZE:
+        raise ValidationError(
+            {
+                "video": (
+                    "Video file is too large. "
+                    "Please upload a video smaller than 25 MB."
+                )
+            }
+        )
+
+    temp_path = None
+
+    try:
+        suffix = os.path.splitext(
+            getattr(video, "name", "")
+        )[1] or ".mp4"
+
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=suffix,
+        ) as temp_file:
+            temp_path = temp_file.name
+
+            for chunk in video.chunks():
+                temp_file.write(chunk)
+
+        ffprobe = imageio_ffmpeg.get_ffmpeg_exe()
+
+        command = [
+            ffprobe,
+            "-i",
+            temp_path,
+            "-hide_banner",
+            "-f",
+            "null",
+            "-",
+        ]
+
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            raise ValidationError(
+                {
+                    "video": (
+                        "The uploaded video could not be "
+                        "processed. Please upload a valid video."
+                    )
+                }
+            )
+
+        duration_command = [
+            ffprobe,
+            "-i",
+            temp_path,
+            "-show_entries",
+            "format=duration",
+            "-v",
+            "quiet",
+            "-of",
+            "json",
+        ]
+
+        duration_result = subprocess.run(
+            duration_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+
+        if duration_result.returncode != 0:
+            raise ValidationError(
+                {
+                    "video": (
+                        "Unable to determine the video duration. "
+                        "Please try another video."
+                    )
+                }
+            )
+
+        metadata = json.loads(
+            duration_result.stdout
+        )
+
+        duration = float(
+            metadata["format"]["duration"]
+        )
+
+        if duration > MAX_VIDEO_DURATION:
+            raise ValidationError(
+                {
+                    "video": (
+                        "Community videos must be 10 seconds "
+                        "or shorter."
+                    )
+                }
+            )
+
+    except ValidationError:
+        raise
+
+    except (
+        KeyError,
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+    ):
+        raise ValidationError(
+            {
+                "video": (
+                    "Unable to determine the video duration. "
+                    "Please try another video."
+                )
+            }
+        )
+
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 class PostListCreateView(generics.ListCreateAPIView):
     queryset = (
@@ -64,28 +220,35 @@ class PostListCreateView(generics.ListCreateAPIView):
             Post.DISCUSSION,
         )
 
-        if post_type == Post.FOR_SALE:
+        if post_type == Post.MARKETPLACE:
             raise ValidationError(
                 {
                     "post_type": (
-                        "For Sale posts must be created "
+                        "Marketplace listings must be created "
                         "through the marketplace listing flow."
                     )
                 }
             )
+
+        video = self.request.FILES.get("video")
+
+        validate_community_video(video)
 
         serializer.save(
             author=self.request.user
         )
 
 
-class ForSalePostCreateView(APIView):
+class MarketplacePostCreateView(APIView):
     """
     Create a marketplace Product and a linked
-    Community For Sale post in one transaction.
+    Community Marketplace post in one transaction.
 
     The Product remains the source of truth for
     the marketplace listing.
+
+    Community media such as images and short videos
+    belong to the Community Post.
     """
 
     permission_classes = [
@@ -105,7 +268,7 @@ class ForSalePostCreateView(APIView):
         if farmer_profile is None:
             raise PermissionDenied(
                 "Please create your farmer profile "
-                "before creating a For Sale listing."
+                "before creating a Marketplace listing."
             )
 
         content = str(
@@ -154,6 +317,12 @@ class ForSalePostCreateView(APIView):
         if image:
             product_data["image"] = image
 
+        video = request.FILES.get(
+            "video"
+        )
+
+        validate_community_video(video)
+
         product_serializer = FarmerProductSerializer(
             data=product_data
         )
@@ -170,7 +339,7 @@ class ForSalePostCreateView(APIView):
         post = Post.objects.create(
             author=request.user,
             content=content,
-            post_type=Post.FOR_SALE,
+            post_type=Post.MARKETPLACE,
             location=str(
                 request.data.get(
                     "location",
@@ -178,6 +347,7 @@ class ForSalePostCreateView(APIView):
                 )
             ).strip(),
             product=product,
+            video=video,
         )
 
         return Response(
@@ -236,6 +406,10 @@ class PostDetailView(
         require_complete_profile(
             self.request.user
         )
+
+        video = self.request.FILES.get("video")
+
+        validate_community_video(video)
 
         serializer.save()
 

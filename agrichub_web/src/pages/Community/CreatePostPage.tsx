@@ -8,7 +8,8 @@ import {
   MapPin,
   Send,
   ShoppingBag,
-  Wrench,
+  Video,
+  X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -19,14 +20,23 @@ import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionP
 
 type PostType =
   | "discussion"
-  | "for_sale"
-  | "service";
+  | "marketplace";
 
 interface Category {
   id: number;
   name: string;
   slug: string;
 }
+
+const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
+const MAX_VIDEO_DURATION = 10;
+
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-matroska",
+];
 
 const CreatePostPage = () => {
   const navigate = useNavigate();
@@ -45,9 +55,10 @@ const CreatePostPage = () => {
     useState<PostType>("discussion");
   const [location, setLocation] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [video, setVideo] = useState<File | null>(null);
 
   /* =========================================
-     FOR SALE PRODUCT FIELDS
+     MARKETPLACE PRODUCT FIELDS
   ========================================= */
 
   const [categories, setCategories] =
@@ -90,7 +101,7 @@ const CreatePostPage = () => {
   ========================================= */
 
   useEffect(() => {
-    if (postType !== "for_sale") {
+    if (postType !== "marketplace") {
       return;
     }
 
@@ -139,6 +150,181 @@ const CreatePostPage = () => {
       event.target.files?.[0] || null;
 
     setImage(selectedFile);
+    setError("");
+  };
+
+  /* =========================================
+     VIDEO
+  ========================================= */
+
+  const getVideoDuration = (
+    file: File
+  ): Promise<number> => {
+
+    return new Promise(
+      (resolve, reject) => {
+
+        const videoElement =
+          document.createElement("video");
+
+        const objectUrl =
+          URL.createObjectURL(file);
+
+        videoElement.preload = "metadata";
+
+        videoElement.onloadedmetadata = () => {
+
+          const duration =
+            videoElement.duration;
+
+          URL.revokeObjectURL(objectUrl);
+
+          resolve(duration);
+        };
+
+        videoElement.onerror = () => {
+
+          URL.revokeObjectURL(objectUrl);
+
+          reject(
+            new Error(
+              "Unable to read video duration."
+            )
+          );
+        };
+
+        videoElement.src = objectUrl;
+      }
+    );
+  };
+
+  const handleVideoChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+
+    const selectedFile =
+      event.target.files?.[0] || null;
+
+    if (!selectedFile) {
+      return;
+    }
+
+    setError("");
+
+    /* =========================================
+       VIDEO TYPE
+    ========================================= */
+
+    if (
+      !ALLOWED_VIDEO_TYPES.includes(
+        selectedFile.type
+      )
+    ) {
+
+      setVideo(null);
+
+      setError(
+        "Please upload a supported video format. MP4, WebM, MOV or MKV videos are supported."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    /* =========================================
+       VIDEO SIZE
+    ========================================= */
+
+    if (
+      selectedFile.size >
+      MAX_VIDEO_SIZE
+    ) {
+
+      setVideo(null);
+
+      setError(
+        "Video is too large. Please choose a video smaller than 10 MB."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    /* =========================================
+       VIDEO DURATION
+    ========================================= */
+
+    try {
+
+      const duration =
+        await getVideoDuration(
+          selectedFile
+        );
+
+      if (
+        !Number.isFinite(duration)
+      ) {
+
+        setVideo(null);
+
+        setError(
+          "We couldn't determine the video duration. Please choose another video."
+        );
+
+        event.target.value = "";
+
+        return;
+      }
+
+      if (
+        duration >
+        MAX_VIDEO_DURATION
+      ) {
+
+        setVideo(null);
+
+        setError(
+          "Video is too long. Community videos must be 10 seconds or less."
+        );
+
+        event.target.value = "";
+
+        return;
+      }
+
+      setVideo(selectedFile);
+
+    } catch (err) {
+
+      console.error(
+        "Failed to inspect video:",
+        err
+      );
+
+      setVideo(null);
+
+      setError(
+        "We couldn't read this video. Please choose another video."
+      );
+
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setVideo(null);
+    setError("");
+
+    const videoInput =
+      document.getElementById(
+        "post-video"
+      ) as HTMLInputElement | null;
+
+    if (videoInput) {
+      videoInput.value = "";
+    }
   };
 
   /* =========================================
@@ -173,13 +359,26 @@ const CreatePostPage = () => {
     }
 
     /* =========================================
+       BASIC VALIDATION
+    ========================================= */
+
+    if (!content.trim()) {
+
+      setError(
+        "Please write something before posting."
+      );
+
+      return;
+    }
+
+    /* =========================================
        FARMER PROFILE CHECK
     =========================================
 
-    A For Sale post creates both:
+    A Marketplace post currently creates both:
 
     1. A marketplace Product
-    2. A linked Community Post
+    2. A linked Community Marketplace Post
 
     The Product requires a FarmerProfile.
 
@@ -188,7 +387,7 @@ const CreatePostPage = () => {
     flow.
     */
 
-    if (postType === "for_sale") {
+    if (postType === "marketplace") {
 
       try {
 
@@ -227,20 +426,11 @@ const CreatePostPage = () => {
       }
     }
 
-    if (!content.trim()) {
-
-      setError(
-        "Please write something before posting."
-      );
-
-      return;
-    }
-
     /* =========================================
-       FOR SALE VALIDATION
+       MARKETPLACE VALIDATION
     ========================================= */
 
-    if (postType === "for_sale") {
+    if (postType === "marketplace") {
 
       if (!category) {
 
@@ -294,6 +484,56 @@ const CreatePostPage = () => {
       }
     }
 
+    /* =========================================
+       VIDEO FINAL VALIDATION
+    ========================================= */
+
+    if (video) {
+
+      if (
+        video.size >
+        MAX_VIDEO_SIZE
+      ) {
+
+        setError(
+          "Video is too large. Please choose a video smaller than 10 MB."
+        );
+
+        return;
+      }
+
+      try {
+
+        const duration =
+          await getVideoDuration(video);
+
+        if (
+          duration >
+          MAX_VIDEO_DURATION
+        ) {
+
+          setError(
+            "Video is too long. Community videos must be 10 seconds or less."
+          );
+
+          return;
+        }
+
+      } catch (err) {
+
+        console.error(
+          "Failed to validate video:",
+          err
+        );
+
+        setError(
+          "We couldn't validate the video. Please choose another video."
+        );
+
+        return;
+      }
+    }
+
     setError("");
     setIsSubmitting(true);
 
@@ -320,10 +560,22 @@ const CreatePostPage = () => {
       }
 
       /* =========================================
-         FOR SALE
+         COMMUNITY VIDEO
       ========================================= */
 
-      if (postType === "for_sale") {
+      if (video) {
+
+        formData.append(
+          "video",
+          video
+        );
+      }
+
+      /* =========================================
+         MARKETPLACE
+      ========================================= */
+
+      if (postType === "marketplace") {
 
         formData.append(
           "category",
@@ -364,7 +616,7 @@ const CreatePostPage = () => {
         }
 
         await api.post(
-          "/community/posts/for-sale/",
+          "/community/posts/marketplace/",
           formData
         );
 
@@ -432,7 +684,7 @@ const CreatePostPage = () => {
       }
 
       setError(
-        postType === "for_sale"
+        postType === "marketplace"
           ? "We couldn't create your marketplace listing. Please check your details and try again."
           : "We couldn't publish your post. Please try again."
       );
@@ -575,10 +827,8 @@ const CreatePostPage = () => {
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
 
-                {postType === "for_sale" ? (
+                {postType === "marketplace" ? (
                   <ShoppingBag size={20} />
-                ) : postType === "service" ? (
-                  <Wrench size={20} />
                 ) : (
                   <Leaf size={20} />
                 )}
@@ -591,10 +841,8 @@ const CreatePostPage = () => {
                   htmlFor="post-content"
                   className="text-sm font-bold text-gray-900"
                 >
-                  {postType === "for_sale"
-                    ? "Tell the community about what you're selling"
-                    : postType === "service"
-                    ? "Tell the community about your service"
+                  {postType === "marketplace"
+                    ? "Tell the community about what you're offering"
                     : "What is happening in agriculture?"}
                 </label>
 
@@ -607,10 +855,8 @@ const CreatePostPage = () => {
                     )
                   }
                   placeholder={
-                    postType === "for_sale"
-                      ? "Describe your offer, availability, location or any important details..."
-                      : postType === "service"
-                      ? "Describe the service you offer and how it can help other members..."
+                    postType === "marketplace"
+                      ? "Describe what you're offering, availability, location or any important details..."
                       : "Share an update, ask a question, share knowledge or start a discussion..."
                   }
                   rows={7}
@@ -636,7 +882,7 @@ const CreatePostPage = () => {
               What do you want to post?
             </label>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
 
               <button
                 type="button"
@@ -672,11 +918,11 @@ const CreatePostPage = () => {
                 type="button"
                 onClick={() =>
                   handlePostTypeChange(
-                    "for_sale"
+                    "marketplace"
                   )
                 }
                 className={`rounded-xl border px-4 py-4 text-left transition ${
-                  postType === "for_sale"
+                  postType === "marketplace"
                     ? "border-green-600 bg-green-50 text-green-700"
                     : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
@@ -687,43 +933,13 @@ const CreatePostPage = () => {
                   <ShoppingBag size={17} />
 
                   <span className="text-sm font-bold">
-                    For Sale
+                    Marketplace
                   </span>
 
                 </div>
 
                 <p className="mt-2 text-xs leading-5 opacity-80">
-                  List agricultural products and connect the post directly to the marketplace.
-                </p>
-
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  handlePostTypeChange(
-                    "service"
-                  )
-                }
-                className={`rounded-xl border px-4 py-4 text-left transition ${
-                  postType === "service"
-                    ? "border-green-600 bg-green-50 text-green-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-
-                <div className="flex items-center gap-2">
-
-                  <Wrench size={17} />
-
-                  <span className="text-sm font-bold">
-                    Service
-                  </span>
-
-                </div>
-
-                <p className="mt-2 text-xs leading-5 opacity-80">
-                  Offer or promote an agricultural service to other community members.
+                  Offer agricultural products, services or other commercial opportunities to the community.
                 </p>
 
               </button>
@@ -732,9 +948,9 @@ const CreatePostPage = () => {
 
           </div>
 
-          {/* FOR SALE PRODUCT DETAILS */}
+          {/* MARKETPLACE PRODUCT DETAILS */}
 
-          {postType === "for_sale" && (
+          {postType === "marketplace" && (
 
             <div className="border-t border-gray-100 bg-green-50/40 px-5 py-5 sm:px-6">
 
@@ -1018,13 +1234,13 @@ const CreatePostPage = () => {
                 <span>
 
                   <span className="block text-sm font-bold text-gray-800">
-                    {postType === "for_sale"
+                    {postType === "marketplace"
                       ? "Product image"
                       : "Add an image"}
                   </span>
 
                   <span className="block text-xs text-gray-500">
-                    {postType === "for_sale"
+                    {postType === "marketplace"
                       ? "Add a clear photo of the product"
                       : "Share a photo with the community"}
                   </span>
@@ -1049,8 +1265,87 @@ const CreatePostPage = () => {
 
             {image && (
 
-              <div className="mt-3 rounded-xl bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                Selected: {image.name}
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+
+                <span className="truncate">
+                  Selected: {image.name}
+                </span>
+
+              </div>
+
+            )}
+
+          </div>
+
+          {/* VIDEO */}
+
+          <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
+
+            <label
+              htmlFor="post-video"
+              className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-4 transition hover:border-green-500 hover:bg-green-50"
+            >
+
+              <span className="flex items-center gap-3">
+
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-green-700 shadow-sm">
+                  <Video size={19} />
+                </span>
+
+                <span>
+
+                  <span className="block text-sm font-bold text-gray-800">
+                    Add a video
+                  </span>
+
+                  <span className="block text-xs text-gray-500">
+                    Up to 10 seconds and 10 MB
+                  </span>
+
+                </span>
+
+              </span>
+
+              <span className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm">
+                Browse
+              </span>
+
+            </label>
+
+            <input
+              id="post-video"
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/x-matroska"
+              onChange={handleVideoChange}
+              className="hidden"
+            />
+
+            {video && (
+
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
+
+                <span className="flex min-w-0 items-center gap-2">
+
+                  <Video
+                    size={15}
+                    className="shrink-0"
+                  />
+
+                  <span className="truncate">
+                    Selected: {video.name}
+                  </span>
+
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleRemoveVideo}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-gray-500 transition hover:bg-red-50 hover:text-red-600"
+                  aria-label="Remove selected video"
+                >
+                  <X size={15} />
+                </button>
+
               </div>
 
             )}
@@ -1076,26 +1371,24 @@ const CreatePostPage = () => {
               disabled={
                 isSubmitting ||
                 (
-                  postType === "for_sale" &&
+                  postType === "marketplace" &&
                   isLoadingCategories
                 )
               }
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
 
-              {postType === "for_sale" ? (
+              {postType === "marketplace" ? (
                 <ShoppingBag size={17} />
-              ) : postType === "service" ? (
-                <Wrench size={17} />
               ) : (
                 <Send size={17} />
               )}
 
               {isSubmitting
-                ? postType === "for_sale"
+                ? postType === "marketplace"
                   ? "Creating Listing..."
                   : "Publishing..."
-                : postType === "for_sale"
+                : postType === "marketplace"
                 ? "Create Listing"
                 : "Publish Post"}
 

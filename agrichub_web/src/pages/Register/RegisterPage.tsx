@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -17,12 +17,38 @@ import {
   type RegisterFormData,
 } from "../../validators/authSchemas";
 
-
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
+  /*
+   * Preserve the destination that brought the user
+   * to registration.
+   *
+   * Example:
+   * /register?returnTo=/farmer
+   */
+  const returnTo = searchParams.get("returnTo");
+
+  /*
+   * Only allow internal AgricWise routes to be used
+   * as redirect destinations.
+   */
+  const redirectTo =
+    returnTo && returnTo.startsWith("/")
+      ? returnTo
+      : undefined;
+
+  /*
+   * After registration, send the user to login while
+   * preserving the original destination.
+   */
   const registerMutation = useRegister(() => {
-    navigate("/login");
+    navigate(
+      redirectTo
+        ? `/login?returnTo=${encodeURIComponent(redirectTo)}`
+        : "/login"
+    );
   });
 
   const {
@@ -119,7 +145,11 @@ const RegisterPage = () => {
             </p>
 
             <Link
-              to="/login"
+              to={
+                redirectTo
+                  ? `/login?returnTo=${encodeURIComponent(redirectTo)}`
+                  : "/login"
+              }
               className="mt-2 inline-block font-semibold text-green-700 hover:underline"
             >
               Sign In

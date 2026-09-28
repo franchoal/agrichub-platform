@@ -127,7 +127,7 @@ const ProductsPage = () => {
             <div className="mt-10 flex flex-wrap gap-4">
 
               <Link
-                to="/register/farmer"
+                to="/farmer"
                 className="flex items-center gap-2 rounded-2xl bg-white px-7 py-4 font-semibold text-green-700 transition hover:-translate-y-1 hover:shadow-xl"
               >
                 Become a Seller
@@ -142,7 +142,8 @@ const ProductsPage = () => {
         </div>
 
       </section>
-            {/* ================= CATEGORY CHIPS ================= */}
+
+      {/* ================= CATEGORY CHIPS ================= */}
 
       <section>
 
@@ -331,7 +332,8 @@ const ProductsPage = () => {
         </button>
 
       </section>
-            {/* ================= RESULTS ================= */}
+
+      {/* ================= RESULTS ================= */}
 
       <section>
 
@@ -394,7 +396,7 @@ const ProductsPage = () => {
           <div className="mt-10 flex flex-wrap justify-center gap-5">
 
             <Link
-              to="/register/farmer"
+              to="/farmer"
               className="rounded-2xl bg-white px-8 py-4 font-bold text-green-700 transition hover:-translate-y-1 hover:shadow-2xl"
             >
               Become a Seller
@@ -414,9 +416,7 @@ const ProductsPage = () => {
       </section>
 
     </div>
-
   );
-
 };
 
 export default ProductsPage;

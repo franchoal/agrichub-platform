@@ -6,9 +6,13 @@ import { toast } from "react-hot-toast";
 import { authService } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 
+interface UseLoginOptions {
+  redirectTo?: string;
+}
 
-export const useLogin = () => {
-
+export const useLogin = (
+  options?: UseLoginOptions
+) => {
   const navigate = useNavigate();
 
   const login = useAuthStore(
@@ -16,11 +20,9 @@ export const useLogin = () => {
   );
 
   return useMutation({
-
     mutationFn: authService.login,
 
     onSuccess: (response) => {
-
       /*
       ==========================================
       Save Authentication
@@ -33,17 +35,15 @@ export const useLogin = () => {
         refresh: response.refresh,
       });
 
-
       toast.success(
         "Login successful!"
       );
-
 
       /*
       ==========================================
       AGRICWISE FLOW
 
-      Login
+      Normal login
         ↓
       Authenticate person
         ↓
@@ -51,30 +51,33 @@ export const useLogin = () => {
         ↓
       AgricWise Home
 
-      Users can choose activities from the
-      AgricWise experience instead of being
-      assigned a permanent account role.
+      Seller/business login
+        ↓
+      Authenticate person
+        ↓
+      Save session
+        ↓
+      Return to Farmer Portal
+        ↓
+      Existing farmer → Dashboard
+      New farmer → Profile setup
       ==========================================
       */
 
       navigate(
-        "/",
+        options?.redirectTo || "/",
         {
           replace: true,
         }
       );
     },
 
-
     onError: (error) => {
-
       if (
         axios.isAxiosError(error)
       ) {
-
         const message =
-          error.response?.data?.detail
-          ||
+          error.response?.data?.detail ||
           "Invalid email or password.";
 
         toast.error(
@@ -84,12 +87,9 @@ export const useLogin = () => {
         return;
       }
 
-
       toast.error(
         "Login failed."
       );
     },
-
   });
-
 };

@@ -3,6 +3,9 @@ import {
   BellRing,
   CheckCircle2,
   Clock3,
+  Package,
+  ShoppingBasket,
+  UserRound,
 } from "lucide-react";
 
 import {
@@ -10,21 +13,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import {
-  Card,
-  Button,
-} from "../../components/ui";
+import { Card, Button } from "../../components/ui";
 
-import {
-  useNotifications,
-} from "../../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotifications";
 
-import {
-  notificationService,
-} from "../../services/notificationService";
+import { notificationService } from "../../services/notificationService";
 
 const NotificationsPage = () => {
-
   const queryClient = useQueryClient();
 
   const {
@@ -33,436 +28,286 @@ const NotificationsPage = () => {
     isError,
   } = useNotifications();
 
-  const notificationList =
-    notifications?.results ?? [];
+  const notificationList = notifications?.results ?? [];
 
-  const unreadCount =
-    notificationList.filter(
-      (notification) =>
-        !notification.is_read
-    ).length;
+  const unreadCount = notificationList.filter(
+    (notification) => !notification.is_read
+  ).length;
 
-  const markReadMutation =
-    useMutation({
+  const markReadMutation = useMutation({
+    mutationFn: (id: number) =>
+      notificationService.markNotificationRead(id),
 
-      mutationFn: (
-        id: number
-      ) =>
-        notificationService.markNotificationRead(
-          id
-        ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notifications"],
+      });
+    },
+  });
 
-      onSuccess: () => {
+  const markAllMutation = useMutation({
+    mutationFn:
+      notificationService.markAllNotificationsRead,
 
-        queryClient.invalidateQueries({
-          queryKey: [
-            "notifications",
-          ],
-        });
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notifications"],
+      });
+    },
+  });
 
-      },
+  const getNotificationIcon = (type: string) => {
+    const normalizedType = type.toLowerCase();
 
-    });
+    if (
+      normalizedType.includes("order") ||
+      normalizedType.includes("delivery")
+    ) {
+      return Package;
+    }
 
-  const markAllMutation =
-    useMutation({
+    if (
+      normalizedType.includes("product") ||
+      normalizedType.includes("marketplace") ||
+      normalizedType.includes("payment")
+    ) {
+      return ShoppingBasket;
+    }
 
-      mutationFn:
-        notificationService.markAllNotificationsRead,
+    if (
+      normalizedType.includes("connection") ||
+      normalizedType.includes("follow") ||
+      normalizedType.includes("profile")
+    ) {
+      return UserRound;
+    }
 
-      onSuccess: () => {
-
-        queryClient.invalidateQueries({
-          queryKey: [
-            "notifications",
-          ],
-        });
-
-      },
-
-    });
+    return BellRing;
+  };
 
   if (isLoading) {
-
     return (
+      <main className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+          <div className="mb-5 h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
 
-      <main className="mx-auto max-w-7xl px-6 py-12">
-
-        <div className="space-y-6">
-
-          <div className="h-14 w-72 animate-pulse rounded-xl bg-gray-200" />
-
-          {[1, 2, 3].map((item) => (
-
-            <div
-              key={item}
-              className="h-36 animate-pulse rounded-[30px] bg-gray-100"
-            />
-
-          ))}
-
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm"
+              />
+            ))}
+          </div>
         </div>
-
       </main>
-
     );
-
   }
 
   if (isError) {
-
     return (
+      <main className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+          <Card className="rounded-3xl border-red-100 bg-red-50 p-6">
+            <h2 className="text-xl font-bold text-red-700">
+              Unable to Load Notifications
+            </h2>
 
-      <main className="mx-auto max-w-6xl px-6 py-12">
-
-        <Card className="rounded-[30px] border-red-200 bg-red-50 p-10">
-
-          <h2 className="text-3xl font-bold text-red-700">
-
-            Unable to Load Notifications
-
-          </h2>
-
-          <p className="mt-4 text-red-600">
-
-            Please try again later.
-
-          </p>
-
-        </Card>
-
+            <p className="mt-2 text-sm leading-6 text-red-600">
+              Please try again later.
+            </p>
+          </Card>
+        </div>
       </main>
-
     );
-
   }
 
   return (
-
-    <main className="mx-auto max-w-7xl px-6 py-12">
-
-      {/* ====================================================== */}
-{/* HERO */}
-{/* ====================================================== */}
-
-<section className="relative overflow-hidden rounded-[36px]">
-
-  {/* Background */}
-
-  <div className="absolute inset-0 bg-gradient-to-r from-green-800 via-green-700 to-emerald-600" />
-
-  {/* Decorative Shapes */}
-
-  <div className="absolute -right-16 -top-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-
-  <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-
-  <div className="relative grid gap-10 px-10 py-16 lg:grid-cols-[1fr_340px] lg:items-center lg:px-16">
-
-    {/* Left */}
-
-    <div>
-
-      <span className="inline-flex items-center rounded-full bg-white/20 px-5 py-2 text-sm font-semibold backdrop-blur">
-
-        🔔 Notification Center
-
-      </span>
-
-      <h1 className="mt-8 text-5xl font-extrabold leading-tight text-white lg:text-6xl">
-
-        Stay Connected
-        <br />
-        Stay Informed
-
-      </h1>
-
-      <p className="mt-6 max-w-3xl text-lg leading-8 text-green-100">
-
-        Receive real-time updates about orders, payments,
-        deliveries, product approvals and important account
-        activities from across AgricWise Marketplace.
-
-      </p>
-
-    </div>
-
-    {/* Right */}
-
-    <div className="grid gap-5">
-
-      <div className="rounded-[28px] bg-white/15 p-6 text-center backdrop-blur">
-
-        <BellRing
-          size={42}
-          className="mx-auto mb-4 text-white"
-        />
-
-        <p className="text-5xl font-black text-white">
-
-          {unreadCount}
-
-        </p>
-
-        <p className="mt-2 text-green-100">
-
-          Unread Notifications
-
-        </p>
-
-      </div>
-
-      <div className="grid grid-cols-2 gap-5">
-
-        <div className="rounded-[24px] bg-white/15 p-5 text-center backdrop-blur">
-
-          <p className="text-3xl font-black text-white">
-
-            {notificationList.length}
-
-          </p>
-
-          <p className="mt-2 text-sm text-green-100">
-
-            Total
-
-          </p>
-
-        </div>
-
-        <div className="rounded-[24px] bg-white/15 p-5 text-center backdrop-blur">
-
-          <p className="text-3xl font-black text-white">
-
-            {notificationList.length - unreadCount}
-
-          </p>
-
-          <p className="mt-2 text-sm text-green-100">
-
-            Read
-
-          </p>
-
-        </div>
-
-      </div>
-
-      {unreadCount > 0 && (
-
-        <Button
-          onClick={() => markAllMutation.mutate()}
-          disabled={markAllMutation.isPending}
-          className="rounded-2xl bg-white py-3 font-bold text-green-700 hover:bg-green-50"
-        >
-
-          {markAllMutation.isPending
-            ? "Updating..."
-            : "✓ Mark All As Read"}
-
-        </Button>
-
-      )}
-
-    </div>
-
-  </div>
-
-</section>
-      {/* Empty State */}
-
-      {notificationList.length === 0 ? (
-
-        <Card className="rounded-[32px] p-20 text-center shadow-lg">
-
-          <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-green-100">
-
-            <Bell
-              size={56}
-              className="text-green-700"
-            />
-
-          </div>
-
-          <h2 className="mt-8 text-4xl font-bold text-gray-900">
-
-            You're All Caught Up
-
-          </h2>
-
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-500">
-
-            There are no new notifications at the moment.
-            We'll notify you whenever there's important activity.
-
-          </p>
-
-        </Card>
-
-      ) : (
-
-        <div className="space-y-6">
-
-  {notificationList.map((notification) => (
-
-    <div
-      key={notification.id}
-      onClick={() => {
-        if (!notification.is_read) {
-          markReadMutation.mutate(notification.id);
-        }
-      }}
-      className="group cursor-pointer"
-    >
-
-      <Card
-        className={`overflow-hidden rounded-[30px] border-0 p-0 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
-          notification.is_read
-            ? "bg-white"
-            : "ring-2 ring-green-200"
-        }`}
-      >
-
-        <div className="grid gap-8 p-8 lg:grid-cols-[72px_1fr_auto]">
-
-          {/* ====================================================== */}
-          {/* ICON */}
-          {/* ====================================================== */}
-
-          <div
-            className={`flex h-[72px] w-[72px] items-center justify-center rounded-3xl ${
-              notification.is_read
-                ? "bg-gray-100"
-                : "bg-green-100"
-            }`}
-          >
-
-            <BellRing
-              size={34}
-              className={
-                notification.is_read
-                  ? "text-gray-500"
-                  : "text-green-700"
-              }
-            />
-
-          </div>
-
-          {/* ====================================================== */}
-          {/* CONTENT */}
-          {/* ====================================================== */}
-
-          <div>
-
-            <div className="flex flex-wrap items-center gap-3">
-
-              <h2 className="text-2xl font-bold text-gray-900 transition group-hover:text-green-700">
-
-                {notification.title}
-
-              </h2>
-
-              {!notification.is_read && (
-
-                <span className="rounded-full bg-green-600 px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
-
-                  New
-
-                </span>
-
-              )}
-
-            </div>
-
-            <p className="mt-4 max-w-3xl leading-8 text-gray-600">
-
-              {notification.message}
-
-            </p>
-
-          </div>
-
-          {/* ====================================================== */}
-          {/* META */}
-          {/* ====================================================== */}
-
-          <div className="flex flex-col items-end justify-between">
-
-            <span className="rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-
-              {notification.notification_type.replaceAll(
-                "_",
-                " "
-              )}
-
-            </span>
-
-            <div className="mt-8 flex items-center gap-2 text-sm text-gray-500">
-
-              <Clock3 size={16} />
-
-              {new Date(
-                notification.created_at
-              ).toLocaleString()}
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* ====================================================== */}
-        {/* FOOTER */}
-        {/* ====================================================== */}
-
-        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-8 py-4">
-
+    <main className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-4 sm:px-6 sm:pt-8">
+        {/* APP HEADER */}
+        <header className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+              <Bell size={21} className="text-green-700" />
+            </div>
 
-            <CheckCircle2
-              size={18}
-              className={
-                notification.is_read
-                  ? "text-green-600"
-                  : "text-gray-400"
-              }
-            />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                Notifications
+              </h1>
 
-            <span className="text-sm font-medium text-gray-600">
-
-              {notification.is_read
-                ? "Notification Read"
-                : "Click to mark as read"}
-
-            </span>
-
+              <p className="text-xs text-gray-500">
+                {unreadCount > 0
+                  ? `${unreadCount} unread notification${
+                      unreadCount !== 1 ? "s" : ""
+                    }`
+                  : "You're all caught up"}
+              </p>
+            </div>
           </div>
 
-          {!notification.is_read && (
-
-            <span className="rounded-full bg-green-100 px-4 py-2 text-xs font-bold uppercase tracking-wide text-green-700">
-
-              Action Required
-
-            </span>
-
+          {unreadCount > 0 && (
+            <Button
+              onClick={() => markAllMutation.mutate()}
+              disabled={markAllMutation.isPending}
+              className="rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white hover:bg-green-700 sm:px-4"
+            >
+              {markAllMutation.isPending
+                ? "Updating..."
+                : "Mark all read"}
+            </Button>
           )}
+        </header>
 
-        </div>
+        {/* UNREAD SUMMARY */}
+        {notificationList.length > 0 && (
+          <section className="mb-5 rounded-3xl bg-gradient-to-r from-green-700 to-emerald-600 p-5 text-white shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-100">
+                  Notification Center
+                </p>
 
-      </Card>
+                <h2 className="mt-1 text-xl font-bold">
+                  Stay updated
+                </h2>
 
-    </div>
+                <p className="mt-1 text-sm text-green-100">
+                  Orders, payments, marketplace activity and account
+                  updates appear here.
+                </p>
+              </div>
 
-  ))}
+              <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15 sm:flex">
+                <BellRing size={27} />
+              </div>
+            </div>
+          </section>
+        )}
 
-</div>
-      )}
+        {/* EMPTY STATE */}
+        {notificationList.length === 0 ? (
+          <Card className="rounded-3xl border-0 p-10 text-center shadow-sm sm:p-14">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
+              <Bell
+                size={38}
+                className="text-green-600"
+              />
+            </div>
 
+            <h2 className="mt-5 text-2xl font-bold text-gray-900">
+              You're All Caught Up
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500">
+              There are no new notifications at the moment. We'll
+              notify you whenever there's important activity.
+            </p>
+          </Card>
+        ) : (
+          <section className="space-y-3">
+            {notificationList.map((notification) => {
+              const NotificationIcon = getNotificationIcon(
+                notification.notification_type
+              );
+
+              return (
+                <div
+                  key={notification.id}
+                  onClick={() => {
+                    if (!notification.is_read) {
+                      markReadMutation.mutate(notification.id);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Card
+                    className={`overflow-hidden rounded-3xl border-0 p-0 shadow-sm transition ${
+                      notification.is_read
+                        ? "bg-white"
+                        : "bg-green-50/70 ring-1 ring-green-200"
+                    }`}
+                  >
+                    <div className="flex gap-3 p-4 sm:gap-4 sm:p-5">
+                      {/* ICON */}
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+                          notification.is_read
+                            ? "bg-gray-100"
+                            : "bg-green-100"
+                        }`}
+                      >
+                        <NotificationIcon
+                          size={21}
+                          className={
+                            notification.is_read
+                              ? "text-gray-500"
+                              : "text-green-700"
+                          }
+                        />
+                      </div>
+
+                      {/* CONTENT */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h2
+                              className={`text-sm font-bold leading-5 ${
+                                notification.is_read
+                                  ? "text-gray-800"
+                                  : "text-gray-900"
+                              }`}
+                            >
+                              {notification.title}
+                            </h2>
+
+                            <p className="mt-2 text-sm leading-6 text-gray-600">
+                              {notification.message}
+                            </p>
+                          </div>
+
+                          {!notification.is_read && (
+                            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-green-600" />
+                          )}
+                        </div>
+
+                        {/* META */}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 shadow-sm">
+                            {notification.notification_type.replaceAll(
+                              "_",
+                              " "
+                            )}
+                          </span>
+
+                          <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                            <Clock3 size={12} />
+
+                            {new Date(
+                              notification.created_at
+                            ).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* STATUS */}
+                    {!notification.is_read && (
+                      <div className="flex items-center gap-2 border-t border-green-100 bg-green-100/50 px-4 py-2.5 text-[11px] font-medium text-green-700 sm:px-5">
+                        <CheckCircle2 size={14} />
+                        Tap to mark as read
+                      </div>
+                    )}
+                  </Card>
+                </div>
+              );
+            })}
+          </section>
+        )}
+      </div>
     </main>
-
   );
-
 };
 
 export default NotificationsPage;

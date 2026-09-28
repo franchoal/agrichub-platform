@@ -13,14 +13,14 @@ export interface CommunityPost {
 
   post_type:
     | "discussion"
-    | "for_sale"
-    | "service";
+    | "marketplace";
 
   /*
    * Marketplace connection.
    *
    * These fields are populated by the backend for
-   * For Sale community posts.
+   * Marketplace community posts that are linked
+   * to a product listing.
    */
   product_id: number | null;
   product_name: string | null;
@@ -29,7 +29,8 @@ export interface CommunityPost {
 
   location: string;
   image: string | null;
-
+  video: string | null;
+  
   created_at: string;
   updated_at: string;
 }

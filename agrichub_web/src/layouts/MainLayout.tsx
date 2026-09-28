@@ -20,18 +20,18 @@ import {
 import { logoIcon } from "../assets/logo";
 
 import { useAuthStore } from "../store/authStore";
+import { useFarmerProfile } from "../hooks/useFarmerProfile";
 // import { useCartStore } from "../store/cartStore";
-
 
 const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const { user, logout } = useAuthStore();
+  const { data: farmerProfile } = useFarmerProfile();
   // const { items } = useCartStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -71,10 +71,10 @@ const MainLayout = () => {
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-700">
               <img
-  src={logoIcon}
-  alt="AgricWise Africa"
-  className="h-9 w-9 object-contain"
-/>
+                src={logoIcon}
+                alt="AgricWise Africa"
+                className="h-9 w-9 object-contain"
+              />
             </div>
 
             <div className="hidden sm:block">
@@ -242,6 +242,17 @@ const MainLayout = () => {
 
               {user && (
                 <>
+                  {farmerProfile && (
+                    <Link
+                      to="/farmer/dashboard"
+                      onClick={closeMobileMenu}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                    >
+                      <Home size={18} />
+                      Business Dashboard
+                    </Link>
+                  )}
+
                   <Link
                     to="/notifications"
                     onClick={closeMobileMenu}
@@ -260,7 +271,6 @@ const MainLayout = () => {
                       <ShoppingCart size={18} />
                       Cart
                     </span>
-
                   </Link>
 
                   <Link
@@ -284,24 +294,25 @@ const MainLayout = () => {
               )}
 
               {!user && (
-  <div className="mt-2 space-y-2">
-    <Link
-      to="/login/buyer"
-      onClick={closeMobileMenu}
-      className="flex items-center justify-center rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-    >
-      Login
-    </Link>
+                <div className="mt-2 space-y-2">
+                  <Link
+                    to="/login/buyer"
+                    onClick={closeMobileMenu}
+                    className="flex items-center justify-center rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Login
+                  </Link>
 
-    <Link
-      to="/register"
-      onClick={closeMobileMenu}
-      className="flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-800"
-    >
-      Join AgricWise
-    </Link>
-  </div>
-)}
+                  <Link
+                    to="/register"
+                    onClick={closeMobileMenu}
+                    className="flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-800"
+                  >
+                    Join AgricWise
+                  </Link>
+                </div>
+              )}
+
             </div>
 
           </div>
@@ -494,6 +505,5 @@ const MainLayout = () => {
     </div>
   );
 };
-
 
 export default MainLayout;

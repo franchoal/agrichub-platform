@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (
     PostListCreateView,
     PostDetailView,
-    ForSalePostCreateView,
+    MarketplacePostCreateView,
     CommentListCreateView,
     ReactionListCreateView,
     ConnectionListCreateView,
@@ -20,9 +20,9 @@ urlpatterns = [
         name="community-post-list",
     ),
     path(
-        "posts/for-sale/",
-        ForSalePostCreateView.as_view(),
-        name="community-for-sale-create",
+        "posts/marketplace/",
+        MarketplacePostCreateView.as_view(),
+        name="community-marketplace-create",
     ),
     path(
         "posts/<int:pk>/",
@@ -39,7 +39,6 @@ urlpatterns = [
         ReactionListCreateView.as_view(),
         name="community-reaction-list",
     ),
-
     path(
         "connections/",
         ConnectionListCreateView.as_view(),

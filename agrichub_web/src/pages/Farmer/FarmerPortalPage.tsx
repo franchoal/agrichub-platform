@@ -56,6 +56,10 @@ const FarmerPortalPage = () => {
 
     /*
      * Existing farmer → dashboard.
+     *
+     * This includes both verified and unverified farmers.
+     * Verification controls marketplace visibility,
+     * not access to the farmer dashboard.
      */
     if (farmerProfile) {
       return <Navigate to="/farmer/dashboard" replace />;
@@ -74,6 +78,9 @@ const FarmerPortalPage = () => {
 
   /*
    * Public farmer portal for users who are not authenticated.
+   *
+   * The returnTo parameter preserves the seller/business intent
+   * through the login or registration process.
    */
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 to-white">
@@ -170,14 +177,14 @@ const FarmerPortalPage = () => {
 
             <div className="mt-10 space-y-4">
               <Link
-                to="/login/farmer"
+                to="/login?returnTo=/farmer"
                 className="block w-full rounded-xl bg-green-600 px-6 py-4 text-center font-semibold text-white transition hover:bg-green-700"
               >
                 Farmer Login
               </Link>
 
               <Link
-                to="/register/farmer"
+                to="/register?returnTo=/farmer"
                 className="block w-full rounded-xl border-2 border-green-600 px-6 py-4 text-center font-semibold text-green-700 transition hover:bg-green-50"
               >
                 Create Farmer Account

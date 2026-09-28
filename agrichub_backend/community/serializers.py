@@ -20,13 +20,11 @@ class PostSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
-
     product_name = serializers.CharField(
         source="product.name",
         read_only=True,
         allow_null=True,
     )
-
     product_price = serializers.DecimalField(
         source="product.price",
         max_digits=10,
@@ -34,7 +32,6 @@ class PostSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
-
     product_image = serializers.ImageField(
         source="product.image",
         read_only=True,
@@ -58,6 +55,7 @@ class PostSerializer(serializers.ModelSerializer):
             "product_image",
             "location",
             "image",
+            "video",
             "created_at",
             "updated_at",
         ]
