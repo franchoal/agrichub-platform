@@ -42,7 +42,7 @@ def validate_community_video(video):
 
     Rules:
     - Supported video MIME type
-    - Maximum file size of 25 MB
+    - Maximum file size of 10 MB
     - Maximum duration of 10 seconds
     """
 
@@ -66,7 +66,7 @@ def validate_community_video(video):
             {
                 "video": (
                     "Video file is too large. "
-                    "Please upload a video smaller than 25 MB."
+                    "Please upload a video smaller than 10 MB."
                 )
             }
         )
@@ -87,13 +87,12 @@ def validate_community_video(video):
             for chunk in video.chunks():
                 temp_file.write(chunk)
 
-        ffprobe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
 
         command = [
-            ffprobe,
+            ffmpeg,
             "-i",
             temp_path,
-            "-hide_banner",
             "-f",
             "null",
             "-",
@@ -117,27 +116,25 @@ def validate_community_video(video):
                 }
             )
 
-        duration_command = [
-            ffprobe,
-            "-i",
-            temp_path,
-            "-show_entries",
-            "format=duration",
-            "-v",
-            "quiet",
-            "-of",
-            "json",
-        ]
+        duration = None
 
-        duration_result = subprocess.run(
-            duration_command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-        )
+        for line in result.stderr.splitlines():
+            if "Duration:" in line:
+                duration_text = line.split(
+                    "Duration:",
+                    1,
+                )[1].strip().split(",", 1)[0]
 
-        if duration_result.returncode != 0:
+                hours, minutes, seconds = duration_text.split(":")
+
+                duration = (
+                    (float(hours) * 3600)
+                    + (float(minutes) * 60)
+                    + float(seconds)
+                )
+                break
+
+        if duration is None:
             raise ValidationError(
                 {
                     "video": (
@@ -146,14 +143,6 @@ def validate_community_video(video):
                     )
                 }
             )
-
-        metadata = json.loads(
-            duration_result.stdout
-        )
-
-        duration = float(
-            metadata["format"]["duration"]
-        )
 
         if duration > MAX_VIDEO_DURATION:
             raise ValidationError(
@@ -169,15 +158,15 @@ def validate_community_video(video):
         raise
 
     except (
-        KeyError,
         ValueError,
         TypeError,
-        json.JSONDecodeError,
+        OSError,
+        subprocess.SubprocessError,
     ):
         raise ValidationError(
             {
                 "video": (
-                    "Unable to determine the video duration. "
+                    "Unable to process the uploaded video. "
                     "Please try another video."
                 )
             }
@@ -187,6 +176,13 @@ def validate_community_video(video):
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
 
+        # Important:
+        # Validation consumed the uploaded file.
+        # Reset it so Django/Cloudinary can upload it afterward.
+        try:
+            video.seek(0)
+        except (AttributeError, OSError):
+            pass
 class PostListCreateView(generics.ListCreateAPIView):
     queryset = (
         Post.objects
