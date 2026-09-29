@@ -126,11 +126,24 @@ const ProductsPage = () => {
 
             <div className="mt-10 flex flex-wrap gap-4">
 
+              {/* BECOME A SELLER */}
+
               <Link
                 to="/farmer"
                 className="flex items-center gap-2 rounded-2xl bg-white px-7 py-4 font-semibold text-green-700 transition hover:-translate-y-1 hover:shadow-xl"
               >
                 Become a Seller
+
+                <ArrowRight size={18} />
+              </Link>
+
+              {/* FARMER PORTAL */}
+
+              <Link
+                to="/farmer"
+                className="flex items-center gap-2 rounded-2xl border border-white/70 bg-green-950/30 px-7 py-4 font-semibold text-white backdrop-blur transition hover:-translate-y-1 hover:bg-green-950/50"
+              >
+                Farmer Portal
 
                 <ArrowRight size={18} />
               </Link>
@@ -142,6 +155,7 @@ const ProductsPage = () => {
         </div>
 
       </section>
+
 
       {/* ================= CATEGORY CHIPS ================= */}
 
@@ -198,6 +212,7 @@ const ProductsPage = () => {
         </div>
 
       </section>
+
 
       {/* ================= FILTERS ================= */}
 
@@ -308,6 +323,7 @@ const ProductsPage = () => {
 
       </section>
 
+
       {/* ================= TOOLBAR ================= */}
 
       <section className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-white p-6 shadow md:flex-row md:items-center">
@@ -332,6 +348,7 @@ const ProductsPage = () => {
         </button>
 
       </section>
+
 
       {/* ================= RESULTS ================= */}
 
@@ -366,6 +383,7 @@ const ProductsPage = () => {
 
       </section>
 
+
       {/* ================= CTA ================= */}
 
       <section className="relative overflow-hidden rounded-[32px]">
@@ -385,12 +403,10 @@ const ProductsPage = () => {
           </h2>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-green-100">
-
             Join thousands of Nigerian farmers selling directly to buyers
             across Nigeria. Upload products, receive orders, grow your
             customer base and increase your farm income with
             AgricWise Marketplace.
-
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-5">

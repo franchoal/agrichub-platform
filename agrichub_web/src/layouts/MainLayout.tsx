@@ -17,21 +17,18 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { logoIcon } from "../assets/logo";
 
+import { logoIcon } from "../assets/logo";
 import { useAuthStore } from "../store/authStore";
-import { useFarmerProfile } from "../hooks/useFarmerProfile";
-// import { useCartStore } from "../store/cartStore";
 
 const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const { user, logout } = useAuthStore();
-  const { data: farmerProfile } = useFarmerProfile();
-  // const { items } = useCartStore();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -117,7 +114,7 @@ const MainLayout = () => {
 
             {user && (
               <Link
-                to="/farmer/dashboard"
+                to="/farmer"
                 className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                   isActive("/farmer")
                     ? "bg-green-50 text-green-700"
@@ -150,6 +147,7 @@ const MainLayout = () => {
                   className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
                   aria-label="Cart"
                 >
+                  <ShoppingCart size={19} />
                 </Link>
 
                 <Link
@@ -199,7 +197,9 @@ const MainLayout = () => {
 
           <button
             type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() =>
+              setMobileMenuOpen(!mobileMenuOpen)
+            }
             className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-50 md:hidden"
             aria-label="Toggle menu"
           >
@@ -231,6 +231,7 @@ const MainLayout = () => {
                 Home
               </Link>
 
+
               <Link
                 to="/products"
                 onClick={closeMobileMenu}
@@ -240,18 +241,21 @@ const MainLayout = () => {
                 Marketplace
               </Link>
 
+
               {user && (
                 <>
-                  {farmerProfile && (
-                    <Link
-                      to="/farmer/dashboard"
-                      onClick={closeMobileMenu}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
-                    >
-                      <Home size={18} />
-                      Business Dashboard
-                    </Link>
-                  )}
+
+                  {/* BUSINESS PORTAL */}
+
+                  <Link
+                    to="/farmer"
+                    onClick={closeMobileMenu}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                  >
+                    <Home size={18} />
+                    Business Portal
+                  </Link>
+
 
                   <Link
                     to="/notifications"
@@ -261,6 +265,7 @@ const MainLayout = () => {
                     <Bell size={18} />
                     Notifications
                   </Link>
+
 
                   <Link
                     to="/cart"
@@ -273,6 +278,7 @@ const MainLayout = () => {
                     </span>
                   </Link>
 
+
                   <Link
                     to="/profile"
                     onClick={closeMobileMenu}
@@ -282,6 +288,7 @@ const MainLayout = () => {
                     Profile
                   </Link>
 
+
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -290,11 +297,14 @@ const MainLayout = () => {
                     <LogOut size={18} />
                     Logout
                   </button>
+
                 </>
               )}
 
+
               {!user && (
                 <div className="mt-2 space-y-2">
+
                   <Link
                     to="/login/buyer"
                     onClick={closeMobileMenu}
@@ -310,6 +320,7 @@ const MainLayout = () => {
                   >
                     Join AgricWise
                   </Link>
+
                 </div>
               )}
 
@@ -350,7 +361,9 @@ const MainLayout = () => {
           >
             <Home
               size={20}
-              strokeWidth={isActive("/") ? 2.5 : 2}
+              strokeWidth={
+                isActive("/") ? 2.5 : 2
+              }
             />
 
             <span className="text-[10px] font-semibold">
@@ -371,7 +384,9 @@ const MainLayout = () => {
           >
             <Search
               size={20}
-              strokeWidth={isActive("/products") ? 2.5 : 2}
+              strokeWidth={
+                isActive("/products") ? 2.5 : 2
+              }
             />
 
             <span className="text-[10px] font-semibold">
@@ -423,7 +438,9 @@ const MainLayout = () => {
           >
             <MessageCircle
               size={20}
-              strokeWidth={isActive("/messages") ? 2.5 : 2}
+              strokeWidth={
+                isActive("/messages") ? 2.5 : 2
+              }
             />
 
             <span className="text-[10px] font-semibold">
@@ -444,7 +461,9 @@ const MainLayout = () => {
           >
             <User
               size={20}
-              strokeWidth={isActive("/profile") ? 2.5 : 2}
+              strokeWidth={
+                isActive("/profile") ? 2.5 : 2
+              }
             />
 
             <span className="text-[10px] font-semibold">
@@ -475,7 +494,9 @@ const MainLayout = () => {
             </p>
           </div>
 
+
           <div className="flex items-center gap-5 text-xs font-medium text-gray-500">
+
             <Link
               to="/"
               className="hover:text-green-700"
@@ -496,6 +517,7 @@ const MainLayout = () => {
             >
               Profile
             </Link>
+
           </div>
 
         </div>
