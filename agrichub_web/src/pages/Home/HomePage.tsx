@@ -5,25 +5,33 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionPrompt";
 import { useProfileCompletion } from "../../hooks/useProfileCompletion";
+import { useAuthStore } from "../../store/authStore";
+import { api } from "../../services/api";
 
 import {
   ArrowRight,
   Bell,
   BookOpen,
   BriefcaseBusiness,
+  Check,
   ChevronRight,
+  EllipsisVertical,
   Image as ImageIcon,
   Leaf,
+  Loader2,
   MessageCircle,
   Package,
+  Pencil,
   Plus,
   Search,
   Send,
   ShoppingBasket,
   Sparkles,
   Tractor,
+  Trash2,
   Users,
   Wrench,
+  X,
 } from "lucide-react";
 
 import {
@@ -49,18 +57,10 @@ import {
 const HomePage = () => {
   const queryClient = useQueryClient();
 
+  const user = useAuthStore((state) => state.user);
+
   const [showProfilePrompt, setShowProfilePrompt] =
     useState(false);
-
-  const {
-    data: profile,
-    isLoading: isLoadingProfile,
-  } = useProfileCompletion();
-
-  const profileIsComplete = Boolean(
-    profile?.location?.trim() &&
-      profile?.bio?.trim()
-  );
 
   const [openComments, setOpenComments] =
     useState<number | null>(null);
@@ -85,6 +85,52 @@ const HomePage = () => {
   const [isConnecting, setIsConnecting] =
     useState<Record<number, boolean>>({});
 
+  /*
+  ==========================================
+  EDIT / DELETE STATE
+  ==========================================
+  */
+
+  const [openPostMenu, setOpenPostMenu] =
+    useState<number | null>(null);
+
+  const [editingPostId, setEditingPostId] =
+    useState<number | null>(null);
+
+  const [editContent, setEditContent] =
+    useState("");
+
+  const [editLocation, setEditLocation] =
+    useState("");
+
+  const [isSavingPost, setIsSavingPost] =
+    useState(false);
+
+  const [isDeletingPost, setIsDeletingPost] =
+    useState<number | null>(null);
+
+  /*
+  ==========================================
+  PROFILE
+  ==========================================
+  */
+
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+  } = useProfileCompletion();
+
+  const profileIsComplete = Boolean(
+    profile?.location?.trim() &&
+      profile?.bio?.trim()
+  );
+
+  /*
+  ==========================================
+  COMMUNITY DATA
+  ==========================================
+  */
+
   const {
     data: communityPosts = [],
     isLoading: isLoadingPosts,
@@ -94,6 +140,72 @@ const HomePage = () => {
   const {
     data: connections = [],
   } = useConnections();
+
+  /*
+  ==========================================
+  AUTOMATIC COMMUNITY REFRESH
+  ==========================================
+  */
+
+  useEffect(() => {
+    const refreshCommunity = async () => {
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["community-posts"],
+        });
+      } catch (error) {
+        console.error(
+          "Failed to refresh community feed:",
+          error
+        );
+      }
+    };
+
+    const interval = window.setInterval(
+      refreshCommunity,
+      10000
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [queryClient]);
+
+  /*
+  ==========================================
+  AUTOMATIC CONNECTION REFRESH
+  ==========================================
+  */
+
+  useEffect(() => {
+    const refreshConnections = async () => {
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["community-connections"],
+        });
+      } catch (error) {
+        console.error(
+          "Failed to refresh community connections:",
+          error
+        );
+      }
+    };
+
+    const interval = window.setInterval(
+      refreshConnections,
+      15000
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [queryClient]);
+
+  /*
+  ==========================================
+  HELPERS
+  ==========================================
+  */
 
   const formatPostDate = (date: string) => {
     return new Intl.DateTimeFormat("en-NG", {
@@ -132,6 +244,25 @@ const HomePage = () => {
 
   /*
   ==========================================
+  POST MANAGEMENT PERMISSIONS
+  ==========================================
+  */
+
+  const canManagePost = (
+    postAuthorId: number
+  ) => {
+    if (!user) {
+      return false;
+    }
+
+    return (
+      user.is_staff === true ||
+      user.id === postAuthorId
+    );
+  };
+
+  /*
+  ==========================================
   COMMENTS
   ==========================================
   */
@@ -139,9 +270,11 @@ const HomePage = () => {
   const handleToggleComments = async (
     postId: number
   ) => {
-    if (!requireCompleteProfile()) {
-      return;
-    }
+    /*
+     * Reading comments is public.
+     * Profile completion is only required
+     * when submitting a comment.
+     */
 
     if (openComments === postId) {
       setOpenComments(null);
@@ -274,14 +407,28 @@ const HomePage = () => {
   const getConnectionStatus = (
     userId: number
   ) => {
+    if (!user) {
+      return null;
+    }
+
+    if (user.id === userId) {
+      return null;
+    }
+
     if (connectionStatus[userId]) {
       return connectionStatus[userId];
     }
 
     const connection = connections.find(
       (item) =>
-        item.follower === userId ||
-        item.following === userId
+        (
+          item.follower === user.id &&
+          item.following === userId
+        ) ||
+        (
+          item.following === user.id &&
+          item.follower === userId
+        )
     );
 
     if (!connection) {
@@ -298,6 +445,10 @@ const HomePage = () => {
   const handleConnect = async (
     userId: number
   ) => {
+    if (!user || user.id === userId) {
+      return;
+    }
+
     if (!requireCompleteProfile()) {
       return;
     }
@@ -335,6 +486,132 @@ const HomePage = () => {
         ...previous,
         [userId]: false,
       }));
+    }
+  };
+
+  /*
+  ==========================================
+  EDIT POST
+  ==========================================
+  */
+
+  const startEditingPost = (
+    postId: number,
+    content: string,
+    location: string
+  ) => {
+    setOpenPostMenu(null);
+    setEditingPostId(postId);
+    setEditContent(content || "");
+    setEditLocation(location || "");
+  };
+
+  const cancelEditingPost = () => {
+    if (isSavingPost) {
+      return;
+    }
+
+    setEditingPostId(null);
+    setEditContent("");
+    setEditLocation("");
+  };
+
+  const handleSavePost = async (
+    postId: number
+  ) => {
+    const content = editContent.trim();
+    const location = editLocation.trim();
+
+    if (!content) {
+      return;
+    }
+
+    setIsSavingPost(true);
+
+    try {
+      await api.patch(
+        `/community/posts/${postId}/`,
+        {
+          content,
+          location,
+        }
+      );
+
+      setEditingPostId(null);
+      setEditContent("");
+      setEditLocation("");
+
+      await queryClient.invalidateQueries({
+        queryKey: ["community-posts"],
+      });
+    } catch (error) {
+      console.error(
+        "Failed to update community post:",
+        error
+      );
+    } finally {
+      setIsSavingPost(false);
+    }
+  };
+
+  /*
+  ==========================================
+  DELETE POST
+  ==========================================
+  */
+
+  const handleDeletePost = async (
+    postId: number
+  ) => {
+    setOpenPostMenu(null);
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post? This action cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingPost(postId);
+
+    try {
+      await api.delete(
+        `/community/posts/${postId}/`
+      );
+
+      if (openComments === postId) {
+        setOpenComments(null);
+      }
+
+      setComments((previous) => {
+        const next = {
+          ...previous,
+        };
+
+        delete next[postId];
+
+        return next;
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["community-posts"],
+      });
+
+      /*
+       * Marketplace posts create a linked Product.
+       * We deliberately do not invalidate or delete
+       * marketplace products here because community
+       * post deletion must not silently delete the
+       * farmer's actual marketplace listing.
+       */
+    } catch (error) {
+      console.error(
+        "Failed to delete community post:",
+        error
+      );
+    } finally {
+      setIsDeletingPost(null);
     }
   };
 
@@ -484,7 +761,7 @@ const HomePage = () => {
 
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 sm:grid-cols-5">
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 sm:grid-cols-4">
 
             <Link
               to="/community/create"
@@ -510,11 +787,10 @@ const HomePage = () => {
             </Link>
 
             <Link
-              to="/community/create"
-              onClick={handleCreatePostClick}
+              to="/products"
               className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
-              <ShoppingBasket size={16} />
+              <Package size={16} />
 
               <span className="hidden sm:inline">
                 Marketplace
@@ -522,20 +798,15 @@ const HomePage = () => {
             </Link>
 
             <Link
-              to="/products"
-              className="hidden items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700 sm:flex"
-            >
-              <Search size={16} />
-              Request
-            </Link>
-
-            <Link
               to="/community/create"
               onClick={handleCreatePostClick}
-              className="hidden items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700 sm:flex"
+              className="flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-semibold text-gray-600 transition hover:bg-green-50 hover:text-green-700"
             >
               <MessageCircle size={16} />
-              Discuss
+
+              <span className="hidden sm:inline">
+                Discuss
+              </span>
             </Link>
 
           </div>
@@ -570,13 +841,10 @@ const HomePage = () => {
                 </h2>
               </div>
 
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-green-700"
-              >
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700">
                 Latest
                 <ChevronRight size={16} />
-              </button>
+              </span>
 
             </div>
 
@@ -702,11 +970,17 @@ const HomePage = () => {
                 const isMarketplace =
                   post.post_type === "marketplace";
 
+                const isEditing =
+                  editingPostId === post.id;
+
+                const canManage =
+                  canManagePost(post.author);
+
                 return (
 
                   <article
                     key={post.id}
-                    className="mb-5 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+                    className="relative mb-5 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
                   >
 
                     {/* POST CONTENT */}
@@ -736,62 +1010,148 @@ const HomePage = () => {
 
                         <div className="min-w-0 flex-1">
 
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <div className="flex items-start justify-between gap-3">
 
-                            <h3 className="font-bold text-gray-900">
-                              {post.author_name ||
-                                "AgricWise Member"}
-                            </h3>
+                            <div className="min-w-0 flex-1">
 
-                            <span className="text-gray-300">
-                              •
-                            </span>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 
-                            <span className="text-xs text-gray-500">
-                              {formatPostDate(
-                                post.created_at
-                              )}
-                            </span>
+                                <h3 className="font-bold text-gray-900">
+                                  {post.author_name ||
+                                    "AgricWise Member"}
+                                </h3>
 
-                            {post.author_connection_count >
-                              0 && (
-                              <>
                                 <span className="text-gray-300">
                                   •
                                 </span>
 
                                 <span className="text-xs text-gray-500">
-                                  {
-                                    post.author_connection_count
-                                  }{" "}
-                                  {post.author_connection_count ===
-                                  1
-                                    ? "connection"
-                                    : "connections"}
+                                  {formatPostDate(
+                                    post.created_at
+                                  )}
                                 </span>
-                              </>
-                            )}
 
-                          </div>
+                                {post.author_connection_count >
+                                  0 && (
+                                  <>
+                                    <span className="text-gray-300">
+                                      •
+                                    </span>
 
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <span className="text-xs text-gray-500">
+                                      {
+                                        post.author_connection_count
+                                      }{" "}
+                                      {post.author_connection_count ===
+                                      1
+                                        ? "connection"
+                                        : "connections"}
+                                    </span>
+                                  </>
+                                )}
 
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                isMarketplace
-                                  ? "bg-yellow-50 text-yellow-700"
-                                  : "bg-green-50 text-green-700"
-                              }`}
-                            >
-                              {getPostTypeLabel(
-                                post.post_type
-                              )}
-                            </span>
+                              </div>
 
-                            {post.location && (
-                              <span className="text-xs text-gray-500">
-                                {post.location}
-                              </span>
+                              <div className="mt-1 flex flex-wrap items-center gap-2">
+
+                                <span
+                                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                    isMarketplace
+                                      ? "bg-yellow-50 text-yellow-700"
+                                      : "bg-green-50 text-green-700"
+                                  }`}
+                                >
+                                  {getPostTypeLabel(
+                                    post.post_type
+                                  )}
+                                </span>
+
+                                {post.location && (
+                                  <span className="text-xs text-gray-500">
+                                    {post.location}
+                                  </span>
+                                )}
+
+                              </div>
+
+                            </div>
+
+                            {/* POST MANAGEMENT MENU */}
+
+                            {canManage && (
+                              <div className="relative shrink-0">
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOpenPostMenu(
+                                      openPostMenu === post.id
+                                        ? null
+                                        : post.id
+                                    )
+                                  }
+                                  className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                                  aria-label="Post options"
+                                >
+                                  <EllipsisVertical
+                                    size={19}
+                                  />
+                                </button>
+
+                                {openPostMenu ===
+                                  post.id && (
+
+                                  <div className="absolute right-0 top-10 z-30 w-36 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-xl">
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        startEditingPost(
+                                          post.id,
+                                          post.content,
+                                          post.location || ""
+                                        )
+                                      }
+                                      className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                                    >
+                                      <Pencil
+                                        size={15}
+                                      />
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDeletePost(
+                                          post.id
+                                        )
+                                      }
+                                      disabled={
+                                        isDeletingPost ===
+                                        post.id
+                                      }
+                                      className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                                    >
+                                      {isDeletingPost ===
+                                      post.id ? (
+                                        <Loader2
+                                          size={15}
+                                          className="animate-spin"
+                                        />
+                                      ) : (
+                                        <Trash2
+                                          size={15}
+                                        />
+                                      )}
+
+                                      Delete
+                                    </button>
+
+                                  </div>
+                                )}
+
+                              </div>
                             )}
 
                           </div>
@@ -800,11 +1160,104 @@ const HomePage = () => {
 
                       </div>
 
-                      {/* CONTENT */}
+                      {/* EDIT FORM */}
 
-                      <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-gray-700">
-                        {post.content}
-                      </p>
+                      {isEditing ? (
+
+                        <div className="mt-5 rounded-2xl border border-green-100 bg-green-50/50 p-4">
+
+                          <div className="flex items-center justify-between">
+
+                            <p className="text-sm font-bold text-gray-900">
+                              Edit post
+                            </p>
+
+                            <button
+                              type="button"
+                              onClick={cancelEditingPost}
+                              disabled={isSavingPost}
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition hover:bg-white hover:text-gray-800"
+                              aria-label="Cancel editing"
+                            >
+                              <X size={17} />
+                            </button>
+
+                          </div>
+
+                          <textarea
+                            value={editContent}
+                            onChange={(event) =>
+                              setEditContent(
+                                event.target.value
+                              )
+                            }
+                            rows={5}
+                            className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm leading-6 text-gray-700 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                            placeholder="What is happening in agriculture?"
+                          />
+
+                          <input
+                            type="text"
+                            value={editLocation}
+                            onChange={(event) =>
+                              setEditLocation(
+                                event.target.value
+                              )
+                            }
+                            placeholder="Location"
+                            className="mt-3 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                          />
+
+                          <div className="mt-3 flex justify-end gap-2">
+
+                            <button
+                              type="button"
+                              onClick={cancelEditingPost}
+                              disabled={isSavingPost}
+                              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              <X size={15} />
+                              Cancel
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSavePost(
+                                  post.id
+                                )
+                              }
+                              disabled={
+                                isSavingPost ||
+                                !editContent.trim()
+                              }
+                              className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isSavingPost ? (
+                                <Loader2
+                                  size={15}
+                                  className="animate-spin"
+                                />
+                              ) : (
+                                <Check size={15} />
+                              )}
+
+                              {isSavingPost
+                                ? "Saving..."
+                                : "Save Changes"}
+                            </button>
+
+                          </div>
+
+                        </div>
+
+                      ) : (
+
+                        <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-gray-700">
+                          {post.content}
+                        </p>
+
+                      )}
 
                       {/* MARKETPLACE LISTING SUMMARY */}
 
@@ -940,39 +1393,44 @@ const HomePage = () => {
 
                       {/* CONNECTION */}
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleConnect(
-                            post.author
-                          )
-                        }
-                        disabled={
-                          isConnecting[
-                            post.author
-                          ] ||
-                          authorConnectionStatus ===
-                            "connected"
-                        }
-                        className={`inline-flex items-center gap-1.5 transition ${
-                          authorConnectionStatus
-                            ? "text-green-700"
-                            : "hover:text-green-700"
-                        } disabled:cursor-not-allowed`}
-                      >
+                      {user &&
+                        user.id !== post.author && (
 
-                        <Send size={16} />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleConnect(
+                                post.author
+                              )
+                            }
+                            disabled={
+                              isConnecting[
+                                post.author
+                              ] ||
+                              authorConnectionStatus ===
+                                "connected"
+                            }
+                            className={`inline-flex items-center gap-1.5 transition ${
+                              authorConnectionStatus
+                                ? "text-green-700"
+                                : "hover:text-green-700"
+                            } disabled:cursor-not-allowed`}
+                          >
 
-                        {isConnecting[
-                          post.author
-                        ]
-                          ? "Connecting..."
-                          : authorConnectionStatus ===
-                              "connected"
-                            ? "Connected"
-                            : "Connect"}
+                            <Send size={16} />
 
-                      </button>
+                            {isConnecting[
+                              post.author
+                            ]
+                              ? "Connecting..."
+                              : authorConnectionStatus ===
+                                  "connected"
+                                ? "Connected"
+                                : "Connect"}
+
+                          </button>
+
+                        )}
 
                     </div>
 
@@ -1099,7 +1557,16 @@ const HomePage = () => {
                             aria-label="Send comment"
                           >
 
-                            <Send size={17} />
+                            {isSubmittingComment[
+                              post.id
+                            ] ? (
+                              <Loader2
+                                size={17}
+                                className="animate-spin"
+                              />
+                            ) : (
+                              <Send size={17} />
+                            )}
 
                           </button>
 
