@@ -1,10 +1,119 @@
+from io import BytesIO
+
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Q
+from PIL import Image, ImageOps
 
 from cloudinary_storage.storage import VideoMediaCloudinaryStorage
 
 from products.models import Product
+
+
+MAX_POST_IMAGE_SIZE = 1600
+POST_IMAGE_QUALITY = 85
+
+
+def prepare_post_image(image_file):
+    """
+    Resize and compress community post images before storage.
+
+    - Preserves aspect ratio.
+    - Corrects camera orientation.
+    - Converts unsupported modes to RGB/RGBA as needed.
+    - Limits the longest side to 1600px.
+    - Compresses JPEG images to reduce file size.
+    """
+
+    if not image_file:
+        return image_file
+
+    try:
+        image_file.seek(0)
+
+        image = Image.open(image_file)
+        image = ImageOps.exif_transpose(image)
+
+        original_format = image.format
+
+        if (
+            image.width <= MAX_POST_IMAGE_SIZE
+            and image.height <= MAX_POST_IMAGE_SIZE
+        ):
+            image_file.seek(0)
+            return image_file
+
+        image.thumbnail(
+            (
+                MAX_POST_IMAGE_SIZE,
+                MAX_POST_IMAGE_SIZE,
+            ),
+            Image.Resampling.LANCZOS,
+        )
+
+        output = BytesIO()
+
+        if original_format == "PNG":
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGBA")
+
+            image.save(
+                output,
+                format="PNG",
+                optimize=True,
+            )
+
+        elif original_format == "WEBP":
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+
+            image.save(
+                output,
+                format="WEBP",
+                quality=POST_IMAGE_QUALITY,
+                method=6,
+            )
+
+        else:
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+
+            image.save(
+                output,
+                format="JPEG",
+                quality=POST_IMAGE_QUALITY,
+                optimize=True,
+            )
+
+        output.seek(0)
+
+        original_name = getattr(
+            image_file,
+            "name",
+            "community-image",
+        )
+
+        if original_format not in ("PNG", "WEBP"):
+            original_name = (
+                original_name.rsplit(".", 1)[0]
+                + ".jpg"
+            )
+
+        return ContentFile(
+            output.read(),
+            name=original_name,
+        )
+
+    except Exception:
+        # Never allow image processing to break
+        # an otherwise valid post upload.
+        try:
+            image_file.seek(0)
+        except (AttributeError, OSError):
+            pass
+
+        return image_file
 
 
 class Post(models.Model):
@@ -66,6 +175,14 @@ class Post(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if self.image and not self.image._committed:
+            self.image = prepare_post_image(
+                self.image
+            )
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return (
@@ -210,7 +327,9 @@ class Connection(models.Model):
                 name="unique_user_connection",
             ),
             models.CheckConstraint(
-                condition=~Q(follower=models.F("following")),
+                condition=~Q(
+                    follower=models.F("following")
+                ),
                 name="prevent_self_connection",
             ),
         ]

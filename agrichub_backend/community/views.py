@@ -1,12 +1,11 @@
-import json
 import os
 import subprocess
 import tempfile
 
+import imageio_ffmpeg
+
 from django.db import transaction
 from django.db.models import Q
-
-import imageio_ffmpeg
 
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -14,10 +13,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from farmers.models import FarmerProfile
-from notifications.models import Notification
 from farmers.serializers import FarmerProductSerializer
+from notifications.models import Notification
 
-from .models import Post, Comment, Reaction, Connection
+from .models import Connection, Post, Comment, Reaction
 from .serializers import (
     PostSerializer,
     CommentSerializer,
@@ -25,9 +24,25 @@ from .serializers import (
     ConnectionSerializer,
 )
 
+
+# ============================================================
+# COMMUNITY VIDEO SETTINGS
+# ============================================================
+
 MAX_VIDEO_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_VIDEO_DURATION = 10.0  # seconds
 
+ALLOWED_VIDEO_TYPES = {
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+    "video/x-matroska",
+}
+
+
+# ============================================================
+# PROFILE VALIDATION
+# ============================================================
 
 def require_complete_profile(user):
     """
@@ -55,17 +70,51 @@ def require_complete_profile(user):
         )
 
 
-ALLOWED_VIDEO_TYPES = {
-    "video/mp4",
-    "video/webm",
-    "video/quicktime",
-    "video/x-matroska",
-}
+# ============================================================
+# POST MANAGEMENT PERMISSION
+# ============================================================
 
+def can_manage_post(user, post):
+    """
+    Determine whether a user can edit or delete a post.
+
+    Allowed:
+    - The original post author
+    - Django staff/admin users
+
+    This deliberately uses is_staff rather than checking
+    for a specific username or email address.
+    """
+
+    return (
+        user.is_authenticated
+        and (
+            user.is_staff
+            or post.author_id == user.id
+        )
+    )
+
+
+def require_post_management_permission(user, post):
+    """
+    Raise PermissionDenied unless the authenticated user
+    is either the post owner or a Django staff/admin user.
+    """
+
+    if not can_manage_post(user, post):
+        raise PermissionDenied(
+            "You can only manage your own posts."
+        )
+
+
+# ============================================================
+# VIDEO VALIDATION
+# ============================================================
 
 def validate_community_video(video):
     """
-    Validate community videos before they are stored in Cloudinary.
+    Validate community videos before they are stored
+    in Cloudinary.
 
     Rules:
     - Supported video MIME type
@@ -76,7 +125,11 @@ def validate_community_video(video):
     if video is None:
         return
 
-    content_type = getattr(video, "content_type", None)
+    content_type = getattr(
+        video,
+        "content_type",
+        None,
+    )
 
     if content_type not in ALLOWED_VIDEO_TYPES:
         raise ValidationError(
@@ -147,18 +200,25 @@ def validate_community_video(video):
 
         for line in result.stderr.splitlines():
             if "Duration:" in line:
-                duration_text = line.split(
-                    "Duration:",
-                    1,
-                )[1].strip().split(",", 1)[0]
+                duration_text = (
+                    line.split(
+                        "Duration:",
+                        1,
+                    )[1]
+                    .strip()
+                    .split(",", 1)[0]
+                )
 
-                hours, minutes, seconds = duration_text.split(":")
+                hours, minutes, seconds = (
+                    duration_text.split(":")
+                )
 
                 duration = (
                     (float(hours) * 3600)
                     + (float(minutes) * 60)
                     + float(seconds)
                 )
+
                 break
 
         if duration is None:
@@ -200,19 +260,40 @@ def validate_community_video(video):
         )
 
     finally:
-        if temp_path and os.path.exists(temp_path):
+        if (
+            temp_path
+            and os.path.exists(temp_path)
+        ):
             os.remove(temp_path)
 
-        # Important:
         # Validation consumed the uploaded file.
         # Reset it so Django/Cloudinary can upload it afterward.
         try:
             video.seek(0)
-        except (AttributeError, OSError):
+        except (
+            AttributeError,
+            OSError,
+        ):
             pass
 
 
-class PostListCreateView(generics.ListCreateAPIView):
+# ============================================================
+# COMMUNITY POSTS
+# ============================================================
+
+class PostListCreateView(
+    generics.ListCreateAPIView
+):
+    """
+    List community posts or create a normal discussion post.
+
+    GET:
+        Public.
+
+    POST:
+        Authenticated users only.
+    """
+
     queryset = (
         Post.objects
         .select_related(
@@ -245,6 +326,9 @@ class PostListCreateView(generics.ListCreateAPIView):
             Post.DISCUSSION,
         )
 
+        # Marketplace posts must go through the dedicated
+        # marketplace creation flow because they create both
+        # a Product and a Community Post.
         if post_type == Post.MARKETPLACE:
             raise ValidationError(
                 {
@@ -255,7 +339,9 @@ class PostListCreateView(generics.ListCreateAPIView):
                 }
             )
 
-        video = self.request.FILES.get("video")
+        video = self.request.FILES.get(
+            "video"
+        )
 
         validate_community_video(video)
 
@@ -263,6 +349,10 @@ class PostListCreateView(generics.ListCreateAPIView):
             author=self.request.user
         )
 
+
+# ============================================================
+# MARKETPLACE POST CREATION
+# ============================================================
 
 class MarketplacePostCreateView(APIView):
     """
@@ -272,8 +362,8 @@ class MarketplacePostCreateView(APIView):
     The Product remains the source of truth for
     the marketplace listing.
 
-    Community media such as images and short videos
-    belong to the Community Post.
+    Community media such as short videos belong
+    to the Community Post.
     """
 
     permission_classes = [
@@ -286,9 +376,13 @@ class MarketplacePostCreateView(APIView):
             request.user
         )
 
-        farmer_profile = FarmerProfile.objects.filter(
-            user=request.user
-        ).first()
+        farmer_profile = (
+            FarmerProfile.objects
+            .filter(
+                user=request.user
+            )
+            .first()
+        )
 
         if farmer_profile is None:
             raise PermissionDenied(
@@ -348,8 +442,10 @@ class MarketplacePostCreateView(APIView):
 
         validate_community_video(video)
 
-        product_serializer = FarmerProductSerializer(
-            data=product_data
+        product_serializer = (
+            FarmerProductSerializer(
+                data=product_data
+            )
         )
 
         product_serializer.is_valid(
@@ -391,9 +487,30 @@ class MarketplacePostCreateView(APIView):
         )
 
 
+# ============================================================
+# SINGLE POST
+# ============================================================
+
 class PostDetailView(
     generics.RetrieveUpdateDestroyAPIView
 ):
+    """
+    Retrieve, edit or delete a community post.
+
+    GET:
+        Public.
+
+    PUT/PATCH:
+        Allowed for:
+        - Post owner
+        - Django staff/admin
+
+    DELETE:
+        Allowed for:
+        - Post owner
+        - Django staff/admin
+    """
+
     queryset = (
         Post.objects
         .select_related(
@@ -420,32 +537,37 @@ class PostDetailView(
         ]
 
     def perform_update(self, serializer):
-        if (
-            self.get_object().author
-            != self.request.user
-        ):
-            raise PermissionDenied(
-                "You can only edit your own posts."
-            )
+        post = self.get_object()
+
+        require_post_management_permission(
+            self.request.user,
+            post,
+        )
 
         require_complete_profile(
             self.request.user
         )
 
-        video = self.request.FILES.get("video")
+        video = self.request.FILES.get(
+            "video"
+        )
 
         validate_community_video(video)
 
         serializer.save()
 
     def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise PermissionDenied(
-                "You can only delete your own posts."
-            )
+        require_post_management_permission(
+            self.request.user,
+            instance,
+        )
 
         instance.delete()
 
+
+# ============================================================
+# COMMENTS
+# ============================================================
 
 class CommentListCreateView(
     generics.ListCreateAPIView
@@ -460,9 +582,13 @@ class CommentListCreateView(
         return (
             Comment.objects
             .filter(
-                post_id=self.kwargs["post_id"]
+                post_id=self.kwargs[
+                    "post_id"
+                ]
             )
-            .select_related("author")
+            .select_related(
+                "author"
+            )
         )
 
     def perform_create(self, serializer):
@@ -472,9 +598,15 @@ class CommentListCreateView(
 
         serializer.save(
             author=self.request.user,
-            post_id=self.kwargs["post_id"],
+            post_id=self.kwargs[
+                "post_id"
+            ],
         )
 
+
+# ============================================================
+# REACTIONS
+# ============================================================
 
 class ReactionListCreateView(
     generics.ListCreateAPIView
@@ -489,9 +621,13 @@ class ReactionListCreateView(
         return (
             Reaction.objects
             .filter(
-                post_id=self.kwargs["post_id"]
+                post_id=self.kwargs[
+                    "post_id"
+                ]
             )
-            .select_related("user")
+            .select_related(
+                "user"
+            )
         )
 
     def perform_create(self, serializer):
@@ -501,9 +637,15 @@ class ReactionListCreateView(
 
         serializer.save(
             user=self.request.user,
-            post_id=self.kwargs["post_id"],
+            post_id=self.kwargs[
+                "post_id"
+            ],
         )
 
+
+# ============================================================
+# CONNECTIONS
+# ============================================================
 
 class ConnectionListCreateView(
     generics.ListCreateAPIView
@@ -538,9 +680,11 @@ class ConnectionListCreateView(
             self.request.user
         )
 
-        following = serializer.validated_data[
-            "following"
-        ]
+        following = (
+            serializer.validated_data[
+                "following"
+            ]
+        )
 
         if following == self.request.user:
             raise ValidationError(
@@ -563,15 +707,22 @@ class ConnectionListCreateView(
         )
 
         if existing:
-            if existing.status == Connection.ACCEPTED:
+            if (
+                existing.status
+                == Connection.ACCEPTED
+            ):
                 raise ValidationError(
                     "You are already connected with "
                     "this user."
                 )
 
-            existing.follower = self.request.user
+            existing.follower = (
+                self.request.user
+            )
             existing.following = following
-            existing.status = Connection.ACCEPTED
+            existing.status = (
+                Connection.ACCEPTED
+            )
 
             existing.save(
                 update_fields=[
@@ -600,6 +751,10 @@ class ConnectionListCreateView(
         )
 
 
+# ============================================================
+# CONNECTION REQUESTS
+# ============================================================
+
 class ConnectionRequestListView(
     generics.ListAPIView
 ):
@@ -622,6 +777,10 @@ class ConnectionRequestListView(
             )
         )
 
+
+# ============================================================
+# ACCEPT CONNECTION
+# ============================================================
 
 class ConnectionAcceptView(APIView):
     permission_classes = [
@@ -653,7 +812,9 @@ class ConnectionAcceptView(APIView):
                 status=404,
             )
 
-        connection.status = Connection.ACCEPTED
+        connection.status = (
+            Connection.ACCEPTED
+        )
 
         connection.save(
             update_fields=[
@@ -669,6 +830,10 @@ class ConnectionAcceptView(APIView):
         )
 
 
+# ============================================================
+# REJECT CONNECTION
+# ============================================================
+
 class ConnectionRejectView(APIView):
     permission_classes = [
         permissions.IsAuthenticated
@@ -676,10 +841,13 @@ class ConnectionRejectView(APIView):
 
     def post(self, request, pk):
         try:
-            connection = Connection.objects.get(
-                pk=pk,
-                following=request.user,
-                status=Connection.PENDING,
+            connection = (
+                Connection.objects
+                .get(
+                    pk=pk,
+                    following=request.user,
+                    status=Connection.PENDING,
+                )
             )
 
         except Connection.DoesNotExist:
@@ -692,7 +860,9 @@ class ConnectionRejectView(APIView):
                 status=404,
             )
 
-        connection.status = Connection.REJECTED
+        connection.status = (
+            Connection.REJECTED
+        )
 
         connection.save(
             update_fields=[
