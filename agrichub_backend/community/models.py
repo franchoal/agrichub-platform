@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
+from cloudinary_storage.storage import VideoMediaCloudinaryStorage
+
 from products.models import Product
 
 
@@ -48,6 +50,7 @@ class Post(models.Model):
     )
 
     video = models.FileField(
+        storage=VideoMediaCloudinaryStorage(),
         upload_to="community/posts/videos/",
         blank=True,
         null=True,
