@@ -28,6 +28,33 @@ from .serializers import (
 MAX_VIDEO_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_VIDEO_DURATION = 10.0  # seconds
 
+
+def require_complete_profile(user):
+    """
+    Require the authenticated user to complete
+    their general AgricWise profile before
+    participating in community activities.
+
+    A complete profile requires:
+    - Location
+    - Bio
+    """
+
+    if (
+        not hasattr(user, "profile")
+        or not user.profile.is_complete
+    ):
+        raise ValidationError(
+            {
+                "profile": (
+                    "Please complete your profile "
+                    "with your location and bio "
+                    "before continuing."
+                )
+            }
+        )
+
+
 ALLOWED_VIDEO_TYPES = {
     "video/mp4",
     "video/webm",
@@ -183,6 +210,8 @@ def validate_community_video(video):
             video.seek(0)
         except (AttributeError, OSError):
             pass
+
+
 class PostListCreateView(generics.ListCreateAPIView):
     queryset = (
         Post.objects
