@@ -5,8 +5,6 @@ import {
   Menu,
   MessageCircle,
   Plus,
-  Search,
-  ShoppingCart,
   User,
   X,
 } from "lucide-react";
@@ -50,15 +48,12 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* ===================================== */}
       {/* DESKTOP / TABLET HEADER */}
       {/* ===================================== */}
 
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-
           {/* LOGO */}
 
           <Link
@@ -85,11 +80,9 @@ const MainLayout = () => {
             </div>
           </Link>
 
-
           {/* DESKTOP NAVIGATION */}
 
           <nav className="hidden items-center gap-1 md:flex">
-
             <Link
               to="/"
               className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
@@ -99,17 +92,6 @@ const MainLayout = () => {
               }`}
             >
               Home
-            </Link>
-
-            <Link
-              to="/products"
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                isActive("/products")
-                  ? "bg-green-50 text-green-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
-              }`}
-            >
-              Marketplace
             </Link>
 
             {user && (
@@ -124,14 +106,11 @@ const MainLayout = () => {
                 My Activity
               </Link>
             )}
-
           </nav>
-
 
           {/* DESKTOP ACTIONS */}
 
           <div className="hidden items-center gap-2 md:flex">
-
             {user ? (
               <>
                 <Link
@@ -140,14 +119,6 @@ const MainLayout = () => {
                   aria-label="Notifications"
                 >
                   <Bell size={19} />
-                </Link>
-
-                <Link
-                  to="/cart"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
-                  aria-label="Cart"
-                >
-                  <ShoppingCart size={19} />
                 </Link>
 
                 <Link
@@ -189,9 +160,7 @@ const MainLayout = () => {
                 </Link>
               </>
             )}
-
           </div>
-
 
           {/* MOBILE MENU BUTTON */}
 
@@ -209,9 +178,7 @@ const MainLayout = () => {
               <Menu size={22} />
             )}
           </button>
-
         </div>
-
 
         {/* ===================================== */}
         {/* MOBILE DROPDOWN MENU */}
@@ -219,9 +186,7 @@ const MainLayout = () => {
 
         {mobileMenuOpen && (
           <div className="border-t border-gray-100 bg-white px-4 py-4 md:hidden">
-
             <div className="space-y-1">
-
               <Link
                 to="/"
                 onClick={closeMobileMenu}
@@ -231,20 +196,8 @@ const MainLayout = () => {
                 Home
               </Link>
 
-
-              <Link
-                to="/products"
-                onClick={closeMobileMenu}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
-              >
-                <ShoppingCart size={18} />
-                Marketplace
-              </Link>
-
-
               {user && (
                 <>
-
                   {/* BUSINESS PORTAL */}
 
                   <Link
@@ -256,7 +209,6 @@ const MainLayout = () => {
                     Business Portal
                   </Link>
 
-
                   <Link
                     to="/notifications"
                     onClick={closeMobileMenu}
@@ -265,19 +217,6 @@ const MainLayout = () => {
                     <Bell size={18} />
                     Notifications
                   </Link>
-
-
-                  <Link
-                    to="/cart"
-                    onClick={closeMobileMenu}
-                    className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
-                  >
-                    <span className="flex items-center gap-3">
-                      <ShoppingCart size={18} />
-                      Cart
-                    </span>
-                  </Link>
-
 
                   <Link
                     to="/profile"
@@ -288,7 +227,6 @@ const MainLayout = () => {
                     Profile
                   </Link>
 
-
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -297,14 +235,11 @@ const MainLayout = () => {
                     <LogOut size={18} />
                     Logout
                   </button>
-
                 </>
               )}
 
-
               {!user && (
                 <div className="mt-2 space-y-2">
-
                   <Link
                     to="/login/buyer"
                     onClick={closeMobileMenu}
@@ -320,17 +255,12 @@ const MainLayout = () => {
                   >
                     Join AgricWise
                   </Link>
-
                 </div>
               )}
-
             </div>
-
           </div>
         )}
-
       </header>
-
 
       {/* ===================================== */}
       {/* PAGE CONTENT */}
@@ -340,15 +270,12 @@ const MainLayout = () => {
         <Outlet />
       </main>
 
-
       {/* ===================================== */}
       {/* MOBILE APP BOTTOM NAVIGATION */}
       {/* ===================================== */}
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
-
         <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
-
           {/* HOME */}
 
           <Link
@@ -370,30 +297,6 @@ const MainLayout = () => {
               Home
             </span>
           </Link>
-
-
-          {/* DISCOVER */}
-
-          <Link
-            to="/products"
-            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
-              isActive("/products")
-                ? "text-green-700"
-                : "text-gray-400"
-            }`}
-          >
-            <Search
-              size={20}
-              strokeWidth={
-                isActive("/products") ? 2.5 : 2
-              }
-            />
-
-            <span className="text-[10px] font-semibold">
-              Discover
-            </span>
-          </Link>
-
 
           {/* POST */}
 
@@ -425,7 +328,6 @@ const MainLayout = () => {
             </Link>
           )}
 
-
           {/* MESSAGES */}
 
           <Link
@@ -448,7 +350,6 @@ const MainLayout = () => {
             </span>
           </Link>
 
-
           {/* PROFILE */}
 
           <Link
@@ -470,20 +371,15 @@ const MainLayout = () => {
               Profile
             </span>
           </Link>
-
         </div>
-
       </nav>
-
 
       {/* ===================================== */}
       {/* DESKTOP FOOTER */}
       {/* ===================================== */}
 
       <footer className="hidden border-t border-gray-100 bg-white md:block">
-
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-
           <div>
             <p className="text-sm font-bold text-gray-800">
               AgricWise Africa
@@ -494,9 +390,7 @@ const MainLayout = () => {
             </p>
           </div>
 
-
           <div className="flex items-center gap-5 text-xs font-medium text-gray-500">
-
             <Link
               to="/"
               className="hover:text-green-700"
@@ -505,25 +399,14 @@ const MainLayout = () => {
             </Link>
 
             <Link
-              to="/products"
-              className="hover:text-green-700"
-            >
-              Marketplace
-            </Link>
-
-            <Link
               to="/profile"
               className="hover:text-green-700"
             >
               Profile
             </Link>
-
           </div>
-
         </div>
-
       </footer>
-
     </div>
   );
 };

@@ -7,8 +7,25 @@ import FinalCTASection from "./components/FinalCTASection";
 import Footer from "../../components/common/Footer";
 
 function LandingPage() {
-return ( <main className="min-h-screen overflow-x-hidden bg-white"> <HeroSection /> <AboutAgricWiseSection /> <ServicesSection /> <CommunityPreviewSection /> <EcosystemSection /> <FinalCTASection /> <Footer /> </main>
-);
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-white">
+      <HeroSection />
+
+      <div id="about-agricwise">
+        <AboutAgricWiseSection />
+      </div>
+
+      <ServicesSection />
+
+      <CommunityPreviewSection />
+
+      <EcosystemSection />
+
+      <FinalCTASection />
+
+      <Footer />
+    </main>
+  );
 }
 
 export default LandingPage;
