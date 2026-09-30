@@ -8,6 +8,8 @@ import MainLayout from "../layouts/MainLayout";
 import HomePage from "../pages/Home/HomePage";
 import AboutPage from "../pages/About/AboutPage";
 
+import LandingPage from "../pages/Landing/LandingPage";
+
 import ProductsPage from "../pages/Products/ProductsPage";
 import ProductDetailsPage from "../pages/Products/ProductDetailsPage";
 import CreateProductPage from "../pages/Products/CreateProductPage";
@@ -45,14 +47,18 @@ import { useAuthStore } from "../store/authStore";
 HOME ENTRY
 ==========================================
 
-The AgricWise community feed is for
-authenticated members.
+The root entry point serves two different
+experiences depending on authentication.
 
-A new visitor must first create an
-AgricWise account.
+Unauthenticated visitors see the public
+AgricWise landing page.
 
-Returning authenticated users proceed
-directly to the community feed.
+Authenticated users proceed directly to
+the existing AgricWise community feed.
+
+This keeps the existing authenticated
+experience intact while giving new visitors
+a proper introduction to the platform.
 */
 
 const HomeEntry = () => {
@@ -61,12 +67,7 @@ const HomeEntry = () => {
   );
 
   if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/register"
-        replace
-      />
-    );
+    return <LandingPage />;
   }
 
   return <HomePage />;
@@ -170,7 +171,14 @@ export const router = createBrowserRouter([
 
       /*
       ========================================
-      COMMUNITY HOME
+      ROOT / COMMUNITY HOME
+      ========================================
+
+      Unauthenticated:
+        LandingPage
+
+      Authenticated:
+        HomePage
       ========================================
       */
 

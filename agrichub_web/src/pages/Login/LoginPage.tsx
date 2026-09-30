@@ -1,4 +1,12 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import {
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import {
+  Link,
+  useSearchParams,
+} from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,6 +27,9 @@ import { useLogin } from "../../hooks/useLogin";
 
 const LoginPage = () => {
   const [searchParams] = useSearchParams();
+
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   /*
    * Preserve the destination that brought the user
@@ -52,10 +63,10 @@ const LoginPage = () => {
   });
 
   /*
-  ==========================================
-  Login Mutation
-  ==========================================
-  */
+   ==========================================
+   Login Mutation
+   ==========================================
+   */
 
   const {
     mutate,
@@ -65,10 +76,10 @@ const LoginPage = () => {
   });
 
   /*
-  ==========================================
-  Submit
-  ==========================================
-  */
+   ==========================================
+   Submit
+   ==========================================
+   */
 
   const onSubmit = (
     data: LoginFormData
@@ -94,13 +105,36 @@ const LoginPage = () => {
             error={errors.email?.message}
           />
 
-          <Input
-            type="password"
-            label="Password"
-            placeholder="Enter your password"
-            {...register("password")}
-            error={errors.password?.message}
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              placeholder="Enter your password"
+              {...register("password")}
+              error={errors.password?.message}
+              className="pr-12"
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowPassword((current) => !current)
+              }
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
+              aria-pressed={showPassword}
+              className="absolute right-3 top-[38px] flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500/30"
+            >
+              {showPassword ? (
+                <EyeOff size={19} />
+              ) : (
+                <Eye size={19} />
+              )}
+            </button>
+          </div>
 
           <Button
             type="submit"
@@ -148,3 +182,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

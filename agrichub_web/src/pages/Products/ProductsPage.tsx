@@ -4,6 +4,7 @@ import {
   Search,
   Filter,
   ArrowRight,
+  Play,
 } from "lucide-react";
 
 import {
@@ -21,23 +22,17 @@ import ProductGrid from "../../components/products/ProductGrid";
 const ProductsPage = () => {
   const [search, setSearch] = useState("");
 
-  const debouncedSearch =
-    useDebounce(search);
+  const debouncedSearch = useDebounce(search);
 
-  const [category, setCategory] =
-    useState("");
+  const [category, setCategory] = useState("");
 
-  const [minPrice, setMinPrice] =
-    useState("");
+  const [minPrice, setMinPrice] = useState("");
 
-  const [maxPrice, setMaxPrice] =
-    useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
-  const [ordering, setOrdering] =
-    useState("-created_at");
+  const [ordering, setOrdering] = useState("-created_at");
 
-  const [page, setPage] =
-    useState(1);
+  const [page, setPage] = useState(1);
 
   const {
     data: categories = [],
@@ -98,55 +93,126 @@ const ProductsPage = () => {
 
       {/* ================= HERO ================= */}
 
-      <section className="relative overflow-hidden rounded-[32px]">
+      <section className="relative min-h-[520px] overflow-hidden rounded-[32px] bg-green-950 sm:min-h-[560px]">
 
-        <img
-          src={marketplaceBanner}
-          alt="Nigeria's Digital Agricultural Marketplace"
+        {/* AgricWise Hero Video */}
+
+        <video
           className="absolute inset-0 h-full w-full object-cover"
-        />
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source
+            src="/video/Hero_video.mp4"
+            type="video/mp4"
+          />
+        </video>
 
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/90 via-green-800/70 to-green-700/40" />
+        {/* Dark overlay */}
 
-        <div className="relative px-8 py-24 lg:px-16">
+        <div className="absolute inset-0 bg-black/45" />
+
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/15" />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
+
+        {/* Content */}
+
+        <div className="relative z-10 flex min-h-[520px] items-center px-6 py-16 sm:min-h-[560px] sm:px-10 lg:px-16">
 
           <div className="max-w-3xl">
 
-            <span className="rounded-full bg-white/20 px-5 py-2 text-sm font-semibold text-white backdrop-blur">
-              🌾 Fresh Produce From Verified Nigerian Farmers
-            </span>
+            {/* Badge */}
 
-            <h1 className="mt-8 text-5xl font-extrabold leading-tight text-white lg:text-6xl">
-              Marketplace
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white shadow-lg backdrop-blur-md sm:text-sm">
+
+              <span className="text-green-300">
+                🌾
+              </span>
+
+              AgricWise Marketplace
+            </div>
+
+            {/* Heading */}
+
+            <h1 className="mt-7 text-4xl font-black leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl">
+
+              Discover.
+              <span className="text-green-300">
+                {" "}Connect.
+              </span>
+              <br />
+              Trade with confidence.
+
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-green-100">
-              Discover vegetables, fruits, grains, livestock and more from trusted farmers across Nigeria. Shop confidently with transparent pricing and quality produce.
+            {/* Description */}
+
+            <p className="mt-6 max-w-2xl text-base leading-7 text-white/85 sm:text-lg sm:leading-8">
+
+              Discover agricultural products from farmers and sellers,
+              explore what's available and connect with the people
+              behind the products.
+
             </p>
 
-            <div className="mt-10 flex flex-wrap gap-4">
+            {/* Actions */}
 
-              {/* BECOME A SELLER */}
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
 
               <Link
                 to="/farmer"
-                className="flex items-center gap-2 rounded-2xl bg-white px-7 py-4 font-semibold text-green-700 transition hover:-translate-y-1 hover:shadow-xl"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-green-800 shadow-xl transition duration-200 hover:-translate-y-0.5 hover:bg-green-50 hover:shadow-2xl"
               >
                 Become a Seller
 
-                <ArrowRight size={18} />
+                <ArrowRight
+                  size={18}
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                />
               </Link>
 
-              {/* FARMER PORTAL */}
-
-              <Link
-                to="/farmer"
-                className="flex items-center gap-2 rounded-2xl border border-white/70 bg-green-950/30 px-7 py-4 font-semibold text-white backdrop-blur transition hover:-translate-y-1 hover:bg-green-950/50"
+              <a
+                href="#marketplace-products"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-md transition duration-200 hover:bg-white/20"
               >
-                Farmer Portal
+                <Play
+                  size={16}
+                  fill="currentColor"
+                />
 
-                <ArrowRight size={18} />
-              </Link>
+                Explore Products
+              </a>
+
+            </div>
+
+            {/* Marketplace identity strip */}
+
+            <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-white/65">
+
+              <span>Fresh Produce</span>
+
+              <span className="text-green-300">
+                •
+              </span>
+
+              <span>Grains</span>
+
+              <span className="text-green-300">
+                •
+              </span>
+
+              <span>Livestock</span>
+
+              <span className="text-green-300">
+                •
+              </span>
+
+              <span>Farm Products</span>
 
             </div>
 
@@ -216,7 +282,7 @@ const ProductsPage = () => {
 
       {/* ================= FILTERS ================= */}
 
-      <section className="rounded-[28px] bg-white p-8 shadow">
+      <section className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
 
         <div className="mb-6 flex items-center gap-3">
 
@@ -226,7 +292,7 @@ const ProductsPage = () => {
           />
 
           <h2 className="text-xl font-bold">
-            Filter Products
+            Find Products
           </h2>
 
         </div>
@@ -241,7 +307,7 @@ const ProductsPage = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-600"
+            className="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
           />
 
           <select
@@ -250,7 +316,7 @@ const ProductsPage = () => {
               setCategory(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-300 px-4 py-3"
+            className="rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
           >
 
             <option value="">
@@ -278,7 +344,7 @@ const ProductsPage = () => {
               setMinPrice(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-300 px-4 py-3"
+            className="rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
           />
 
           <input
@@ -289,7 +355,7 @@ const ProductsPage = () => {
               setMaxPrice(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-300 px-4 py-3"
+            className="rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
           />
 
           <select
@@ -298,7 +364,7 @@ const ProductsPage = () => {
               setOrdering(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-300 px-4 py-3"
+            className="rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
           >
 
             <option value="-created_at">
@@ -326,23 +392,27 @@ const ProductsPage = () => {
 
       {/* ================= TOOLBAR ================= */}
 
-      <section className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-white p-6 shadow md:flex-row md:items-center">
+      <section
+        id="marketplace-products"
+        className="flex flex-col items-start justify-between gap-5 rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm md:flex-row md:items-center"
+      >
 
         <div>
 
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl font-black text-gray-900 sm:text-3xl">
             Available Products
           </h2>
 
-          <p className="mt-2 text-gray-500">
-            {products?.count ?? 0} Product{(products?.count ?? 0) !== 1 ? "s" : ""} Found
+          <p className="mt-2 text-sm text-gray-500">
+            {products?.count ?? 0} Product
+            {(products?.count ?? 0) !== 1 ? "s" : ""} Found
           </p>
 
         </div>
 
         <button
           onClick={clearFilters}
-          className="rounded-xl border border-green-600 px-6 py-3 font-semibold text-green-700 transition hover:bg-green-50"
+          className="rounded-full border border-green-600 px-6 py-3 text-sm font-semibold text-green-700 transition hover:bg-green-50"
         >
           Reset Filters
         </button>
@@ -403,10 +473,8 @@ const ProductsPage = () => {
           </h2>
 
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-green-100">
-            Join thousands of Nigerian farmers selling directly to buyers
-            across Nigeria. Upload products, receive orders, grow your
-            customer base and increase your farm income with
-            AgricWise Marketplace.
+            List your agricultural products, connect with buyers and
+            build your presence on AgricWise Marketplace.
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-5">
