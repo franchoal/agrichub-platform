@@ -1,16 +1,19 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+
 import axios from "axios";
+
 import { toast } from "react-hot-toast";
 
 import {
   farmerService,
-  type FarmerProfile,
 } from "../services/farmerService";
 
-type FarmerProfilePayload = Omit<
-  FarmerProfile,
-  "id" | "is_verified"
->;
+import type {
+  UpdateFarmerProfileData,
+} from "../services/farmerService";
 
 export const useUpdateFarmerProfile = (
   onSuccess?: () => void
@@ -19,7 +22,7 @@ export const useUpdateFarmerProfile = (
 
   return useMutation({
     mutationFn: async (
-      data: FarmerProfilePayload
+      data: UpdateFarmerProfileData
     ) => {
       try {
         return await farmerService.updateProfile(
@@ -27,8 +30,8 @@ export const useUpdateFarmerProfile = (
         );
       } catch (error) {
         /**
-         * If the farmer profile doesn't exist yet,
-         * create it instead.
+         * If the agricultural business profile
+         * doesn't exist yet, create it instead.
          */
         if (
           axios.isAxiosError(error) &&
@@ -45,7 +48,7 @@ export const useUpdateFarmerProfile = (
 
     onSuccess: () => {
       toast.success(
-        "Farmer profile saved successfully."
+        "AgricWise business profile saved successfully."
       );
 
       queryClient.invalidateQueries({
@@ -59,11 +62,13 @@ export const useUpdateFarmerProfile = (
 
     onError: (error) => {
       if (axios.isAxiosError(error)) {
-        console.error(error.response?.data);
+        console.error(
+          error.response?.data
+        );
 
         const message =
           error.response?.data?.detail ||
-          "Unable to save farmer profile.";
+          "Unable to save AgricWise business profile.";
 
         toast.error(message);
 
@@ -71,7 +76,7 @@ export const useUpdateFarmerProfile = (
       }
 
       toast.error(
-        "Unable to save farmer profile."
+        "Unable to save AgricWise business profile."
       );
     },
   });

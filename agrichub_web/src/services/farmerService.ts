@@ -1,7 +1,26 @@
 import { api } from "./api";
 
 /* ==============================
-   Farmer Profile Types
+   Agricultural Category Types
+============================== */
+
+export interface AgriculturalCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+}
+
+export interface PaginatedAgriculturalCategories {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AgriculturalCategory[];
+}
+
+/* ==============================
+   Farmer / Agricultural Business
+   Profile Types
 ============================== */
 
 export interface FarmerProfile {
@@ -9,7 +28,59 @@ export interface FarmerProfile {
   farm_name: string;
   farm_location: string;
   farm_description: string;
+  business_categories: AgriculturalCategory[];
   is_verified: boolean;
+}
+
+export interface CreateFarmerProfileData {
+  farm_name: string;
+  farm_location: string;
+  farm_description: string;
+  category_ids: number[];
+}
+
+export interface UpdateFarmerProfileData {
+  farm_name: string;
+  farm_location: string;
+  farm_description: string;
+  category_ids: number[];
+}
+
+/* ==============================
+   Agricultural Service Types
+============================== */
+
+export interface AgriculturalService {
+  id: number;
+  business: number;
+  business_name: string;
+  name: string;
+  description: string;
+  location: string;
+  price: string | null;
+  price_unit: string;
+  image: string | null;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAgriculturalServiceData {
+  name: string;
+  description: string;
+  location?: string;
+  price?: string | null;
+  price_unit?: string;
+  is_available?: boolean;
+}
+
+export interface UpdateAgriculturalServiceData {
+  name?: string;
+  description?: string;
+  location?: string;
+  price?: string | null;
+  price_unit?: string;
+  is_available?: boolean;
 }
 
 /* ==============================
@@ -63,44 +134,134 @@ export interface UpdateFarmerProductData {
 }
 
 /* ==============================
+   Agricultural Services Response
+============================== */
+
+export interface PaginatedAgriculturalServices {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AgriculturalService[];
+}
+
+/* ==============================
    Farmer Service
 ============================== */
 
 export const farmerService = {
   /**
    * ==============================
-   * Farmer Profile
+   * Agricultural Categories
+   * ==============================
+   */
+
+  getCategories: async (): Promise<AgriculturalCategory[]> => {
+    const response =
+      await api.get<PaginatedAgriculturalCategories>(
+        "/farmers/categories/"
+      );
+
+    return response.data.results;
+  },
+
+  /**
+   * ==============================
+   * Agricultural Business Profile
    * ==============================
    */
 
   getProfile: async (): Promise<FarmerProfile> => {
-    const response = await api.get<FarmerProfile>(
-      "/farmers/profile/"
-    );
+    const response =
+      await api.get<FarmerProfile>(
+        "/farmers/profile/"
+      );
 
     return response.data;
   },
 
   createProfile: async (
-    data: Omit<FarmerProfile, "id" | "is_verified">
+    data: CreateFarmerProfileData
   ): Promise<FarmerProfile> => {
-    const response = await api.post<FarmerProfile>(
-      "/farmers/profile/create/",
-      data
-    );
+    const response =
+      await api.post<FarmerProfile>(
+        "/farmers/profile/create/",
+        data
+      );
 
     return response.data;
   },
 
   updateProfile: async (
-    data: Omit<FarmerProfile, "id" | "is_verified">
+    data: UpdateFarmerProfileData
   ): Promise<FarmerProfile> => {
-    const response = await api.put<FarmerProfile>(
-      "/farmers/profile/",
-      data
-    );
+    const response =
+      await api.put<FarmerProfile>(
+        "/farmers/profile/",
+        data
+      );
 
     return response.data;
+  },
+
+  /**
+   * ==============================
+   * Agricultural Services
+   * ==============================
+   */
+
+  getMyServices: async (): Promise<
+    AgriculturalService[]
+  > => {
+    const response =
+      await api.get<AgriculturalService[]>(
+        "/farmers/services/"
+      );
+
+    return response.data;
+  },
+
+  getService: async (
+    id: number
+  ): Promise<AgriculturalService> => {
+    const response =
+      await api.get<AgriculturalService>(
+        `/farmers/services/${id}/`
+      );
+
+    return response.data;
+  },
+
+  createService: async (
+    data: CreateAgriculturalServiceData
+  ): Promise<AgriculturalService> => {
+    const response =
+      await api.post<AgriculturalService>(
+        "/farmers/services/",
+        data
+      );
+
+    return response.data;
+  },
+
+  updateService: async (
+    id: number,
+    data: UpdateAgriculturalServiceData
+  ): Promise<AgriculturalService> => {
+    const response =
+      await api.patch<AgriculturalService>(
+        `/farmers/services/${id}/`,
+        data
+      );
+
+    return response.data;
+  },
+
+  deleteService: async (
+    id: number
+  ): Promise<void> => {
+    await api.delete(
+      `/farmers/services/${id}/`
+    );
   },
 
   /**

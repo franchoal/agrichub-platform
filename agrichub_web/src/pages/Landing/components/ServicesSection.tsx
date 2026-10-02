@@ -71,8 +71,6 @@ status: "growing",
 function ServicesSection() {
 return ( <section className="relative overflow-hidden bg-[#F6FAF3] px-4 py-14 sm:px-6 sm:py-18 lg:px-12 lg:py-24">
 {/* Background atmosphere */} <div className="pointer-events-none absolute -right-40 -top-40 h-72 w-72 rounded-full bg-green-200/30 blur-3xl sm:h-96 sm:w-96" />
-
-```
   <div className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-lime-100/60 blur-3xl sm:h-96 sm:w-96" />
 
   <div className="relative mx-auto max-w-7xl">

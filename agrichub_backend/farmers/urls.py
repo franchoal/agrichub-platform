@@ -1,6 +1,9 @@
 from django.urls import path
 
 from .views import (
+    AgriculturalCategoryListView,
+    AgriculturalServiceListCreateView,
+    AgriculturalServiceDetailView,
     FarmerProfileView,
     FarmerProfileCreateView,
     FarmerProductListCreateView,
@@ -9,6 +12,12 @@ from .views import (
 
 
 urlpatterns = [
+    path(
+        "categories/",
+        AgriculturalCategoryListView.as_view(),
+        name="agricultural-categories",
+    ),
+
     path(
         "profile/",
         FarmerProfileView.as_view(),
@@ -19,6 +28,18 @@ urlpatterns = [
         "profile/create/",
         FarmerProfileCreateView.as_view(),
         name="farmer-profile-create",
+    ),
+
+    path(
+        "services/",
+        AgriculturalServiceListCreateView.as_view(),
+        name="agricultural-services",
+    ),
+
+    path(
+        "services/<int:pk>/",
+        AgriculturalServiceDetailView.as_view(),
+        name="agricultural-service-detail",
     ),
 
     path(

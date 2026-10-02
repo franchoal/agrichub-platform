@@ -8,33 +8,39 @@ import { toast } from "react-hot-toast";
 
 import { farmerService } from "../services/farmerService";
 
-import type { FarmerProfile } from "../services/farmerService";
+import type {
+  CreateFarmerProfileData,
+} from "../services/farmerService";
+
 
 export const useCreateFarmerProfile = (
   onSuccess?: () => void
 ) => {
+
   const queryClient =
     useQueryClient();
 
+
   return useMutation({
+
     mutationFn: (
-      data: Omit<
-        FarmerProfile,
-        "id" | "is_verified"
-      >
+      data: CreateFarmerProfileData
     ) =>
       farmerService.createProfile(
         data
       ),
 
+
     onSuccess: async () => {
+
       toast.success(
-        "Farm profile created successfully!"
+        "AgricWise business profile created successfully!"
       );
+
 
       /*
       ==========================================
-      Refresh Farmer Profile
+      Refresh Agricultural Business Profile
       ==========================================
       */
 
@@ -44,18 +50,24 @@ export const useCreateFarmerProfile = (
         ],
       });
 
+
       if (onSuccess) {
         onSuccess();
       }
+
     },
 
+
     onError: (error) => {
+
       if (
         axios.isAxiosError(error)
       ) {
+
         console.error(
           error.response?.data
         );
+
 
         const message =
           typeof error.response
@@ -65,16 +77,24 @@ export const useCreateFarmerProfile = (
               )
                 .flat()
                 .join("\n")
-            : "Failed to create farm profile.";
+            : "Failed to create AgricWise business profile.";
 
-        toast.error(message);
+
+        toast.error(
+          message
+        );
+
 
         return;
       }
 
+
       toast.error(
-        "Failed to create farm profile."
+        "Failed to create AgricWise business profile."
       );
+
     },
+
   });
+
 };

@@ -1,18 +1,27 @@
-from django.db import transaction
-from rest_framework import generics, permissions
 import logging
 
+from django.db import transaction
+
+from rest_framework import generics, permissions
 from rest_framework.exceptions import (
     NotFound,
     PermissionDenied,
 )
 
-from products.models import Product
 from community.models import Post
+from products.models import Product
 
-from .models import FarmerProfile
+from .models import (
+    AgriculturalCategory,
+    AgriculturalService,
+    FarmerProfile,
+)
+
 from .permissions import IsFarmer
+
 from .serializers import (
+    AgriculturalCategorySerializer,
+    AgriculturalServiceSerializer,
     FarmerProfileSerializer,
     FarmerProductSerializer,
 )
@@ -21,18 +30,35 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
-class FarmerProfileView(generics.RetrieveUpdateAPIView):
+class AgriculturalCategoryListView(
+    generics.ListAPIView
+):
+    """
+    Return active agricultural business categories.
+
+    GET /api/farmers/categories/
+    """
+
+    serializer_class = AgriculturalCategorySerializer
+
+    permission_classes = [
+        permissions.AllowAny,
+    ]
+
+    def get_queryset(self):
+        return (
+            AgriculturalCategory.objects
+            .filter(is_active=True)
+            .order_by("name")
+        )
+
+
+class FarmerProfileView(
+    generics.RetrieveUpdateAPIView
+):
     """
     Retrieve and update the authenticated
-    farmer's profile.
-
-    URL:
-        GET /api/farmers/profile/
-        PUT /api/farmers/profile/
-
-    No primary key is required because
-    each authenticated farmer only owns
-    one profile.
+    agricultural business/professional profile.
     """
 
     serializer_class = FarmerProfileSerializer
@@ -50,25 +76,17 @@ class FarmerProfileView(generics.RetrieveUpdateAPIView):
 
         except FarmerProfile.DoesNotExist:
             raise NotFound(
-                "Farmer profile does not exist. Please create your profile first."
+                "Agricultural business profile does not exist. "
+                "Please complete your AgricWise business profile first."
             )
 
 
-class FarmerProfileCreateView(generics.CreateAPIView):
+class FarmerProfileCreateView(
+    generics.CreateAPIView
+):
     """
-    Create an authenticated user's FarmerProfile.
-
-    A FarmerProfile represents the agricultural
-    seller/farmer capability and is separate from
-    the user's universal AgricWise personal profile.
-
-    URL:
-        POST /api/farmers/profile/create/
-
-    Any authenticated AgricWise user can create
-    their first FarmerProfile.
-
-    An existing FarmerProfile cannot be created again.
+    Create an authenticated user's agricultural
+    business/professional profile.
     """
 
     serializer_class = FarmerProfileSerializer
@@ -82,8 +100,9 @@ class FarmerProfileCreateView(generics.CreateAPIView):
         if FarmerProfile.objects.filter(
             user=self.request.user
         ).exists():
+
             raise PermissionDenied(
-                "Farmer profile already exists."
+                "Agricultural business profile already exists."
             )
 
         serializer.save(
@@ -91,16 +110,91 @@ class FarmerProfileCreateView(generics.CreateAPIView):
         )
 
 
+class AgriculturalServiceListCreateView(
+    generics.ListCreateAPIView
+):
+    """
+    List and create services belonging to the
+    authenticated agricultural business.
+
+    GET:
+        /api/farmers/services/
+
+    POST:
+        /api/farmers/services/
+    """
+
+    serializer_class = AgriculturalServiceSerializer
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsFarmer,
+    ]
+
+    def get_queryset(self):
+
+        return (
+            AgriculturalService.objects
+            .filter(
+                business__user=self.request.user
+            )
+            .select_related("business")
+            .order_by("-created_at")
+        )
+
+    def perform_create(self, serializer):
+
+        try:
+            business = FarmerProfile.objects.get(
+                user=self.request.user
+            )
+
+        except FarmerProfile.DoesNotExist:
+            raise PermissionDenied(
+                "Please complete your AgricWise business "
+                "profile before adding services."
+            )
+
+        serializer.save(
+            business=business
+        )
+
+
+class AgriculturalServiceDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    """
+    Retrieve, update and delete a service
+    belonging to the authenticated business.
+    """
+
+    serializer_class = AgriculturalServiceSerializer
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsFarmer,
+    ]
+
+    def get_queryset(self):
+
+        return (
+            AgriculturalService.objects
+            .filter(
+                business__user=self.request.user
+            )
+            .select_related("business")
+        )
+
+
 class FarmerProductListCreateView(
     generics.ListCreateAPIView
 ):
     """
-    Farmers can list and create
-    their own products.
+    List and create products belonging to the
+    authenticated agricultural business.
 
-    Creating a product also automatically
-    creates its corresponding Community
-    Marketplace post.
+    Creating a product also automatically creates
+    its corresponding Community Marketplace post.
     """
 
     serializer_class = FarmerProductSerializer
@@ -144,14 +238,18 @@ class FarmerProductListCreateView(
             )
 
         except FarmerProfile.DoesNotExist:
+
             raise PermissionDenied(
-                "Please create your farmer profile before adding products."
+                "Please complete your AgricWise business "
+                "profile before adding products."
             )
 
         except Exception:
+
             logger.exception(
                 "PRODUCT AND COMMUNITY LISTING CREATION FAILED"
             )
+
             raise
 
 
@@ -159,9 +257,8 @@ class FarmerProductDetailView(
     generics.RetrieveUpdateDestroyAPIView
 ):
     """
-    Retrieve, update and delete
-    products belonging to the
-    authenticated farmer only.
+    Retrieve, update and delete products belonging
+    only to the authenticated agricultural business.
     """
 
     serializer_class = FarmerProductSerializer
@@ -185,13 +282,6 @@ class FarmerProductDetailView(
 
     @transaction.atomic
     def perform_destroy(self, instance):
-        """
-        Delete the linked Community Marketplace post
-        before deleting the marketplace Product.
-
-        This keeps the marketplace and community
-        listing synchronized.
-        """
 
         Post.objects.filter(
             product=instance,

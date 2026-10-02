@@ -38,7 +38,7 @@ function AboutAgricWiseSection() {
 return ( <section className="relative overflow-hidden bg-white px-4 py-14 sm:px-6 sm:py-18 lg:px-12 lg:py-24">
 {/* Background atmosphere */} <div className="pointer-events-none absolute -left-40 top-20 h-72 w-72 rounded-full bg-green-100/60 blur-3xl sm:h-80 sm:w-80" />
 
-```
+
   <div className="pointer-events-none absolute -right-40 bottom-0 h-80 w-80 rounded-full bg-lime-100/50 blur-3xl sm:h-96 sm:w-96" />
 
   <div className="relative mx-auto max-w-7xl">
