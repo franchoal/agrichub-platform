@@ -36,17 +36,11 @@ import {
   Input,
 } from "../ui";
 
-
 const FarmerProfileForm = () => {
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
-
-
-  const [
-    searchParams,
-  ] = useSearchParams();
-
+  const [searchParams] =
+    useSearchParams();
 
   /*
   ==========================================
@@ -55,17 +49,13 @@ const FarmerProfileForm = () => {
   */
 
   const requestedReturnTo =
-    searchParams.get(
-      "returnTo"
-    );
-
+    searchParams.get("returnTo");
 
   const returnTo =
     requestedReturnTo &&
     requestedReturnTo.startsWith("/")
       ? requestedReturnTo
       : "/farmer/dashboard";
-
 
   /*
   ==========================================
@@ -76,96 +66,87 @@ const FarmerProfileForm = () => {
   const [
     categories,
     setCategories,
-  ] = useState<
-    AgriculturalCategory[]
-  >([]);
-
+  ] = useState<AgriculturalCategory[]>(
+    []
+  );
 
   const [
     categoriesLoading,
     setCategoriesLoading,
   ] = useState(true);
 
-
   const [
     categoriesError,
     setCategoriesError,
-  ] = useState<string | null>(
-    null
-  );
-
+  ] = useState<string | null>(null);
 
   useEffect(() => {
-
     let isMounted = true;
-
 
     const loadCategories =
       async () => {
-
         try {
-
-          setCategoriesLoading(
-            true
-          );
-
-          setCategoriesError(
-            null
-          );
-
+          setCategoriesLoading(true);
+          setCategoriesError(null);
 
           const data =
             await farmerService.getCategories();
 
+          if (!isMounted) {
+            return;
+          }
 
-          if (isMounted) {
+          /*
+          ==========================================
+          SAFETY NORMALIZATION
+          ==========================================
 
-            setCategories(
+          The category API should return an array.
+          We still protect the UI against an
+          unexpected response shape so that a bad
+          API response cannot crash the page.
+          */
+
+          if (Array.isArray(data)) {
+            setCategories(data);
+          } else {
+            console.error(
+              "Unexpected agricultural categories response:",
               data
             );
 
+            setCategories([]);
+
+            setCategoriesError(
+              "We could not load the agricultural categories. Please refresh and try again."
+            );
           }
-
         } catch (error) {
-
           console.error(
             "Failed to load agricultural categories:",
             error
           );
 
-
           if (isMounted) {
-
             setCategoriesError(
               "We could not load the agricultural categories. Please refresh and try again."
             );
 
+            setCategories([]);
           }
-
         } finally {
-
           if (isMounted) {
-
-            setCategoriesLoading(
-              false
-            );
-
+            setCategoriesLoading(false);
           }
-
         }
-
       };
 
-
     loadCategories();
-
 
     return () => {
       isMounted = false;
     };
-
   }, []);
-
 
   /*
   ==========================================
@@ -174,19 +155,11 @@ const FarmerProfileForm = () => {
   */
 
   const createProfile =
-    useCreateFarmerProfile(
-      () => {
-
-        navigate(
-          returnTo,
-          {
-            replace: true,
-          }
-        );
-
-      }
-    );
-
+    useCreateFarmerProfile(() => {
+      navigate(returnTo, {
+        replace: true,
+      });
+    });
 
   /*
   ==========================================
@@ -216,12 +189,36 @@ const FarmerProfileForm = () => {
     },
   });
 
+  /*
+  ==========================================
+  SELECTED CATEGORY IDS
+  ==========================================
+  */
+
+  const watchedCategoryIds =
+    watch("category_ids");
+
+  /*
+  ==========================================
+  SAFETY NORMALIZATION
+  ==========================================
+
+  React Hook Form should normally give us
+  number[], but we explicitly normalize here
+  before using array methods such as filter,
+  includes and spread.
+
+  This prevents:
+
+      TypeError: s.filter is not a function
+  */
 
   const selectedCategoryIds =
-    watch(
-      "category_ids"
-    );
-
+    Array.isArray(
+      watchedCategoryIds
+    )
+      ? watchedCategoryIds
+      : [];
 
   /*
   ==========================================
@@ -232,16 +229,17 @@ const FarmerProfileForm = () => {
   const toggleCategory = (
     categoryId: number
   ) => {
-
     const current =
-      selectedCategoryIds || [];
-
+      Array.isArray(
+        selectedCategoryIds
+      )
+        ? selectedCategoryIds
+        : [];
 
     const isSelected =
       current.includes(
         categoryId
       );
-
 
     const next =
       isSelected
@@ -254,7 +252,6 @@ const FarmerProfileForm = () => {
             categoryId,
           ];
 
-
     setValue(
       "category_ids",
       next,
@@ -263,9 +260,7 @@ const FarmerProfileForm = () => {
         shouldDirty: true,
       }
     );
-
   };
-
 
   /*
   ==========================================
@@ -276,36 +271,21 @@ const FarmerProfileForm = () => {
   const onSubmit:
     SubmitHandler<
       FarmerProfileFormData
-    > = (
-      data
-    ) => {
-
-      createProfile.mutate(
-        data
-      );
-
+    > = (data) => {
+      createProfile.mutate(data);
     };
 
-
   return (
-
     <form
-      onSubmit={
-        handleSubmit(
-          onSubmit
-        )
-      }
+      onSubmit={handleSubmit(onSubmit)}
       className="space-y-8"
     >
-
       {/* =====================================
           BUSINESS TYPE
       ===================================== */}
 
       <section>
-
         <div className="mb-4">
-
           <h2 className="text-lg font-bold text-gray-900">
             What do you do in agriculture?
           </h2>
@@ -315,65 +295,43 @@ const FarmerProfileForm = () => {
             describe your agricultural business,
             products or professional services.
           </p>
-
         </div>
 
-
         {categoriesLoading && (
-
           <div className="rounded-xl border border-green-100 bg-green-50 p-5">
-
             <div className="flex items-center gap-3">
-
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
 
               <p className="text-sm font-medium text-green-800">
                 Loading agricultural categories...
               </p>
-
             </div>
-
           </div>
-
         )}
 
-
         {categoriesError && (
-
           <div className="rounded-xl border border-red-200 bg-red-50 p-5">
-
             <p className="text-sm text-red-700">
               {categoriesError}
             </p>
-
           </div>
-
         )}
-
 
         {!categoriesLoading &&
           !categoriesError &&
+          Array.isArray(categories) &&
           categories.length > 0 && (
-
             <div className="grid gap-3 sm:grid-cols-2">
-
               {categories.map(
-                (
-                  category
-                ) => {
-
+                (category) => {
                   const selected =
                     selectedCategoryIds.includes(
                       category.id
                     );
 
-
                   return (
-
                     <button
-                      key={
-                        category.id
-                      }
+                      key={category.id}
                       type="button"
                       onClick={() =>
                         toggleCategory(
@@ -390,9 +348,7 @@ const FarmerProfileForm = () => {
                         }
                       `}
                     >
-
                       <div className="flex items-start gap-3">
-
                         <div
                           className={`
                             mt-0.5 flex h-5 w-5
@@ -406,18 +362,14 @@ const FarmerProfileForm = () => {
                             }
                           `}
                         >
-
                           {selected && (
                             <span className="text-xs font-bold">
                               ✓
                             </span>
                           )}
-
                         </div>
 
-
                         <div className="min-w-0">
-
                           <h3
                             className={`
                               text-sm font-semibold
@@ -428,73 +380,50 @@ const FarmerProfileForm = () => {
                               }
                             `}
                           >
-                            {
-                              category.name
-                            }
+                            {category.name}
                           </h3>
 
-
                           <p className="mt-1 text-xs leading-5 text-gray-500">
-                            {
-                              category.description
-                            }
+                            {category.description}
                           </p>
-
                         </div>
-
                       </div>
-
                     </button>
-
                   );
-
                 }
               )}
-
             </div>
-
           )}
 
-
         {errors.category_ids && (
-
           <p className="mt-3 text-sm text-red-500">
             {
               errors.category_ids.message
             }
           </p>
-
         )}
-
       </section>
-
 
       {/* =====================================
           BUSINESS NAME
       ===================================== */}
 
       <section>
-
         <Input
           label="Business / Farm Name"
           placeholder="e.g. Green Valley Farms"
-          {...register(
-            "farm_name"
-          )}
+          {...register("farm_name")}
           error={
             errors.farm_name?.message
           }
         />
-
       </section>
-
 
       {/* =====================================
           LOCATION
       ===================================== */}
 
       <section>
-
         <Input
           label="Business Location"
           placeholder="e.g. Abeokuta, Ogun State"
@@ -505,22 +434,16 @@ const FarmerProfileForm = () => {
             errors.farm_location?.message
           }
         />
-
       </section>
-
 
       {/* =====================================
           DESCRIPTION
       ===================================== */}
 
       <section>
-
         <label className="mb-2 block text-sm font-medium text-gray-700">
-
           About Your Business
-
         </label>
-
 
         <textarea
           {...register(
@@ -540,30 +463,22 @@ const FarmerProfileForm = () => {
           "
         />
 
-
         {errors.farm_description && (
-
           <p className="mt-2 text-sm text-red-500">
-
             {
               errors
                 .farm_description
                 .message
             }
-
           </p>
-
         )}
-
       </section>
-
 
       {/* =====================================
           SUBMIT
       ===================================== */}
 
       <div className="border-t border-gray-100 pt-6">
-
         <Button
           type="submit"
           isLoading={
@@ -576,20 +491,13 @@ const FarmerProfileForm = () => {
             categories.length === 0
           }
         >
-
           {createProfile.isPending
             ? "Creating AgricWise Business..."
             : "Create AgricWise Business Profile"}
-
         </Button>
-
       </div>
-
     </form>
-
   );
-
 };
-
 
 export default FarmerProfileForm;
