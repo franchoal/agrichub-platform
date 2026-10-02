@@ -84,7 +84,7 @@ export interface UpdateAgriculturalServiceData {
 }
 
 /* ==============================
-   Product Types
+   Farmer Product Types
 ============================== */
 
 export interface FarmerProduct {
@@ -111,6 +111,21 @@ export interface PaginatedFarmerProducts {
   results: FarmerProduct[];
 }
 
+/* ==============================
+   Paginated Agricultural Services
+============================== */
+
+export interface PaginatedAgriculturalServices {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AgriculturalService[];
+}
+
+/* ==============================
+   Farmer Product Payloads
+============================== */
+
 export interface CreateFarmerProductData {
   category: number;
   name: string;
@@ -134,28 +149,17 @@ export interface UpdateFarmerProductData {
 }
 
 /* ==============================
-   Agricultural Services Response
-============================== */
-
-export interface PaginatedAgriculturalServices {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: AgriculturalService[];
-}
-
-/* ==============================
    Farmer Service
 ============================== */
 
 export const farmerService = {
-  /**
-   * ==============================
-   * Agricultural Categories
-   * ==============================
-   */
+  /* ==============================
+     Agricultural Categories
+  ============================== */
 
-  getCategories: async (): Promise<AgriculturalCategory[]> => {
+  getCategories: async (): Promise<
+    AgriculturalCategory[]
+  > => {
     const response =
       await api.get<PaginatedAgriculturalCategories>(
         "/farmers/categories/"
@@ -164,11 +168,9 @@ export const farmerService = {
     return response.data.results;
   },
 
-  /**
-   * ==============================
-   * Agricultural Business Profile
-   * ==============================
-   */
+  /* ==============================
+     Agricultural Business Profile
+  ============================== */
 
   getProfile: async (): Promise<FarmerProfile> => {
     const response =
@@ -203,21 +205,19 @@ export const farmerService = {
     return response.data;
   },
 
-  /**
-   * ==============================
-   * Agricultural Services
-   * ==============================
-   */
+  /* ==============================
+     Agricultural Services
+  ============================== */
 
   getMyServices: async (): Promise<
     AgriculturalService[]
   > => {
     const response =
-      await api.get<AgriculturalService[]>(
+      await api.get<PaginatedAgriculturalServices>(
         "/farmers/services/"
       );
 
-    return response.data;
+    return response.data.results;
   },
 
   getService: async (
@@ -264,13 +264,13 @@ export const farmerService = {
     );
   },
 
-  /**
-   * ==============================
-   * Farmer Products
-   * ==============================
-   */
+  /* ==============================
+     Farmer Products
+  ============================== */
 
-  getMyProducts: async (): Promise<PaginatedFarmerProducts> => {
+  getMyProducts: async (): Promise<
+    PaginatedFarmerProducts
+  > => {
     const response =
       await api.get<PaginatedFarmerProducts>(
         "/farmers/products/"
