@@ -7,6 +7,7 @@ import { useFarmerOrders } from "../../hooks/useFarmerOrders";
 import { useFarmerProducts } from "../../hooks/useFarmerProducts";
 import { useFarmerProfile } from "../../hooks/useFarmerProfile";
 import { useDeleteProduct } from "../../hooks/useDeleteProduct";
+
 import {
   useAgriculturalServices,
   useCreateAgriculturalService,
@@ -56,7 +57,7 @@ const FarmerDashboardPage = () => {
   ============================== */
 
   const {
-    data: services = [],
+    data: servicesData,
     isLoading: isServicesLoading,
     isError: isServicesError,
   } = useAgriculturalServices();
@@ -91,14 +92,43 @@ const FarmerDashboardPage = () => {
     useState<AgriculturalService | null>(null);
 
   /* ==============================
-     Derived Data
+     Defensive Data Normalization
   ============================== */
 
-  const products =
-    productsData?.results ?? [];
+  const products = Array.isArray(
+    productsData?.results
+  )
+    ? productsData.results
+    : [];
 
-  const orders =
-    ordersData?.results ?? [];
+  const orders = Array.isArray(
+    ordersData?.results
+  )
+    ? ordersData.results
+    : [];
+
+  /*
+   * useAgriculturalServices() already returns
+   * AgriculturalService[].
+   *
+   * Do not access servicesData.results here.
+   */
+  const services: AgriculturalService[] =
+    Array.isArray(servicesData)
+      ? servicesData
+      : [];
+
+  const businessCategories =
+    profile &&
+    Array.isArray(
+      profile.business_categories
+    )
+      ? profile.business_categories
+      : [];
+
+  /* ==============================
+     Derived Data
+  ============================== */
 
   const inStockProducts =
     products.filter(
@@ -115,8 +145,20 @@ const FarmerDashboardPage = () => {
 
   const availableServices =
     services.filter(
-      (service) =>
+      (service: AgriculturalService) =>
         service.is_available
+    );
+
+  const pendingOrders =
+    orders.filter(
+      (order) =>
+        order.status === "pending"
+    );
+
+  const completedOrders =
+    orders.filter(
+      (order) =>
+        order.status === "completed"
     );
 
   /* ==============================
@@ -163,7 +205,9 @@ const FarmerDashboardPage = () => {
         "Are you sure you want to delete this product?"
       );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     deleteProduct(id);
   };
@@ -214,7 +258,8 @@ const FarmerDashboardPage = () => {
       updateService(
         {
           id: editingService.id,
-          data: data as UpdateAgriculturalServiceData,
+          data:
+            data as UpdateAgriculturalServiceData,
         },
         {
           onSuccess: () => {
@@ -246,7 +291,9 @@ const FarmerDashboardPage = () => {
         `Are you sure you want to remove "${service.name}" from your services?`
       );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     deleteService(service.id);
   };
@@ -287,8 +334,9 @@ const FarmerDashboardPage = () => {
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {profile.business_categories
-                ?.slice(0, 3)
+
+              {businessCategories
+                .slice(0, 3)
                 .map((category) => (
                   <span
                     key={category.id}
@@ -297,6 +345,7 @@ const FarmerDashboardPage = () => {
                     {category.name}
                   </span>
                 ))}
+
             </div>
 
           </div>
@@ -345,6 +394,7 @@ const FarmerDashboardPage = () => {
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+
             <p className="text-sm text-gray-500">
               Products Listed
             </p>
@@ -356,9 +406,11 @@ const FarmerDashboardPage = () => {
             <p className="mt-3 text-sm text-gray-500">
               Products in your inventory
             </p>
+
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+
             <p className="text-sm text-gray-500">
               Services Offered
             </p>
@@ -370,9 +422,11 @@ const FarmerDashboardPage = () => {
             <p className="mt-3 text-sm text-gray-500">
               Agricultural services you offer
             </p>
+
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+
             <p className="text-sm text-gray-500">
               Active Orders
             </p>
@@ -384,9 +438,11 @@ const FarmerDashboardPage = () => {
             <p className="mt-3 text-sm text-gray-500">
               Customer purchases
             </p>
+
           </div>
 
           <div className="rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+
             <p className="text-sm text-gray-500">
               Available Services
             </p>
@@ -398,6 +454,7 @@ const FarmerDashboardPage = () => {
             <p className="mt-3 text-sm text-gray-500">
               Services currently available
             </p>
+
           </div>
 
         </div>
@@ -449,16 +506,19 @@ const FarmerDashboardPage = () => {
       <section className="mb-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
         <div className="rounded-2xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Products
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-green-700">
-            {productsData?.count ?? 0}
+            {productsData?.count ?? products.length}
           </h2>
+
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Services
           </p>
@@ -466,36 +526,31 @@ const FarmerDashboardPage = () => {
           <h2 className="mt-2 text-3xl font-bold text-emerald-700">
             {services.length}
           </h2>
+
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Pending Orders
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-yellow-600">
-            {
-              orders.filter(
-                (order) =>
-                  order.status === "pending"
-              ).length
-            }
+            {pendingOrders.length}
           </h2>
+
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow">
+
           <p className="text-sm text-gray-500">
             Completed Orders
           </p>
 
           <h2 className="mt-2 text-3xl font-bold text-emerald-700">
-            {
-              orders.filter(
-                (order) =>
-                  order.status === "completed"
-              ).length
-            }
+            {completedOrders.length}
           </h2>
+
         </div>
 
       </section>
@@ -516,6 +571,7 @@ const FarmerDashboardPage = () => {
             to="/farmer/products/create"
             className="rounded-2xl bg-green-600 p-6 text-white shadow transition hover:bg-green-700"
           >
+
             <h2 className="text-xl font-semibold">
               + Add Product
             </h2>
@@ -523,6 +579,7 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-sm text-green-100">
               List a product for customers to discover.
             </p>
+
           </Link>
 
           <button
@@ -530,6 +587,7 @@ const FarmerDashboardPage = () => {
             onClick={openCreateServiceForm}
             className="rounded-2xl border bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-xl"
           >
+
             <h2 className="text-xl font-semibold text-green-700">
               + Add Service
             </h2>
@@ -537,12 +595,14 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-sm text-gray-600">
               Showcase an agricultural service you provide.
             </p>
+
           </button>
 
           <Link
             to="/farmer/orders"
             className="rounded-2xl bg-white p-6 shadow transition hover:bg-green-50"
           >
+
             <h2 className="text-xl font-semibold text-green-700">
               Customer Orders
             </h2>
@@ -550,12 +610,14 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-sm text-gray-600">
               Manage incoming orders.
             </p>
+
           </Link>
 
           <Link
             to="/notifications"
             className="rounded-2xl bg-white p-6 shadow transition hover:bg-green-50"
           >
+
             <h2 className="text-xl font-semibold text-green-700">
               Notifications
             </h2>
@@ -563,6 +625,7 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-sm text-gray-600">
               View recent notifications.
             </p>
+
           </Link>
 
         </div>
@@ -579,6 +642,7 @@ const FarmerDashboardPage = () => {
           <div className="mb-6 flex items-start justify-between gap-4">
 
             <div>
+
               <p className="text-sm font-medium uppercase tracking-wide text-green-600">
                 AgricWise Services
               </p>
@@ -593,6 +657,7 @@ const FarmerDashboardPage = () => {
                 Tell customers what agricultural service
                 your business or professional practice provides.
               </p>
+
             </div>
 
             <button
@@ -640,6 +705,7 @@ const FarmerDashboardPage = () => {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
           <div>
+
             <h2 className="text-2xl font-bold text-gray-900">
               My Agricultural Services
             </h2>
@@ -648,6 +714,7 @@ const FarmerDashboardPage = () => {
               Showcase the agricultural services your business
               or professional practice provides.
             </p>
+
           </div>
 
           <button
@@ -663,9 +730,11 @@ const FarmerDashboardPage = () => {
         {isServicesLoading ? (
 
           <div className="py-12 text-center">
+
             <p className="text-gray-500">
               Loading your services...
             </p>
+
           </div>
 
         ) : isServicesError ? (
@@ -714,17 +783,17 @@ const FarmerDashboardPage = () => {
 
           <div className="grid gap-5 md:grid-cols-2">
 
-            {services.map((service) => (
-
-              <AgriculturalServiceCard
-                key={service.id}
-                service={service}
-                onEdit={openEditServiceForm}
-                onDelete={handleDeleteService}
-                isDeleting={isDeletingService}
-              />
-
-            ))}
+            {services.map(
+              (service: AgriculturalService) => (
+                <AgriculturalServiceCard
+                  key={service.id}
+                  service={service}
+                  onEdit={openEditServiceForm}
+                  onDelete={handleDeleteService}
+                  isDeleting={isDeletingService}
+                />
+              )
+            )}
 
           </div>
 
@@ -797,12 +866,7 @@ const FarmerDashboardPage = () => {
             </div>
 
             <div>
-              ✓ {
-                orders.filter(
-                  (order) =>
-                    order.status === "pending"
-                ).length
-              } Pending Orders
+              ✓ {pendingOrders.length} Pending Orders
             </div>
 
             <div>
@@ -826,6 +890,7 @@ const FarmerDashboardPage = () => {
         <div className="mb-6 flex items-center justify-between">
 
           <div>
+
             <h2 className="text-2xl font-semibold">
               Recent Orders
             </h2>
@@ -833,6 +898,7 @@ const FarmerDashboardPage = () => {
             <p className="mt-1 text-sm text-gray-500">
               Keep track of recent customer purchases.
             </p>
+
           </div>
 
           <Link
@@ -1010,8 +1076,9 @@ const FarmerDashboardPage = () => {
 
           <span className="w-fit rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700">
 
-            {productsData?.count ?? 0} Product
-            {(productsData?.count ?? 0) !== 1
+            {productsData?.count ?? products.length} Product
+            {(productsData?.count ??
+              products.length) !== 1
               ? "s"
               : ""}
 
@@ -1058,6 +1125,7 @@ const FarmerDashboardPage = () => {
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
 
           <div className="rounded-xl border border-green-100 bg-green-50 p-5">
+
             <p className="text-sm text-green-700">
               Products
             </p>
@@ -1065,9 +1133,11 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-2xl font-bold text-green-800">
               {products.length}
             </p>
+
           </div>
 
           <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-5">
+
             <p className="text-sm text-emerald-700">
               In Stock
             </p>
@@ -1075,9 +1145,11 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-2xl font-bold text-emerald-800">
               {inStockProducts.length}
             </p>
+
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+
             <p className="text-sm text-gray-600">
               Unavailable
             </p>
@@ -1085,6 +1157,7 @@ const FarmerDashboardPage = () => {
             <p className="mt-2 text-2xl font-bold text-gray-800">
               {unavailableProducts.length}
             </p>
+
           </div>
 
         </div>
@@ -1092,9 +1165,11 @@ const FarmerDashboardPage = () => {
         {isLoading ? (
 
           <div className="py-12 text-center">
+
             <p className="text-gray-500">
               Loading products...
             </p>
+
           </div>
 
         ) : products.length === 0 ? (
@@ -1134,7 +1209,8 @@ const FarmerDashboardPage = () => {
 
             </div>
 
-            {(productsData?.count ?? 0) >
+            {(productsData?.count ??
+              products.length) >
               products.length && (
 
               <div className="mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center">
