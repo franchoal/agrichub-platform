@@ -1,4 +1,4 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 
 import { Card, Button } from "../../components/ui";
 
@@ -32,20 +32,39 @@ const FarmerOrderDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <p>Loading order...</p>
+      <main className="min-h-screen bg-gradient-to-b from-green-50/50 via-white to-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="space-y-6">
+            <div className="h-10 w-48 animate-pulse rounded-xl bg-gray-200" />
+            <div className="h-32 animate-pulse rounded-[28px] bg-gray-100" />
+            <div className="h-72 animate-pulse rounded-[28px] bg-gray-100" />
+          </div>
+        </div>
       </main>
     );
   }
 
   if (isError || !order) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <Card className="border-red-200 bg-red-50 p-8">
-          <h2 className="text-2xl font-bold text-red-700">
-            Order not found
-          </h2>
-        </Card>
+      <main className="min-h-screen bg-gradient-to-b from-green-50/50 via-white to-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <Card className="border-red-200 bg-red-50 p-6 sm:p-8">
+            <h2 className="text-2xl font-bold text-red-700">
+              Order not found
+            </h2>
+
+            <p className="mt-3 text-red-600">
+              This order may no longer be available or could not be loaded.
+            </p>
+
+            <Link
+              to="/farmer/orders"
+              className="mt-6 inline-flex rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
+            >
+              Back to Orders
+            </Link>
+          </Card>
+        </div>
       </main>
     );
   }
@@ -70,91 +89,213 @@ const FarmerOrderDetailsPage = () => {
 
   const canUpdate = Boolean(nextStatus[order.status]);
 
+  const formattedStatus = order.status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold">
-          Order #{order.id}
-        </h1>
+    <main className="min-h-screen bg-gradient-to-b from-green-50/50 via-white to-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        {/* ========================================== */}
+        {/* BACK */}
+        {/* ========================================== */}
 
-        <p className="mt-2 text-gray-600">
-          Buyer: {order.buyer}
-        </p>
+        <Link
+          to="/farmer/orders"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 transition hover:text-green-800"
+        >
+          ← Back to Orders
+        </Link>
 
-        <p className="mt-1 text-gray-600">
-          Status:
-          <span className="ml-2 font-semibold">
-            {order.status
-              .replaceAll("_", " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())}
-          </span>
-        </p>
-      </div>
+        {/* ========================================== */}
+        {/* HEADER */}
+        {/* ========================================== */}
 
-      <Card>
-        <div className="space-y-5">
-          {order.items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between border-b pb-4"
+        <section className="mt-6 overflow-hidden rounded-[30px] bg-gradient-to-r from-green-800 via-green-700 to-emerald-600 text-white shadow-xl sm:rounded-[36px]">
+          <div className="relative p-6 sm:p-10 lg:p-12">
+            <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+
+            <div className="relative">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <span className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur">
+                    AgricWise Business Order
+                  </span>
+
+                  <h1 className="mt-5 text-3xl font-extrabold sm:text-4xl lg:text-5xl">
+                    Order #{order.id}
+                  </h1>
+
+                  <p className="mt-3 text-green-100">
+                    Customer:{" "}
+                    <span className="font-semibold text-white">
+                      {order.buyer}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white/15 px-5 py-4 backdrop-blur">
+                  <p className="text-xs uppercase tracking-wide text-green-100">
+                    Current Status
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-white">
+                    {formattedStatus}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================== */}
+        {/* ORDER ITEMS */}
+        {/* ========================================== */}
+
+        <Card className="mt-6 overflow-hidden rounded-[28px] border-0 shadow-lg sm:mt-8">
+          <div className="border-b border-gray-100 px-5 py-5 sm:px-8">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Order Items
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Products included in this customer order.
+            </p>
+          </div>
+
+          <div className="divide-y divide-gray-100">
+            {order.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8"
+              >
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    {item.product_name}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    ₦{Number(item.price).toLocaleString()} ×{" "}
+                    {item.quantity}
+                  </p>
+                </div>
+
+                <span className="text-lg font-bold text-green-700 sm:text-right">
+                  ₦{Number(item.subtotal).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-gray-100 bg-gray-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <span className="text-lg font-semibold text-gray-700">
+              Order Total
+            </span>
+
+            <span className="text-3xl font-extrabold text-green-700">
+              ₦{Number(order.total).toLocaleString()}
+            </span>
+          </div>
+        </Card>
+
+        {/* ========================================== */}
+        {/* ORDER ACTION */}
+        {/* ========================================== */}
+
+        {canUpdate ? (
+          <Card className="mt-6 rounded-[28px] border-0 bg-white p-5 shadow-lg sm:mt-8 sm:p-8">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Order Management
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
+                Move this order through the fulfillment process as your
+                business completes each stage.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-green-50 p-4">
+              <p className="text-sm font-medium text-green-800">
+                Next step
+              </p>
+
+              <p className="mt-1 text-sm text-green-700">
+                {nextLabel[order.status]}
+              </p>
+            </div>
+
+            <Button
+              className="mt-5 w-full rounded-2xl py-3.5 text-base font-semibold"
+              disabled={isPending}
+              onClick={() =>
+                updateOrder({
+                  id: order.id,
+                  data: {
+                    status: nextStatus[
+                      order.status
+                    ] as
+                      | "accepted"
+                      | "processing"
+                      | "ready"
+                      | "out_for_delivery"
+                      | "delivered"
+                      | "completed",
+                  },
+                })
+              }
             >
-              <div>
-                <h3 className="font-semibold">
-                  {item.product_name}
-                </h3>
-
-                <p className="text-gray-500">
-                  ₦{Number(item.price).toLocaleString()} ×{" "}
-                  {item.quantity}
-                </p>
+              {isPending
+                ? "Updating Order..."
+                : nextLabel[order.status]}
+            </Button>
+          </Card>
+        ) : (
+          <Card className="mt-6 rounded-[28px] border-0 bg-white p-6 shadow-lg sm:mt-8 sm:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">
+                ✓
               </div>
 
-              <span className="font-bold text-green-700">
-                ₦{Number(item.subtotal).toLocaleString()}
-              </span>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Order Processing Complete
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-gray-500">
+                  There are no further actions available for this order at
+                  its current stage.
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
+          </Card>
+        )}
 
-        <div className="mt-8 flex items-center justify-between border-t pt-6">
-          <span className="text-xl font-semibold">
-            Total
-          </span>
+        {/* ========================================== */}
+        {/* BUSINESS GUIDANCE */}
+        {/* ========================================== */}
 
-          <span className="text-3xl font-bold text-green-700">
-            ₦{Number(order.total).toLocaleString()}
-          </span>
-        </div>
-      </Card>
+        <section className="mt-8 rounded-[28px] bg-white p-6 shadow-lg sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">
+              🤝
+            </div>
 
-      {canUpdate && (
-        <Card className="mt-6">
-          <Button
-            className="w-full"
-            disabled={isPending}
-            onClick={() =>
-              updateOrder({
-                id: order.id,
-                data: {
-                  status: nextStatus[
-                    order.status
-                  ] as
-                    | "accepted"
-                    | "processing"
-                    | "ready"
-                    | "out_for_delivery"
-                    | "delivered"
-                    | "completed",
-                },
-              })
-            }
-          >
-            {isPending
-              ? "Updating..."
-              : nextLabel[order.status]}
-          </Button>
-        </Card>
-      )}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Build Customer Trust
+              </h2>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500 sm:text-base">
+                Keep customers informed, fulfill orders promptly, and
+                maintain the quality of your products or services. Reliable
+                fulfillment helps build repeat business and a stronger
+                reputation on AgricWise.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   );
 };

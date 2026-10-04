@@ -15,6 +15,10 @@ const FarmerRoute = () => {
   ==========================================
   Authentication
   ==========================================
+
+  The agricultural business workspace is
+  available only to authenticated AgricWise
+  members.
   */
 
   if (!user) {
@@ -28,18 +32,21 @@ const FarmerRoute = () => {
 
   /*
   ==========================================
-  Existing Farmer/Seller Workspace
+  AgricWise Business Workspace
   ==========================================
 
-  AgricWise no longer assigns permanent
-  Buyer/Farmer account roles.
+  FarmerProfile is retained internally for
+  backend compatibility.
 
-  FarmerProfile is retained as a transitional
-  capability/workspace for users who want to
-  operate as agricultural sellers/farmers.
+  From the user's perspective, this profile
+  represents their agricultural business,
+  farm, enterprise, service operation, or
+  professional activity on AgricWise.
 
-  This is separate from the universal
-  AgricWise personal profile.
+  We intentionally keep the existing
+  FarmerProfile implementation and routes
+  until the broader architecture is fully
+  migrated.
   */
 
   const {
@@ -50,7 +57,7 @@ const FarmerRoute = () => {
 
   /*
   ==========================================
-  Loading
+  Loading State
   ==========================================
   */
 
@@ -63,11 +70,11 @@ const FarmerRoute = () => {
           </div>
 
           <h2 className="text-xl font-semibold text-gray-900">
-            Loading AgricWise Workspace...
+            Loading AgricWise Business Workspace...
           </h2>
 
           <p className="mt-2 text-sm text-gray-600">
-            Please wait.
+            Preparing your agricultural business workspace.
           </p>
         </div>
       </div>
@@ -76,18 +83,19 @@ const FarmerRoute = () => {
 
   /*
   ==========================================
-  No Farmer/Seller Workspace
+  No Agricultural Business Profile
   ==========================================
 
-  Do NOT redirect to /farmer/profile.
+  The universal /profile page remains the
+  personal profile for every AgricWise member.
 
-  /profile is now the universal personal
-  profile for every AgricWise member.
+  Users without an agricultural business
+  profile should not be forced into the
+  business workspace.
 
-  A FarmerProfile will be created later when
-  the user chooses to become a seller/farmer
-  through the appropriate agricultural
-  activity flow.
+  They can create their agricultural business
+  profile through the appropriate onboarding
+  flow.
   */
 
   if (isError || !farmerProfile) {
@@ -101,8 +109,11 @@ const FarmerRoute = () => {
 
   /*
   ==========================================
-  Farmer/Seller Workspace Exists
+  Agricultural Business Profile Exists
   ==========================================
+
+  Allow access to the protected AgricWise
+  business workspace.
   */
 
   return <Outlet />;

@@ -28,9 +28,9 @@ import AgriculturalServiceCard from "../../components/farmer/AgriculturalService
 const FarmerDashboardPage = () => {
   const user = useAuthStore((state) => state.user);
 
-  /* ==============================
-     Business Data
-  ============================== */
+  /* =========================================================
+     BUSINESS DATA
+  ========================================================= */
 
   const {
     data: productsData,
@@ -46,9 +46,9 @@ const FarmerDashboardPage = () => {
 
   const { mutate: deleteProduct } = useDeleteProduct();
 
-  /* ==============================
-     Agricultural Services
-  ============================== */
+  /* =========================================================
+     AGRICULTURAL SERVICES
+  ========================================================= */
 
   const {
     data: servicesData,
@@ -75,9 +75,9 @@ const FarmerDashboardPage = () => {
     isPending: isDeletingService,
   } = useDeleteAgriculturalService();
 
-  /* ==============================
-     Service UI State
-  ============================== */
+  /* =========================================================
+     SERVICE UI STATE
+  ========================================================= */
 
   const [showServiceForm, setShowServiceForm] =
     useState(false);
@@ -85,9 +85,9 @@ const FarmerDashboardPage = () => {
   const [editingService, setEditingService] =
     useState<AgriculturalService | null>(null);
 
-  /* ==============================
-     Defensive Data Normalization
-  ============================== */
+  /* =========================================================
+     DEFENSIVE DATA NORMALIZATION
+  ========================================================= */
 
   const products = Array.isArray(productsData?.results)
     ? productsData.results
@@ -108,9 +108,12 @@ const FarmerDashboardPage = () => {
       ? profile.business_categories
       : [];
 
-  /* ==============================
-     Derived Business Data
-  ============================== */
+  /* =========================================================
+     DERIVED DATA
+  ========================================================= */
+
+  const productCount =
+    productsData?.count ?? products.length;
 
   const inStockProducts = products.filter(
     (product) =>
@@ -123,8 +126,7 @@ const FarmerDashboardPage = () => {
   );
 
   const availableServices = services.filter(
-    (service: AgriculturalService) =>
-      service.is_available
+    (service) => service.is_available
   );
 
   const pendingOrders = orders.filter(
@@ -135,35 +137,25 @@ const FarmerDashboardPage = () => {
     (order) => order.status === "completed"
   );
 
-  const productCount =
-    productsData?.count ?? products.length;
-
-  const profileHasCategories =
-    businessCategories.length > 0;
-
-  const profileHasDescription =
-    Boolean(profile?.farm_description?.trim());
-
   const profileCompletionItems = [
     Boolean(profile?.farm_name?.trim()),
     Boolean(profile?.farm_location?.trim()),
-    profileHasCategories,
-    profileHasDescription,
+    businessCategories.length > 0,
+    Boolean(profile?.farm_description?.trim()),
   ];
 
   const completedProfileItems =
     profileCompletionItems.filter(Boolean).length;
 
-  const profileCompletion =
-    Math.round(
-      (completedProfileItems /
-        profileCompletionItems.length) *
-        100
-    );
+  const profileCompletion = Math.round(
+    (completedProfileItems /
+      profileCompletionItems.length) *
+      100
+  );
 
-  /* ==============================
-     Authentication / Profile
-  ============================== */
+  /* =========================================================
+     AUTHENTICATION / PROFILE
+  ========================================================= */
 
   if (!user) {
     return (
@@ -180,7 +172,7 @@ const FarmerDashboardPage = () => {
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-green-600" />
 
-          <p className="text-gray-500">
+          <p className="text-sm text-gray-500">
             Loading your AgricWise Business Workspace...
           </p>
         </div>
@@ -197,9 +189,9 @@ const FarmerDashboardPage = () => {
     );
   }
 
-  /* ==============================
-     Product Actions
-  ============================== */
+  /* =========================================================
+     PRODUCT ACTIONS
+  ========================================================= */
 
   const handleDeleteProduct = (id: number) => {
     const confirmed = window.confirm(
@@ -213,9 +205,9 @@ const FarmerDashboardPage = () => {
     deleteProduct(id);
   };
 
-  /* ==============================
-     Service Form Actions
-  ============================== */
+  /* =========================================================
+     SERVICE ACTIONS
+  ========================================================= */
 
   const resetServiceForm = () => {
     setEditingService(null);
@@ -299,36 +291,68 @@ const FarmerDashboardPage = () => {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      {/* ==================================================
+    <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+
+      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
+            AgricWise Business Workspace
+          </p>
+
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {profile.farm_name ||
+              "Your Agricultural Business"}
+          </h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Manage your business, products, services and
+            customer activity from one place.
+          </p>
+        </div>
+
+        <Link
+          to="/farmer/profile"
+          className="inline-flex w-fit items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-green-200 hover:text-green-700"
+        >
+          Edit Business
+        </Link>
+      </section>
+
+      {/* =====================================================
           BUSINESS HERO
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-green-700 via-green-600 to-emerald-700 p-6 text-white shadow-xl sm:p-8 lg:p-10">
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
-        <div className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-white/5" />
-        <div className="absolute right-1/4 top-1/2 h-24 w-24 rounded-full bg-white/5" />
+      <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-green-800 via-green-700 to-emerald-700 p-6 text-white shadow-lg sm:p-8">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10" />
 
-        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-white/5" />
+
+        <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-green-50 backdrop-blur-sm">
-              AgricWise Business Portal
+            <div className="mb-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+                Business Command Center
+              </span>
+
+              {profile.is_verified && (
+                <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+                  ✓ Verified
+                </span>
+              )}
             </div>
 
-            <h1 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-              Welcome back,
-              <br />
-              <span className="text-green-50">
-                {profile.farm_name ||
-                  "Your Agricultural Business"}
-              </span>
-            </h1>
+            <h2 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+              Grow your business on AgricWise.
+            </h2>
 
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-green-50 sm:text-base">
-              Manage your agricultural business,
-              showcase what you offer, connect with
-              customers and grow your digital presence
-              on AgricWise.
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-green-50 sm:text-base">
+              Showcase what you offer, manage your
+              agricultural products and services, serve
+              customers and build your digital presence
+              across the AgricWise ecosystem.
             </p>
 
             {businessCategories.length > 0 && (
@@ -338,7 +362,7 @@ const FarmerDashboardPage = () => {
                   .map((category) => (
                     <span
                       key={category.id}
-                      className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
+                      className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
                     >
                       {category.name}
                     </span>
@@ -353,10 +377,10 @@ const FarmerDashboardPage = () => {
             )}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <Link
               to="/farmer/products/create"
-              className="rounded-2xl bg-white px-5 py-3 text-center font-semibold text-green-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+              className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-green-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
             >
               + Add Product
             </Link>
@@ -364,64 +388,56 @@ const FarmerDashboardPage = () => {
             <button
               type="button"
               onClick={openCreateServiceForm}
-              className="rounded-2xl border border-white/30 bg-white/10 px-5 py-3 font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
+              className="rounded-2xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
             >
               + Add Service
             </button>
-
-            <Link
-              to="/farmer/profile"
-              className="rounded-2xl border border-white/30 px-5 py-3 text-center font-semibold text-white transition hover:bg-white/10"
-            >
-              Edit Business
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           PROFILE COMPLETION
-      ================================================== */}
+      ===================================================== */}
 
       {profileCompletion < 100 && (
-        <section className="mb-8 rounded-3xl border border-green-100 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-lg">
-                  ✨
-                </div>
-
-                <div>
-                  <h2 className="font-bold text-gray-900">
-                    Complete Your Business Profile
-                  </h2>
-
-                  <p className="text-sm text-gray-500">
-                    A complete profile helps people
-                    understand and trust your business.
-                  </p>
-                </div>
+        <section className="mb-6 rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-xl">
+                ✨
               </div>
 
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between text-xs font-medium">
-                  <span className="text-gray-500">
-                    Profile completion
-                  </span>
+              <div className="min-w-0">
+                <h2 className="font-bold text-gray-900">
+                  Complete your business profile
+                </h2>
 
-                  <span className="text-green-700">
-                    {profileCompletion}%
-                  </span>
-                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  A complete profile gives customers a
+                  clearer picture of who you are and what
+                  you offer.
+                </p>
 
-                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                  <div
-                    className="h-full rounded-full bg-green-600 transition-all duration-500"
-                    style={{
-                      width: `${profileCompletion}%`,
-                    }}
-                  />
+                <div className="mt-4 max-w-xl">
+                  <div className="mb-2 flex items-center justify-between text-xs font-semibold">
+                    <span className="text-gray-500">
+                      Profile completion
+                    </span>
+
+                    <span className="text-green-700">
+                      {profileCompletion}%
+                    </span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-green-600 transition-all duration-500"
+                      style={{
+                        width: `${profileCompletion}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -436,116 +452,89 @@ const FarmerDashboardPage = () => {
         </section>
       )}
 
-      {/* ==================================================
-          BUSINESS OVERVIEW
-      ================================================== */}
+      {/* =====================================================
+          KEY METRICS
+      ===================================================== */}
 
-      <section className="mb-10">
-        <div className="mb-5">
-          <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
-            Your Business
+      <section className="mb-8">
+        <div className="mb-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
+            At a glance
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold text-gray-900">
+          <h2 className="mt-1 text-xl font-bold text-gray-900">
             Business Overview
           </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            A snapshot of what is happening across
-            your AgricWise business.
-          </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-xl">
-                📦
-              </div>
+              <span className="text-xl">📦</span>
 
               <span className="text-xs font-medium text-gray-400">
-                Inventory
+                Products
               </span>
             </div>
 
-            <p className="mt-5 text-sm text-gray-500">
-              Products Listed
-            </p>
-
-            <p className="mt-1 text-4xl font-bold text-green-700">
+            <p className="mt-5 text-3xl font-bold text-gray-900">
               {productCount}
             </p>
 
-            <p className="mt-2 text-xs text-gray-500">
-              {inStockProducts.length} currently in stock
+            <p className="mt-1 text-xs text-gray-500">
+              {inStockProducts.length} in stock
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-xl">
-                🛠️
-              </div>
+              <span className="text-xl">🛠️</span>
 
               <span className="text-xs font-medium text-gray-400">
                 Services
               </span>
             </div>
 
-            <p className="mt-5 text-sm text-gray-500">
-              Services Offered
-            </p>
-
-            <p className="mt-1 text-4xl font-bold text-emerald-600">
+            <p className="mt-5 text-3xl font-bold text-gray-900">
               {services.length}
             </p>
 
-            <p className="mt-2 text-xs text-gray-500">
-              {availableServices.length} currently available
+            <p className="mt-1 text-xs text-gray-500">
+              {availableServices.length} available
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
-                🛒
-              </div>
+              <span className="text-xl">🛒</span>
 
               <span className="text-xs font-medium text-gray-400">
-                Sales
+                Orders
               </span>
             </div>
 
-            <p className="mt-5 text-sm text-gray-500">
-              Customer Orders
-            </p>
-
-            <p className="mt-1 text-4xl font-bold text-blue-600">
+            <p className="mt-5 text-3xl font-bold text-gray-900">
               {orders.length}
             </p>
 
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500">
               {pendingOrders.length} awaiting action
             </p>
           </div>
 
-          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-xl">
-                ✓
-              </div>
+              <span className="text-xl">
+                {profile.is_verified ? "✓" : "⏳"}
+              </span>
 
               <span className="text-xs font-medium text-gray-400">
                 Trust
               </span>
             </div>
 
-            <p className="mt-5 text-sm text-gray-500">
-              Business Status
-            </p>
-
             <p
-              className={`mt-1 text-xl font-bold ${
+              className={`mt-5 text-lg font-bold ${
                 profile.is_verified
                   ? "text-green-700"
                   : "text-orange-600"
@@ -553,31 +542,31 @@ const FarmerDashboardPage = () => {
             >
               {profile.is_verified
                 ? "Verified"
-                : "Verification Pending"}
+                : "Pending"}
             </p>
 
-            <p className="mt-2 text-xs text-gray-500">
-              AgricWise business verification
+            <p className="mt-1 text-xs text-gray-500">
+              Business verification
             </p>
           </div>
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           VERIFICATION
-      ================================================== */}
+      ===================================================== */}
 
       <section
-        className={`mb-10 rounded-3xl border p-6 sm:p-7 ${
+        className={`mb-8 rounded-2xl border p-5 sm:p-6 ${
           profile.is_verified
             ? "border-green-200 bg-green-50"
             : "border-yellow-200 bg-yellow-50"
         }`}
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div
-              className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ${
+              className={`inline-flex rounded-full px-3 py-1.5 text-xs font-bold ${
                 profile.is_verified
                   ? "bg-green-100 text-green-700"
                   : "bg-yellow-100 text-yellow-700"
@@ -589,27 +578,27 @@ const FarmerDashboardPage = () => {
             </div>
 
             <h2
-              className={`mt-3 text-xl font-bold ${
+              className={`mt-3 text-lg font-bold ${
                 profile.is_verified
                   ? "text-green-800"
                   : "text-yellow-800"
               }`}
             >
               {profile.is_verified
-                ? "Your AgricWise business is verified"
-                : "Your AgricWise business is awaiting verification"}
+                ? "Your business is verified"
+                : "Your business is awaiting verification"}
             </h2>
 
             <p
-              className={`mt-2 max-w-3xl text-sm leading-6 ${
+              className={`mt-1 max-w-3xl text-sm leading-6 ${
                 profile.is_verified
                   ? "text-green-700"
                   : "text-yellow-700"
               }`}
             >
               {profile.is_verified
-                ? "Your agricultural business profile has been verified. Continue keeping your business information, products and services accurate and up to date."
-                : "You can continue building your business presence, adding products and services while your profile is awaiting verification."}
+                ? "Keep your business information, products and services accurate and up to date."
+                : "You can continue adding products and services while your business profile is awaiting verification."}
             </p>
           </div>
 
@@ -626,103 +615,102 @@ const FarmerDashboardPage = () => {
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           QUICK ACTIONS
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="mb-10">
-        <div className="mb-5">
-          <h2 className="text-2xl font-bold text-gray-900">
+      <section className="mb-8">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
             Quick Actions
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            Manage the most important parts of your
-            AgricWise business.
+            Manage the areas that matter most to your
+            business.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/farmer/products/create"
-            className="group rounded-2xl bg-green-600 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:bg-green-700 hover:shadow-lg"
+            className="rounded-2xl bg-green-600 p-5 text-white shadow-sm transition hover:-translate-y-1 hover:bg-green-700 hover:shadow-lg"
           >
             <div className="text-2xl">📦</div>
 
-            <h3 className="mt-4 text-lg font-semibold">
+            <h3 className="mt-3 font-bold">
               Add Product
             </h3>
 
-            <p className="mt-2 text-sm text-green-100">
+            <p className="mt-1 text-sm text-green-100">
               List products, supplies or agricultural
-              goods you offer.
+              goods.
             </p>
           </Link>
 
           <button
             type="button"
             onClick={openCreateServiceForm}
-            className="rounded-2xl border border-gray-100 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+            className="rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
           >
             <div className="text-2xl">🛠️</div>
 
-            <h3 className="mt-4 text-lg font-semibold text-green-700">
+            <h3 className="mt-3 font-bold text-gray-900">
               Add Service
             </h3>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Showcase consultancy, farm management,
-              training or other services.
+            <p className="mt-1 text-sm text-gray-500">
+              Showcase your professional agricultural
+              services.
             </p>
           </button>
 
           <Link
             to="/farmer/orders"
-            className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
           >
             <div className="text-2xl">🛒</div>
 
-            <h3 className="mt-4 text-lg font-semibold text-blue-700">
-              Customer Orders
+            <h3 className="mt-3 font-bold text-gray-900">
+              Manage Orders
             </h3>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Review and manage incoming customer
-              purchases.
+            <p className="mt-1 text-sm text-gray-500">
+              Review and manage customer purchases.
             </p>
           </Link>
 
           <Link
             to="/notifications"
-            className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
           >
             <div className="text-2xl">🔔</div>
 
-            <h3 className="mt-4 text-lg font-semibold text-purple-700">
+            <h3 className="mt-3 font-bold text-gray-900">
               Notifications
             </h3>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Stay updated about activity affecting
+            <p className="mt-1 text-sm text-gray-500">
+              Stay informed about activity affecting
               your business.
             </p>
           </Link>
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           SERVICE FORM
-      ================================================== */}
+      ===================================================== */}
 
       {showServiceForm && (
-        <section className="mb-10 rounded-3xl border border-green-100 bg-white p-6 shadow-lg sm:p-8">
+        <section className="mb-8 rounded-3xl border border-green-100 bg-white p-5 shadow-lg sm:p-8">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
                 Business Services
               </p>
 
-              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+              <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
                 {editingService
                   ? "Edit Agricultural Service"
                   : "Add Agricultural Service"}
@@ -769,32 +757,31 @@ const FarmerDashboardPage = () => {
         </section>
       )}
 
-      {/* ==================================================
+      {/* =====================================================
           SERVICES
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="mb-10 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+      <section className="mb-8 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
               What You Offer
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold text-gray-900">
+            <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
               Agricultural Services
             </h2>
 
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
               Showcase the professional, technical or
-              operational agricultural services your
-              business provides.
+              operational services your business provides.
             </p>
           </div>
 
           <button
             type="button"
             onClick={openCreateServiceForm}
-            className="rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
+            className="rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
           >
             + Add Service
           </button>
@@ -804,7 +791,7 @@ const FarmerDashboardPage = () => {
           <div className="py-12 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-green-100 border-t-green-600" />
 
-            <p className="text-gray-500">
+            <p className="text-sm text-gray-500">
               Loading your services...
             </p>
           </div>
@@ -837,121 +824,44 @@ const FarmerDashboardPage = () => {
             <button
               type="button"
               onClick={openCreateServiceForm}
-              className="mt-5 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
+              className="mt-5 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
             >
               Add Your First Service
             </button>
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2">
-            {services.map(
-              (service: AgriculturalService) => (
-                <AgriculturalServiceCard
-                  key={service.id}
-                  service={service}
-                  onEdit={openEditServiceForm}
-                  onDelete={handleDeleteService}
-                  isDeleting={isDeletingService}
-                />
-              )
-            )}
+            {services.map((service) => (
+              <AgriculturalServiceCard
+                key={service.id}
+                service={service}
+                onEdit={openEditServiceForm}
+                onDelete={handleDeleteService}
+                isDeleting={isDeletingService}
+              />
+            ))}
           </div>
         )}
       </section>
 
-      {/* ==================================================
-          BUSINESS SNAPSHOT
-      ================================================== */}
-
-      <section className="mb-10">
-        <div className="mb-5">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Business Snapshot
-          </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            A quick look at your current AgricWise
-            business activity.
-          </p>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-green-100 bg-green-50 p-6">
-            <p className="text-sm font-medium text-green-700">
-              Products
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-green-800">
-              {productCount}
-            </p>
-
-            <p className="mt-1 text-xs text-green-700">
-              {inStockProducts.length} in stock
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6">
-            <p className="text-sm font-medium text-emerald-700">
-              Services
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-emerald-800">
-              {services.length}
-            </p>
-
-            <p className="mt-1 text-xs text-emerald-700">
-              {availableServices.length} available
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-yellow-100 bg-yellow-50 p-6">
-            <p className="text-sm font-medium text-yellow-700">
-              Pending Orders
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-yellow-800">
-              {pendingOrders.length}
-            </p>
-
-            <p className="mt-1 text-xs text-yellow-700">
-              Require attention
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
-            <p className="text-sm font-medium text-blue-700">
-              Completed Orders
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-blue-800">
-              {completedOrders.length}
-            </p>
-
-            <p className="mt-1 text-xs text-blue-700">
-              Successfully completed
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================
+      {/* =====================================================
           RECENT ORDERS
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="mb-10 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+      <section className="mb-8 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
               Sales Activity
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold text-gray-900">
+            <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
               Recent Customer Orders
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Keep track of recent purchases from
-              your customers.
+              Keep track of recent purchases from your
+              customers.
             </p>
           </div>
 
@@ -978,56 +888,54 @@ const FarmerDashboardPage = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders
-              .slice(0, 5)
-              .map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-gray-100 p-4 transition hover:border-green-100 hover:bg-green-50/30 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Order #{order.id}
-                    </h3>
+            {orders.slice(0, 5).map((order) => (
+              <div
+                key={order.id}
+                className="flex flex-col gap-3 rounded-2xl border border-gray-100 p-4 transition hover:border-green-100 hover:bg-green-50/30 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    Order #{order.id}
+                  </h3>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      Buyer: {order.buyer}
-                    </p>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <p className="font-bold text-green-700">
-                      ₦
-                      {Number(
-                        order.total
-                      ).toLocaleString()}
-                    </p>
-
-                    <p className="mt-1 text-sm capitalize text-gray-500">
-                      {order.status.replaceAll(
-                        "_",
-                        " "
-                      )}
-                    </p>
-                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Buyer: {order.buyer}
+                  </p>
                 </div>
-              ))}
+
+                <div className="text-left sm:text-right">
+                  <p className="font-bold text-green-700">
+                    ₦
+                    {Number(
+                      order.total
+                    ).toLocaleString()}
+                  </p>
+
+                  <p className="mt-1 text-sm capitalize text-gray-500">
+                    {order.status.replaceAll(
+                      "_",
+                      " "
+                    )}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           PRODUCTS
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="mb-10 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+      <section className="mb-8 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
               What You Sell
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold text-gray-900">
+            <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
               Business Products
             </h2>
 
@@ -1045,14 +953,14 @@ const FarmerDashboardPage = () => {
           </span>
         </div>
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-7 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-green-100 bg-green-50 p-5">
             <p className="text-sm text-green-700">
               Total Products
             </p>
 
             <p className="mt-2 text-2xl font-bold text-green-800">
-              {products.length}
+              {productCount}
             </p>
           </div>
 
@@ -1077,45 +985,11 @@ const FarmerDashboardPage = () => {
           </div>
         </div>
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-2">
-          <Link
-            to="/farmer/products/create"
-            className="rounded-2xl bg-gray-50 p-6 transition hover:bg-green-50"
-          >
-            <div className="text-2xl">➕</div>
-
-            <h3 className="mt-3 text-lg font-semibold text-green-700">
-              Add Product
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-600">
-              Add a new product to your business
-              inventory.
-            </p>
-          </Link>
-
-          <Link
-            to="/farmer/profile"
-            className="rounded-2xl bg-gray-50 p-6 transition hover:bg-green-50"
-          >
-            <div className="text-2xl">🏢</div>
-
-            <h3 className="mt-3 text-lg font-semibold text-green-700">
-              Business Profile
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-600">
-              Update your AgricWise business identity,
-              categories and information.
-            </p>
-          </Link>
-        </div>
-
         {isProductsLoading ? (
           <div className="py-12 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-green-100 border-t-green-600" />
 
-            <p className="text-gray-500">
+            <p className="text-sm text-gray-500">
               Loading products...
             </p>
           </div>
@@ -1161,8 +1035,8 @@ const FarmerDashboardPage = () => {
                 </p>
 
                 <p className="mt-1 text-xs text-yellow-600">
-                  Pagination for business products
-                  will be added next.
+                  Pagination for business products will
+                  be added later.
                 </p>
               </div>
             )}
@@ -1170,193 +1044,118 @@ const FarmerDashboardPage = () => {
         )}
       </section>
 
-      {/* ==================================================
-          BUSINESS INSIGHTS
-      ================================================== */}
+      {/* =====================================================
+          BUSINESS ACTIVITY
+      ===================================================== */}
 
-      <section className="mb-10 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
-            Coming Soon
+      <section className="mb-8">
+        <div className="mb-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
+            Business Activity
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold text-gray-900">
-            Business Analytics
+          <h2 className="mt-1 text-xl font-bold text-gray-900">
+            Your Business at a Glance
           </h2>
-
-          <div className="mt-6 flex min-h-52 items-center justify-center rounded-2xl bg-gray-50">
-            <div className="px-6 text-center">
-              <div className="text-4xl">📊</div>
-
-              <p className="mt-4 text-lg font-semibold text-gray-700">
-                Analytics Coming Soon
-              </p>
-
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-                Sales trends, revenue insights, customer
-                activity, service performance and product
-                performance will appear here.
-              </p>
-            </div>
-          </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
-            At a Glance
-          </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Products listed
+            </p>
 
-          <h2 className="mt-1 text-2xl font-bold text-gray-900">
-            Business Insights
-          </h2>
+            <p className="mt-2 text-2xl font-bold text-gray-900">
+              {products.length}
+            </p>
+          </div>
 
-          <div className="mt-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Products listed
-              </span>
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Services listed
+            </p>
 
-              <span className="font-semibold text-gray-900">
-                {products.length}
-              </span>
-            </div>
+            <p className="mt-2 text-2xl font-bold text-gray-900">
+              {services.length}
+            </p>
+          </div>
 
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Products in stock
-              </span>
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Pending orders
+            </p>
 
-              <span className="font-semibold text-gray-900">
-                {inStockProducts.length}
-              </span>
-            </div>
+            <p className="mt-2 text-2xl font-bold text-yellow-700">
+              {pendingOrders.length}
+            </p>
+          </div>
 
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Services listed
-              </span>
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Completed orders
+            </p>
 
-              <span className="font-semibold text-gray-900">
-                {services.length}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Available services
-              </span>
-
-              <span className="font-semibold text-gray-900">
-                {availableServices.length}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Customer orders
-              </span>
-
-              <span className="font-semibold text-gray-900">
-                {orders.length}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm text-gray-600">
-                Pending orders
-              </span>
-
-              <span className="font-semibold text-yellow-700">
-                {pendingOrders.length}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                Business status
-              </span>
-
-              <span
-                className={`font-semibold ${
-                  profile.is_verified
-                    ? "text-green-700"
-                    : "text-orange-600"
-                }`}
-              >
-                {profile.is_verified
-                  ? "Verified"
-                  : "Pending Verification"}
-              </span>
-            </div>
+            <p className="mt-2 text-2xl font-bold text-green-700">
+              {completedOrders.length}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ==================================================
-          GROWTH OPPORTUNITIES
-      ================================================== */}
+      {/* =====================================================
+          AGRICWISE ECOSYSTEM
+      ===================================================== */}
 
-      <section className="mb-10">
-        <div className="mb-5">
-          <p className="text-sm font-semibold uppercase tracking-wider text-green-600">
+      <section className="mb-8 rounded-3xl bg-gray-950 p-6 text-white sm:p-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-400">
             AgricWise Ecosystem
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold text-gray-900">
-            Grow Your Agricultural Business
+          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
+            More opportunities are coming.
           </h2>
 
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-            More tools and opportunities are being built
-            into AgricWise to support businesses across
-            the agricultural ecosystem.
+          <p className="mt-3 text-sm leading-7 text-gray-300 sm:text-base">
+            AgricWise is being built to connect
+            agricultural businesses and professionals
+            with more opportunities across the value
+            chain.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               icon: "📊",
               title: "Business Analytics",
-              description:
-                "Understand sales, products, customers and business performance.",
             },
             {
               icon: "👨🏾‍🌾",
               title: "Expert Connections",
-              description:
-                "Connect with agricultural professionals and specialists.",
             },
             {
               icon: "💡",
               title: "Business Advisory",
-              description:
-                "Access practical knowledge and opportunities for business growth.",
             },
             {
               icon: "🌍",
               title: "Market Opportunities",
-              description:
-                "Discover new connections across the wider agricultural ecosystem.",
             },
           ].map((item) => (
             <div
               key={item.title}
-              className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="rounded-2xl border border-white/10 bg-white/5 p-5"
             >
-              <div className="text-3xl">
+              <div className="text-2xl">
                 {item.icon}
               </div>
 
-              <h3 className="mt-4 font-semibold text-gray-900">
+              <h3 className="mt-3 text-sm font-semibold">
                 {item.title}
               </h3>
 
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                {item.description}
-              </p>
-
-              <span className="mt-4 inline-block rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+              <span className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-gray-300">
                 Coming Soon
               </span>
             </div>
@@ -1364,45 +1163,47 @@ const FarmerDashboardPage = () => {
         </div>
       </section>
 
-      {/* ==================================================
+      {/* =====================================================
           BUSINESS TIP
-      ================================================== */}
+      ===================================================== */}
 
-      <section className="mb-10 rounded-3xl bg-gradient-to-r from-green-700 to-emerald-700 p-6 text-white shadow-lg sm:p-8">
+      <section className="mb-8 rounded-3xl bg-gradient-to-r from-green-700 to-emerald-700 p-6 text-white shadow-lg sm:p-8">
         <div className="max-w-3xl">
           <div className="text-3xl">💡</div>
 
           <h2 className="mt-4 text-2xl font-bold">
-            Build a Stronger Digital Presence
+            Build a stronger digital presence
           </h2>
 
-          <p className="mt-3 leading-7 text-green-50">
+          <p className="mt-3 text-sm leading-7 text-green-50 sm:text-base">
             Keep your business information accurate,
             add clear product details and describe your
             services properly. A complete AgricWise
-            presence helps customers and other agricultural
-            businesses understand what you offer.
+            presence makes it easier for customers and
+            other agricultural businesses to understand
+            what you offer.
           </p>
 
           <Link
             to="/farmer/profile"
-            className="mt-5 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-green-700 transition hover:shadow-lg"
+            className="mt-5 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-green-700 transition hover:-translate-y-0.5 hover:shadow-lg"
           >
             Review Business Profile
           </Link>
         </div>
       </section>
 
-      {/* ==================================================
-          FINAL BUSINESS CTA
-      ================================================== */}
+      {/* =====================================================
+          FINAL CTA
+      ===================================================== */}
 
       <section className="rounded-3xl border border-green-100 bg-white p-6 text-center shadow-sm sm:p-10">
         <div className="mx-auto max-w-2xl">
           <div className="text-4xl">🌱</div>
 
           <h2 className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
-            Build Your Agricultural Business on AgricWise
+            Build your agricultural business on
+            AgricWise
           </h2>
 
           <p className="mx-auto mt-4 text-sm leading-7 text-gray-600 sm:text-base">
