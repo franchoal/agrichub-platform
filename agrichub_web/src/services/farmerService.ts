@@ -1,8 +1,8 @@
 import { api } from "./api";
 
-/* ==============================
+/* =========================================================
    Agricultural Category Types
-============================== */
+========================================================= */
 
 export interface AgriculturalCategory {
   id: number;
@@ -18,17 +18,24 @@ export interface PaginatedAgriculturalCategories {
   results: AgriculturalCategory[];
 }
 
-/* ==============================
-   Farmer / Agricultural Business
-   Profile Types
-============================== */
+/* =========================================================
+   Agricultural Business / Professional Profile
+========================================================= */
 
 export interface FarmerProfile {
   id: number;
+
+  /**
+   * Legacy API field names retained for backend compatibility.
+   * User-facing UI should refer to these as business/professional
+   * identity fields.
+   */
   farm_name: string;
   farm_location: string;
   farm_description: string;
+
   business_categories: AgriculturalCategory[];
+
   is_verified: boolean;
 }
 
@@ -46,21 +53,26 @@ export interface UpdateFarmerProfileData {
   category_ids: number[];
 }
 
-/* ==============================
+/* =========================================================
    Agricultural Service Types
-============================== */
+========================================================= */
 
 export interface AgriculturalService {
   id: number;
   business: number;
   business_name: string;
+
   name: string;
   description: string;
   location: string;
+
   price: string | null;
   price_unit: string;
+
   image: string | null;
+
   is_available: boolean;
+
   created_at: string;
   updated_at: string;
 }
@@ -83,26 +95,31 @@ export interface UpdateAgriculturalServiceData {
   is_available?: boolean;
 }
 
-/* ==============================
-   Farmer Product Types
-============================== */
+/* =========================================================
+   Agricultural Product Types
+========================================================= */
 
 export interface FarmerProduct {
   id: number;
+
   category: number;
   category_name: string;
+
   name: string;
   description: string;
+
   price: string;
   quantity: number;
   unit: string;
+
   image: string | null;
+
   is_available: boolean;
 }
 
-/* ==============================
-   Paginated Farmer Products
-============================== */
+/* =========================================================
+   Paginated Agricultural Products
+========================================================= */
 
 export interface PaginatedFarmerProducts {
   count: number;
@@ -111,9 +128,9 @@ export interface PaginatedFarmerProducts {
   results: FarmerProduct[];
 }
 
-/* ==============================
+/* =========================================================
    Paginated Agricultural Services
-============================== */
+========================================================= */
 
 export interface PaginatedAgriculturalServices {
   count: number;
@@ -122,9 +139,9 @@ export interface PaginatedAgriculturalServices {
   results: AgriculturalService[];
 }
 
-/* ==============================
-   Farmer Product Payloads
-============================== */
+/* =========================================================
+   Agricultural Product Payloads
+========================================================= */
 
 export interface CreateFarmerProductData {
   category: number;
@@ -148,14 +165,69 @@ export interface UpdateFarmerProductData {
   image?: File | null;
 }
 
-/* ==============================
-   Farmer Service
-============================== */
+/* =========================================================
+   PUBLIC AGRICULTURAL BUSINESS TYPES
+========================================================= */
+
+export interface PublicBusinessProduct {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  quantity: number;
+  unit: string;
+  image: string | null;
+  is_available: boolean;
+  category: number;
+  category_name: string;
+  created_at: string;
+}
+
+export interface PublicBusinessService {
+  id: number;
+  name: string;
+  description: string;
+  location: string;
+  price: string | null;
+  price_unit: string;
+  image: string | null;
+  is_available: boolean;
+  created_at: string;
+}
+
+export interface PublicAgriculturalBusiness {
+  id: number;
+  farm_name: string;
+  farm_location: string;
+  farm_description: string;
+  business_categories: AgriculturalCategory[];
+  is_verified: boolean;
+  product_count: number;
+  service_count: number;
+}
+
+export interface PublicAgriculturalBusinessDetail
+  extends PublicAgriculturalBusiness {
+  products: PublicBusinessProduct[];
+  services: PublicBusinessService[];
+  created_at: string;
+}
+
+export interface PaginatedPublicAgriculturalBusinesses {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PublicAgriculturalBusiness[];
+}
+
+/* =========================================================
+   AgricWise Agricultural Business Service
+========================================================= */
 
 export const farmerService = {
-  /* ==============================
+  /* =======================================================
      Agricultural Categories
-  ============================== */
+  ======================================================= */
 
   getCategories: async (): Promise<
     AgriculturalCategory[]
@@ -168,9 +240,9 @@ export const farmerService = {
     return response.data.results;
   },
 
-  /* ==============================
-     Agricultural Business Profile
-  ============================== */
+  /* =======================================================
+     Agricultural Business / Professional Profile
+  ======================================================= */
 
   getProfile: async (): Promise<FarmerProfile> => {
     const response =
@@ -205,9 +277,9 @@ export const farmerService = {
     return response.data;
   },
 
-  /* ==============================
+  /* =======================================================
      Agricultural Services
-  ============================== */
+  ======================================================= */
 
   getMyServices: async (): Promise<
     AgriculturalService[]
@@ -264,9 +336,9 @@ export const farmerService = {
     );
   },
 
-  /* ==============================
-     Farmer Products
-  ============================== */
+  /* =======================================================
+     Agricultural Products
+  ======================================================= */
 
   getMyProducts: async (): Promise<
     PaginatedFarmerProducts
@@ -425,5 +497,35 @@ export const farmerService = {
     await api.delete(
       `/farmers/products/${id}/`
     );
+  },
+
+  /* =======================================================
+     PUBLIC AGRICULTURAL BUSINESS DIRECTORY
+  ======================================================= */
+
+  getPublicBusinesses: async (): Promise<
+    PaginatedPublicAgriculturalBusinesses
+  > => {
+    const response =
+      await api.get<PaginatedPublicAgriculturalBusinesses>(
+        "/farmers/businesses/"
+      );
+
+    return response.data;
+  },
+
+  /* =======================================================
+     PUBLIC AGRICULTURAL BUSINESS DETAIL
+  ======================================================= */
+
+  getPublicBusiness: async (
+    id: number
+  ): Promise<PublicAgriculturalBusinessDetail> => {
+    const response =
+      await api.get<PublicAgriculturalBusinessDetail>(
+        `/farmers/businesses/${id}/`
+      );
+
+    return response.data;
   },
 };

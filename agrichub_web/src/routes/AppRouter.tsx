@@ -5,24 +5,54 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
+/* =========================================================
+   PUBLIC / CORE PAGES
+========================================================= */
+
 import HomePage from "../pages/Home/HomePage";
 import AboutPage from "../pages/About/AboutPage";
-
 import LandingPage from "../pages/Landing/LandingPage";
+
+/* =========================================================
+   AGRICULTURAL BUSINESS DISCOVERY
+========================================================= */
+
+import AgriculturalBusinessesPage from "../pages/Businesses/AgriculturalBusinessesPage";
+import AgriculturalBusinessDetailsPage from "../pages/Businesses/AgriculturalBusinessDetailsPage";
+
+/* =========================================================
+   MARKETPLACE
+========================================================= */
 
 import ProductsPage from "../pages/Products/ProductsPage";
 import ProductDetailsPage from "../pages/Products/ProductDetailsPage";
 import CreateProductPage from "../pages/Products/CreateProductPage";
 import EditProductPage from "../pages/Products/EditProductPage";
 
+/* =========================================================
+   SHOPPING
+========================================================= */
+
 import CartPage from "../pages/Cart/CartPage";
 import CheckoutPage from "../pages/Checkout/CheckoutPage";
+
+/* =========================================================
+   ORDERS
+========================================================= */
 
 import OrdersPage from "../pages/Orders/OrdersPage";
 import OrderDetailsPage from "../pages/Orders/OrderDetailsPage";
 
+/* =========================================================
+   AUTHENTICATION
+========================================================= */
+
 import LoginPage from "../pages/Login/LoginPage";
 import RegisterPage from "../pages/Register/RegisterPage";
+
+/* =========================================================
+   FARMER / AGRICULTURAL BUSINESS WORKSPACE
+========================================================= */
 
 import FarmerPortalPage from "../pages/Farmer/FarmerPortalPage";
 import FarmerDashboardPage from "../pages/Farmer/FarmerDashboardPage";
@@ -30,14 +60,34 @@ import FarmerOrdersPage from "../pages/Farmer/FarmerOrdersPage";
 import FarmerOrderDetailsPage from "../pages/Farmer/FarmerOrderDetailsPage";
 import FarmerProfilePage from "../pages/Farmer/FarmerProfilePage";
 
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
+
 import NotificationsPage from "../pages/Notifications/NotificationsPage";
+
+/* =========================================================
+   COMMUNITY
+========================================================= */
 
 import CreatePostPage from "../pages/Community/CreatePostPage";
 
+/* =========================================================
+   PERSONAL PROFILE
+========================================================= */
+
 import ProfilePage from "../pages/Profile/ProfilePage";
+
+/* =========================================================
+   ROUTE GUARDS
+========================================================= */
 
 import ProtectedRoute from "./ProtectedRoute";
 import FarmerRoute from "./FarmerRoute";
+
+/* =========================================================
+   AUTH STORE
+========================================================= */
 
 import { useAuthStore } from "../store/authStore";
 
@@ -84,12 +134,16 @@ MainLayout is the common application shell.
 ProtectedRoute controls authentication.
 
 FarmerRoute controls access to the existing
-farmer/seller workspace.
+agricultural business / seller workspace.
 
 FarmerProfilePage deliberately remains
 outside FarmerRoute because a normal
 authenticated user must be able to create
-their first FarmerProfile.
+their first agricultural business profile.
+
+Public agricultural business discovery also
+remains outside ProtectedRoute so visitors
+can discover businesses before registration.
 */
 
 export const router = createBrowserRouter([
@@ -202,6 +256,38 @@ export const router = createBrowserRouter([
 
       /*
       ========================================
+      AGRICULTURAL BUSINESS DISCOVERY
+      ========================================
+
+      These pages are intentionally public.
+
+      AgricWise business presence is part of
+      the platform's discovery layer. Visitors
+      should be able to discover agricultural
+      businesses, products and services without
+      being forced to register first.
+
+      /businesses
+        Business directory
+
+      /businesses/:id
+        Public business presence
+      ========================================
+      */
+
+      {
+        path: "businesses",
+        element: <AgriculturalBusinessesPage />,
+      },
+
+      {
+        path: "businesses/:id",
+        element: <AgriculturalBusinessDetailsPage />,
+      },
+
+
+      /*
+      ========================================
       MARKETPLACE
       ========================================
       */
@@ -223,7 +309,11 @@ export const router = createBrowserRouter([
       ========================================
 
       Existing farmer portal is retained
-      temporarily.
+      temporarily for compatibility.
+
+      The underlying concept is now the
+      AgricWise agricultural business workspace.
+      ========================================
       */
 
       {
@@ -269,17 +359,17 @@ export const router = createBrowserRouter([
 
           /*
           ====================================
-          FARMER PROFILE ONBOARDING
+          AGRICULTURAL BUSINESS PROFILE
           ====================================
-
-          IMPORTANT:
 
           This is intentionally outside
           FarmerRoute.
 
           A normal authenticated user must
-          be able to create their FarmerProfile
-          before accessing the farmer workspace.
+          be able to create their agricultural
+          business profile before accessing
+          the business workspace.
+          ====================================
           */
 
           {
@@ -336,7 +426,7 @@ export const router = createBrowserRouter([
 
           /*
           ====================================
-          FARMER / SELLER WORKSPACE
+          AGRICWISE BUSINESS WORKSPACE
           ====================================
 
           These routes require an existing
@@ -344,8 +434,12 @@ export const router = createBrowserRouter([
 
           FarmerRoute does not represent a
           permanent user account type.
-          It only verifies that the user's
-          seller/farmer capability exists.
+
+          It only verifies that the user has
+          an agricultural business / professional
+          profile and can therefore access the
+          business workspace.
+          ====================================
           */
 
           {

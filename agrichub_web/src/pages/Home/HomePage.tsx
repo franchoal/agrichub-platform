@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import ProfileCompletionPrompt from "../../components/profile/ProfileCompletionPrompt";
 import { useProfileCompletion } from "../../hooks/useProfileCompletion";
+import { usePublicAgriculturalBusinesses } from "../../hooks/useAgriculturalServices";
 import { useAuthStore } from "../../store/authStore";
 import { api } from "../../services/api";
 
@@ -13,12 +14,14 @@ import {
   Bell,
   BookOpen,
   BriefcaseBusiness,
+  Building2,
   Check,
   ChevronRight,
   EllipsisVertical,
   Image as ImageIcon,
   Leaf,
   Loader2,
+  MapPin,
   MessageCircle,
   Package,
   Pencil,
@@ -143,6 +146,29 @@ const HomePage = () => {
 
   /*
   ==========================================
+  AGRICWISE BUSINESS DISCOVERY
+  ==========================================
+  */
+
+  const {
+    data: businessDirectory,
+    isLoading: isLoadingBusinesses,
+    isError: isBusinessesError,
+  } = usePublicAgriculturalBusinesses();
+
+  const agriculturalBusinesses =
+    businessDirectory?.results ?? [];
+
+  const featuredBusinesses =
+    agriculturalBusinesses.slice(0, 4);
+
+  const verifiedBusinessCount =
+    agriculturalBusinesses.filter(
+      (business) => business.is_verified
+    ).length;
+
+  /*
+  ==========================================
   AUTOMATIC COMMUNITY REFRESH
   ==========================================
   */
@@ -194,6 +220,36 @@ const HomePage = () => {
     const interval = window.setInterval(
       refreshConnections,
       15000
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [queryClient]);
+
+  /*
+  ==========================================
+  AUTOMATIC BUSINESS DIRECTORY REFRESH
+  ==========================================
+  */
+
+  useEffect(() => {
+    const refreshBusinesses = async () => {
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["public-agricultural-businesses"],
+        });
+      } catch (error) {
+        console.error(
+          "Failed to refresh agricultural businesses:",
+          error
+        );
+      }
+    };
+
+    const interval = window.setInterval(
+      refreshBusinesses,
+      60000
     );
 
     return () => {
@@ -270,12 +326,6 @@ const HomePage = () => {
   const handleToggleComments = async (
     postId: number
   ) => {
-    /*
-     * Reading comments is public.
-     * Profile completion is only required
-     * when submitting a comment.
-     */
-
     if (openComments === postId) {
       setOpenComments(null);
       return;
@@ -597,14 +647,6 @@ const HomePage = () => {
       await queryClient.invalidateQueries({
         queryKey: ["community-posts"],
       });
-
-      /*
-       * Marketplace posts create a linked Product.
-       * We deliberately do not invalidate or delete
-       * marketplace products here because community
-       * post deletion must not silently delete the
-       * farmer's actual marketplace listing.
-       */
     } catch (error) {
       console.error(
         "Failed to delete community post:",
@@ -633,7 +675,7 @@ const HomePage = () => {
     <main className="min-h-screen bg-slate-50 pb-24">
 
       {/* ========================================= */}
-      {/* APP HEADER / COMMUNITY WELCOME */}
+      {/* APP HEADER */}
       {/* ========================================= */}
 
       <section className="border-b border-gray-100 bg-white">
@@ -661,6 +703,14 @@ const HomePage = () => {
             </div>
 
             <div className="flex items-center gap-2">
+
+              <Link
+                to="/businesses"
+                className="hidden items-center gap-2 rounded-xl bg-green-50 px-4 py-2.5 text-xs font-bold text-green-700 transition hover:bg-green-100 sm:flex"
+              >
+                <Building2 size={16} />
+                Discover Businesses
+              </Link>
 
               <button
                 type="button"
@@ -717,10 +767,31 @@ const HomePage = () => {
             </h2>
 
             <p className="mt-4 max-w-2xl text-sm leading-6 text-green-50 sm:text-base sm:leading-7">
-              Connect with farmers, businesses, professionals and
-              agricultural communities. Share knowledge, discover
-              opportunities and get things done.
+              Discover agricultural businesses, products,
+              services and people. Share knowledge, build
+              connections and grow your opportunities in one
+              connected ecosystem.
             </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+
+              <Link
+                to="/businesses"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-green-900 transition hover:bg-green-50"
+              >
+                Explore Businesses
+                <ArrowRight size={16} />
+              </Link>
+
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                Explore Marketplace
+                <Package size={16} />
+              </Link>
+
+            </div>
 
           </div>
 
@@ -816,6 +887,312 @@ const HomePage = () => {
       </section>
 
       {/* ========================================= */}
+      {/* AGRICULTURAL BUSINESS DISCOVERY */}
+      {/* ========================================= */}
+
+      <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+
+        <div className="rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+
+            <div>
+
+              <div className="flex items-center gap-2">
+
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100 text-green-700">
+                  <Building2 size={18} />
+                </span>
+
+                <p className="text-xs font-bold uppercase tracking-wider text-green-700">
+                  Discover
+                </p>
+
+              </div>
+
+              <h2 className="mt-3 text-2xl font-black text-gray-900 sm:text-3xl">
+                Agricultural businesses on AgricWise
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+                Explore farms, suppliers, agricultural service
+                providers, consultants, processors and other
+                businesses building their presence on AgricWise.
+              </p>
+
+            </div>
+
+            <Link
+              to="/businesses"
+              className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-green-700 transition hover:text-green-800"
+            >
+              View all businesses
+              <ArrowRight size={16} />
+            </Link>
+
+          </div>
+
+          {/* BUSINESS STATS */}
+
+          {!isLoadingBusinesses &&
+            !isBusinessesError &&
+            agriculturalBusinesses.length > 0 && (
+
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+                <div className="rounded-2xl bg-green-50 p-4">
+                  <p className="text-2xl font-black text-green-800">
+                    {businessDirectory?.count ?? 0}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-green-700">
+                    Businesses
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-blue-50 p-4">
+                  <p className="text-2xl font-black text-blue-800">
+                    {verifiedBusinessCount}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-blue-700">
+                    Verified
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-yellow-50 p-4">
+                  <p className="text-2xl font-black text-yellow-800">
+                    {agriculturalBusinesses.reduce(
+                      (total, business) =>
+                        total + business.product_count,
+                      0
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-yellow-700">
+                    Products
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-purple-50 p-4">
+                  <p className="text-2xl font-black text-purple-800">
+                    {agriculturalBusinesses.reduce(
+                      (total, business) =>
+                        total + business.service_count,
+                      0
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-purple-700">
+                    Services
+                  </p>
+                </div>
+
+              </div>
+            )}
+
+          {/* BUSINESS LOADING */}
+
+          {isLoadingBusinesses && (
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+              {[1, 2, 3, 4].map((item) => (
+
+                <div
+                  key={item}
+                  className="animate-pulse rounded-2xl border border-gray-100 p-4"
+                >
+
+                  <div className="h-11 w-11 rounded-xl bg-gray-200" />
+
+                  <div className="mt-4 h-4 w-3/4 rounded bg-gray-200" />
+
+                  <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
+
+                  <div className="mt-4 h-10 rounded-xl bg-gray-100" />
+
+                </div>
+
+              ))}
+
+            </div>
+          )}
+
+          {/* BUSINESS ERROR */}
+
+          {isBusinessesError && (
+
+            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-5">
+
+              <div className="flex items-start gap-3">
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-red-600">
+                  <Building2 size={18} />
+                </div>
+
+                <div>
+
+                  <h3 className="font-bold text-gray-900">
+                    Business directory unavailable
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    We couldn't load the latest agricultural
+                    businesses. You can still explore the
+                    community and marketplace.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* BUSINESS EMPTY */}
+
+          {!isLoadingBusinesses &&
+            !isBusinessesError &&
+            agriculturalBusinesses.length === 0 && (
+
+              <div className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-7 text-center">
+
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <Building2 size={22} />
+                </div>
+
+                <h3 className="mt-4 font-bold text-gray-900">
+                  Agricultural businesses are joining AgricWise
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+                  Your business can have a structured presence
+                  where people can discover your products and
+                  agricultural services.
+                </p>
+
+                <Link
+                  to="/farmer"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-800"
+                >
+                  Create Your Business Profile
+                  <ArrowRight size={16} />
+                </Link>
+
+              </div>
+            )}
+
+          {/* BUSINESS CARDS */}
+
+          {!isLoadingBusinesses &&
+            !isBusinessesError &&
+            featuredBusinesses.length > 0 && (
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+                {featuredBusinesses.map((business) => (
+
+                  <Link
+                    key={business.id}
+                    to={`/businesses/${business.id}`}
+                    className="group rounded-2xl border border-gray-100 bg-gray-50 p-4 transition hover:-translate-y-0.5 hover:border-green-200 hover:bg-green-50 hover:shadow-md"
+                  >
+
+                    <div className="flex items-start justify-between gap-3">
+
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-green-700 shadow-sm">
+                        <Building2 size={19} />
+                      </div>
+
+                      {business.is_verified && (
+
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-[10px] font-bold text-green-700">
+                          <Check size={11} />
+                          Verified
+                        </span>
+
+                      )}
+
+                    </div>
+
+                    <h3 className="mt-4 line-clamp-2 font-black text-gray-900 group-hover:text-green-800">
+                      {business.farm_name}
+                    </h3>
+
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+
+                      <MapPin size={13} />
+
+                      <span className="line-clamp-1">
+                        {business.farm_location}
+                      </span>
+
+                    </div>
+
+                    {business.business_categories.length > 0 && (
+
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+
+                        {business.business_categories
+                          .slice(0, 2)
+                          .map((category) => (
+
+                            <span
+                              key={category.id}
+                              className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-gray-600"
+                            >
+                              {category.name}
+                            </span>
+
+                          ))}
+
+                        {business.business_categories.length > 2 && (
+
+                          <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-gray-500">
+                            +{business.business_categories.length - 2}
+                          </span>
+
+                        )}
+
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
+
+                      <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-500">
+
+                        <span>
+                          {business.product_count}{" "}
+                          {business.product_count === 1
+                            ? "product"
+                            : "products"}
+                        </span>
+
+                        <span>
+                          {business.service_count}{" "}
+                          {business.service_count === 1
+                            ? "service"
+                            : "services"}
+                        </span>
+
+                      </div>
+
+                      <ChevronRight
+                        size={16}
+                        className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-green-700"
+                      />
+
+                    </div>
+
+                  </Link>
+
+                ))}
+
+              </div>
+            )}
+
+        </div>
+
+      </section>
+
+      {/* ========================================= */}
       {/* MAIN COMMUNITY AREA */}
       {/* ========================================= */}
 
@@ -841,16 +1218,17 @@ const HomePage = () => {
                 </h2>
               </div>
 
-              <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700">
+              <Link
+                to="/community"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-green-700"
+              >
                 Latest
                 <ChevronRight size={16} />
-              </span>
+              </Link>
 
             </div>
 
-            {/* =================================== */}
             {/* LOADING */}
-            {/* =================================== */}
 
             {isLoadingPosts && (
 
@@ -886,12 +1264,9 @@ const HomePage = () => {
                 ))}
 
               </div>
-
             )}
 
-            {/* =================================== */}
             {/* ERROR */}
-            {/* =================================== */}
 
             {isPostsError && (
 
@@ -911,12 +1286,9 @@ const HomePage = () => {
                 </p>
 
               </div>
-
             )}
 
-            {/* =================================== */}
-            {/* EMPTY STATE */}
-            {/* =================================== */}
+            {/* EMPTY */}
 
             {!isLoadingPosts &&
               !isPostsError &&
@@ -950,9 +1322,7 @@ const HomePage = () => {
                 </div>
               )}
 
-            {/* =================================== */}
             {/* REAL COMMUNITY POSTS */}
-            {/* =================================== */}
 
             {!isLoadingPosts &&
               !isPostsError &&
@@ -983,11 +1353,7 @@ const HomePage = () => {
                     className="relative mb-5 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
                   >
 
-                    {/* POST CONTENT */}
-
                     <div className="p-5 sm:p-6">
-
-                      {/* AUTHOR */}
 
                       <div className="flex items-start gap-3">
 
@@ -1076,9 +1442,8 @@ const HomePage = () => {
 
                             </div>
 
-                            {/* POST MANAGEMENT MENU */}
-
                             {canManage && (
+
                               <div className="relative shrink-0">
 
                                 <button
@@ -1114,9 +1479,7 @@ const HomePage = () => {
                                       }
                                       className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                                     >
-                                      <Pencil
-                                        size={15}
-                                      />
+                                      <Pencil size={15} />
                                       Edit
                                     </button>
 
@@ -1159,8 +1522,6 @@ const HomePage = () => {
                         </div>
 
                       </div>
-
-                      {/* EDIT FORM */}
 
                       {isEditing ? (
 
@@ -1259,8 +1620,6 @@ const HomePage = () => {
 
                       )}
 
-                      {/* MARKETPLACE LISTING SUMMARY */}
-
                       {isMarketplace &&
                         post.product_id && (
 
@@ -1269,7 +1628,9 @@ const HomePage = () => {
                             <div className="flex flex-col gap-4 sm:flex-row">
 
                               {post.product_image && (
+
                                 <div className="h-28 w-full shrink-0 overflow-hidden rounded-xl bg-white sm:h-28 sm:w-36">
+
                                   <img
                                     src={post.product_image}
                                     alt={
@@ -1278,6 +1639,7 @@ const HomePage = () => {
                                     }
                                     className="h-full w-full object-cover"
                                   />
+
                                 </div>
                               )}
 
@@ -1293,6 +1655,7 @@ const HomePage = () => {
                                 </h4>
 
                                 {post.product_price && (
+
                                   <p className="mt-1 text-base font-bold text-green-800">
                                     ₦
                                     {Number(
@@ -1324,8 +1687,6 @@ const HomePage = () => {
 
                     </div>
 
-                    {/* COMMUNITY IMAGE */}
-
                     {!isMarketplace &&
                       post.image && (
 
@@ -1338,10 +1699,7 @@ const HomePage = () => {
                           />
 
                         </div>
-
                       )}
-
-                    {/* COMMUNITY VIDEO */}
 
                     {post.video && (
 
@@ -1358,10 +1716,7 @@ const HomePage = () => {
                         </video>
 
                       </div>
-
                     )}
-
-                    {/* ACTIONS */}
 
                     <div className="flex items-center gap-6 border-t border-gray-100 px-5 py-4 text-xs font-semibold text-gray-500 sm:px-6">
 
@@ -1378,7 +1733,6 @@ const HomePage = () => {
                             : "hover:text-green-700"
                         }`}
                       >
-
                         <MessageCircle size={16} />
 
                         Comment
@@ -1388,10 +1742,7 @@ const HomePage = () => {
                             {comments[post.id].length}
                           </span>
                         )}
-
                       </button>
-
-                      {/* CONNECTION */}
 
                       {user &&
                         user.id !== post.author && (
@@ -1416,7 +1767,6 @@ const HomePage = () => {
                                 : "hover:text-green-700"
                             } disabled:cursor-not-allowed`}
                           >
-
                             <Send size={16} />
 
                             {isConnecting[
@@ -1427,20 +1777,14 @@ const HomePage = () => {
                                   "connected"
                                 ? "Connected"
                                 : "Connect"}
-
                           </button>
-
                         )}
 
                     </div>
 
-                    {/* COMMENTS */}
-
                     {openComments === post.id && (
 
                       <div className="border-t border-gray-100 bg-gray-50 px-5 py-5 sm:px-6">
-
-                        {/* COMMENT LIST */}
 
                         {isLoadingComments[
                           post.id
@@ -1486,7 +1830,6 @@ const HomePage = () => {
                                 </div>
 
                               </div>
-
                             ))}
 
                           </div>
@@ -1497,10 +1840,7 @@ const HomePage = () => {
                             No comments yet. Start the
                             conversation.
                           </p>
-
                         )}
-
-                        {/* COMMENT INPUT */}
 
                         <div className="mt-4 flex gap-2">
 
@@ -1532,7 +1872,6 @@ const HomePage = () => {
                                   post.id
                                 );
                               }
-
                             }}
                             placeholder="Write a comment..."
                             className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
@@ -1556,7 +1895,6 @@ const HomePage = () => {
                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-700 text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
                             aria-label="Send comment"
                           >
-
                             {isSubmittingComment[
                               post.id
                             ] ? (
@@ -1567,23 +1905,16 @@ const HomePage = () => {
                             ) : (
                               <Send size={17} />
                             )}
-
                           </button>
 
                         </div>
 
                       </div>
-
                     )}
 
                   </article>
-
                 );
               })}
-
-            {/* =================================== */}
-            {/* START CONVERSATION */}
-            {/* =================================== */}
 
             {!isLoadingPosts &&
               !isPostsError &&
@@ -1652,32 +1983,38 @@ const HomePage = () => {
                 {[
                   {
                     icon: Package,
-                    label: "Products",
+                    label: "Marketplace",
+                    description: "Products & produce",
                     href: "/products",
+                  },
+                  {
+                    icon: Building2,
+                    label: "Businesses",
+                    description: "Farms & agribusinesses",
+                    href: "/businesses",
                   },
                   {
                     icon: Wrench,
                     label: "Services",
-                    href: "/community/create",
+                    description: "Agricultural services",
+                    href: "/businesses",
                   },
                   {
                     icon: Tractor,
                     label: "Equipment",
-                    href: "/products",
-                  },
-                  {
-                    icon: Users,
-                    label: "People & Businesses",
+                    description: "Tools & machinery",
                     href: "/products",
                   },
                   {
                     icon: BookOpen,
                     label: "Knowledge",
+                    description: "Learn & discuss",
                     href: "/community/create",
                   },
                   {
                     icon: BriefcaseBusiness,
                     label: "Opportunities",
+                    description: "Connect & participate",
                     href: "/community/create",
                   },
                 ].map((item) => {
@@ -1697,8 +2034,14 @@ const HomePage = () => {
                           <Icon size={17} />
                         </span>
 
-                        <span className="text-sm font-semibold text-gray-700">
-                          {item.label}
+                        <span>
+                          <span className="block text-sm font-semibold text-gray-700">
+                            {item.label}
+                          </span>
+
+                          <span className="block text-[11px] text-gray-400">
+                            {item.description}
+                          </span>
                         </span>
 
                       </span>
@@ -1710,10 +2053,114 @@ const HomePage = () => {
 
                     </Link>
                   );
-
                 })}
 
               </div>
+
+            </div>
+
+            {/* BUSINESS DISCOVERY */}
+
+            <div className="rounded-2xl bg-white p-5 shadow-sm">
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-xs font-bold uppercase tracking-wider text-green-700">
+                    Business Directory
+                  </p>
+
+                  <h3 className="mt-1 font-black text-gray-900">
+                    Meet AgricWise Businesses
+                  </h3>
+
+                </div>
+
+                <Building2
+                  size={19}
+                  className="text-green-700"
+                />
+
+              </div>
+
+              {isLoadingBusinesses ? (
+
+                <div className="mt-4 space-y-3">
+
+                  {[1, 2, 3].map((item) => (
+
+                    <div
+                      key={item}
+                      className="animate-pulse rounded-xl bg-gray-50 p-3"
+                    >
+                      <div className="h-4 w-3/4 rounded bg-gray-200" />
+                      <div className="mt-2 h-3 w-1/2 rounded bg-gray-100" />
+                    </div>
+
+                  ))}
+
+                </div>
+
+              ) : featuredBusinesses.length > 0 ? (
+
+                <div className="mt-4 space-y-2">
+
+                  {featuredBusinesses
+                    .slice(0, 3)
+                    .map((business) => (
+
+                      <Link
+                        key={business.id}
+                        to={`/businesses/${business.id}`}
+                        className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 transition hover:bg-green-50"
+                      >
+
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-green-700 shadow-sm">
+                          <Building2 size={16} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+
+                          <p className="truncate text-sm font-bold text-gray-800">
+                            {business.farm_name}
+                          </p>
+
+                          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500">
+                            <MapPin size={11} />
+                            {business.farm_location}
+                          </p>
+
+                        </div>
+
+                        {business.is_verified && (
+                          <Check
+                            size={15}
+                            className="shrink-0 text-green-600"
+                          />
+                        )}
+
+                      </Link>
+                    ))}
+
+                </div>
+
+              ) : (
+
+                <p className="mt-4 text-sm leading-6 text-gray-500">
+                  Agricultural businesses will appear here as
+                  they build their AgricWise presence.
+                </p>
+
+              )}
+
+              <Link
+                to="/businesses"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-green-100 bg-green-50 px-4 py-2.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+              >
+                Explore Business Directory
+                <ArrowRight size={14} />
+              </Link>
 
             </div>
 
@@ -1724,6 +2171,7 @@ const HomePage = () => {
               <div className="flex items-center justify-between">
 
                 <div>
+
                   <p className="text-xs font-bold uppercase tracking-wider text-green-700">
                     Marketplace
                   </p>
@@ -1731,6 +2179,7 @@ const HomePage = () => {
                   <h3 className="mt-1 font-black text-gray-900">
                     Agricultural Products
                   </h3>
+
                 </div>
 
                 <Link
@@ -1786,7 +2235,6 @@ const HomePage = () => {
                     </div>
 
                   </Link>
-
                 ))}
 
               </div>
@@ -1812,10 +2260,10 @@ const HomePage = () => {
               </p>
 
               <Link
-                to="/register"
+                to="/farmer"
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-green-800"
               >
-                Join AgricWise
+                Build Your AgricWise Presence
                 <ArrowRight size={16} />
               </Link>
 

@@ -8,15 +8,25 @@ from .views import (
     FarmerProfileCreateView,
     FarmerProductListCreateView,
     FarmerProductDetailView,
+    PublicAgriculturalBusinessListView,
+    PublicAgriculturalBusinessDetailView,
 )
 
 
 urlpatterns = [
+    # ========================================================
+    # AGRICULTURAL CATEGORIES
+    # ========================================================
+
     path(
         "categories/",
         AgriculturalCategoryListView.as_view(),
         name="agricultural-categories",
     ),
+
+    # ========================================================
+    # AUTHENTICATED BUSINESS PROFILE
+    # ========================================================
 
     path(
         "profile/",
@@ -30,6 +40,10 @@ urlpatterns = [
         name="farmer-profile-create",
     ),
 
+    # ========================================================
+    # AGRICULTURAL SERVICES
+    # ========================================================
+
     path(
         "services/",
         AgriculturalServiceListCreateView.as_view(),
@@ -42,6 +56,10 @@ urlpatterns = [
         name="agricultural-service-detail",
     ),
 
+    # ========================================================
+    # BUSINESS PRODUCTS
+    # ========================================================
+
     path(
         "products/",
         FarmerProductListCreateView.as_view(),
@@ -52,5 +70,21 @@ urlpatterns = [
         "products/<int:pk>/",
         FarmerProductDetailView.as_view(),
         name="farmer-product-detail",
+    ),
+
+    # ========================================================
+    # PUBLIC AGRICULTURAL BUSINESS DIRECTORY
+    # ========================================================
+
+    path(
+        "businesses/",
+        PublicAgriculturalBusinessListView.as_view(),
+        name="public-agricultural-businesses",
+    ),
+
+    path(
+        "businesses/<int:pk>/",
+        PublicAgriculturalBusinessDetailView.as_view(),
+        name="public-agricultural-business-detail",
     ),
 ]

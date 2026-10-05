@@ -1,14 +1,17 @@
 import {
   Bell,
+  Building2,
   Home,
   LogOut,
   Menu,
-  MessageCircle,
   Plus,
+  ShoppingBag,
   User,
   X,
 } from "lucide-react";
+
 import { useState } from "react";
+
 import {
   Link,
   Outlet,
@@ -28,6 +31,12 @@ const MainLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false);
 
+  /*
+  ========================================================
+  ACTIVE ROUTE
+  ========================================================
+  */
+
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/";
@@ -36,25 +45,66 @@ const MainLayout = () => {
     return location.pathname.startsWith(path);
   };
 
+  /*
+  ========================================================
+  LOGOUT
+  ========================================================
+  */
+
   const handleLogout = () => {
     logout();
     setMobileMenuOpen(false);
     navigate("/");
   };
 
+  /*
+  ========================================================
+  CLOSE MOBILE MENU
+  ========================================================
+  */
+
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
 
+  /*
+  ========================================================
+  NAVIGATION ITEM STYLES
+  ========================================================
+  */
+
+  const desktopNavClass = (path: string) =>
+    `rounded-xl px-3 py-2 text-sm font-semibold transition ${
+      isActive(path)
+        ? "bg-green-50 text-green-700"
+        : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+    }`;
+
+  const mobileNavClass = (path: string) =>
+    `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
+      isActive(path)
+        ? "bg-green-50 text-green-700"
+        : "text-gray-700 hover:bg-gray-50 hover:text-green-700"
+    }`;
+
+  const bottomNavClass = (path: string) =>
+    `flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 transition ${
+      isActive(path)
+        ? "text-green-700"
+        : "text-gray-400"
+    }`;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ===================================== */}
-      {/* DESKTOP / TABLET HEADER */}
-      {/* ===================================== */}
+      {/* ==================================================
+          HEADER
+      ================================================== */}
 
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* LOGO */}
+          {/* =================================================
+              LOGO
+          ================================================= */}
 
           <Link
             to="/"
@@ -80,50 +130,72 @@ const MainLayout = () => {
             </div>
           </Link>
 
-          {/* DESKTOP NAVIGATION */}
+          {/* =================================================
+              DESKTOP NAVIGATION
+          ================================================= */}
 
           <nav className="hidden items-center gap-1 md:flex">
             <Link
               to="/"
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                isActive("/")
-                  ? "bg-green-50 text-green-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
-              }`}
+              className={desktopNavClass("/")}
             >
               Home
+            </Link>
+
+            <Link
+              to="/businesses"
+              className={desktopNavClass("/businesses")}
+            >
+              Businesses
+            </Link>
+
+            <Link
+              to="/products"
+              className={desktopNavClass("/products")}
+            >
+              Marketplace
             </Link>
 
             {user && (
               <Link
                 to="/farmer"
-                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                  isActive("/farmer")
-                    ? "bg-green-50 text-green-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
-                }`}
+                className={desktopNavClass("/farmer")}
               >
-                My Activity
+                My Business
               </Link>
             )}
           </nav>
 
-          {/* DESKTOP ACTIONS */}
+          {/* =================================================
+              DESKTOP ACTIONS
+          ================================================= */}
 
           <div className="hidden items-center gap-2 md:flex">
             {user ? (
               <>
+                {/* NOTIFICATIONS */}
+
                 <Link
                   to="/notifications"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                    isActive("/notifications")
+                      ? "bg-green-50 text-green-700"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+                  }`}
                   aria-label="Notifications"
                 >
                   <Bell size={19} />
                 </Link>
 
+                {/* PROFILE */}
+
                 <Link
                   to="/profile"
-                  className="ml-1 flex items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-gray-50"
+                  className={`ml-1 flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                    isActive("/profile")
+                      ? "bg-green-50"
+                      : "hover:bg-gray-50"
+                  }`}
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <User size={16} />
@@ -133,6 +205,8 @@ const MainLayout = () => {
                     {user.first_name || user.email}
                   </span>
                 </Link>
+
+                {/* LOGOUT */}
 
                 <button
                   type="button"
@@ -147,7 +221,7 @@ const MainLayout = () => {
               <>
                 <Link
                   to="/login/buyer"
-                  className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
                 >
                   Login
                 </Link>
@@ -162,15 +236,22 @@ const MainLayout = () => {
             )}
           </div>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* =================================================
+              MOBILE MENU BUTTON
+          ================================================= */}
 
           <button
             type="button"
             onClick={() =>
-              setMobileMenuOpen(!mobileMenuOpen)
+              setMobileMenuOpen((current) => !current)
             }
             className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-50 md:hidden"
-            aria-label="Toggle menu"
+            aria-label={
+              mobileMenuOpen
+                ? "Close menu"
+                : "Open menu"
+            }
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
               <X size={22} />
@@ -180,57 +261,89 @@ const MainLayout = () => {
           </button>
         </div>
 
-        {/* ===================================== */}
-        {/* MOBILE DROPDOWN MENU */}
-        {/* ===================================== */}
+        {/* ==================================================
+            MOBILE MENU
+        ================================================== */}
 
         {mobileMenuOpen && (
-          <div className="border-t border-gray-100 bg-white px-4 py-4 md:hidden">
+          <div className="border-t border-gray-100 bg-white px-4 py-4 shadow-sm md:hidden">
             <div className="space-y-1">
+              {/* HOME */}
+
               <Link
                 to="/"
                 onClick={closeMobileMenu}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                className={mobileNavClass("/")}
               >
                 <Home size={18} />
                 Home
               </Link>
 
+              {/* BUSINESSES */}
+
+              <Link
+                to="/businesses"
+                onClick={closeMobileMenu}
+                className={mobileNavClass("/businesses")}
+              >
+                <Building2 size={18} />
+                Agricultural Businesses
+              </Link>
+
+              {/* MARKETPLACE */}
+
+              <Link
+                to="/products"
+                onClick={closeMobileMenu}
+                className={mobileNavClass("/products")}
+              >
+                <ShoppingBag size={18} />
+                Marketplace
+              </Link>
+
               {user && (
                 <>
-                  {/* BUSINESS PORTAL */}
+                  {/* BUSINESS WORKSPACE */}
 
                   <Link
                     to="/farmer"
                     onClick={closeMobileMenu}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                    className={mobileNavClass("/farmer")}
                   >
-                    <Home size={18} />
-                    Business Portal
+                    <Building2 size={18} />
+                    My Business
                   </Link>
+
+                  {/* NOTIFICATIONS */}
 
                   <Link
                     to="/notifications"
                     onClick={closeMobileMenu}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                    className={mobileNavClass(
+                      "/notifications"
+                    )}
                   >
                     <Bell size={18} />
                     Notifications
                   </Link>
 
+                  {/* PROFILE */}
+
                   <Link
                     to="/profile"
                     onClick={closeMobileMenu}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700"
+                    className={mobileNavClass("/profile")}
                   >
                     <User size={18} />
                     Profile
                   </Link>
 
+                  {/* LOGOUT */}
+
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                   >
                     <LogOut size={18} />
                     Logout
@@ -239,7 +352,7 @@ const MainLayout = () => {
               )}
 
               {!user && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
                   <Link
                     to="/login/buyer"
                     onClick={closeMobileMenu}
@@ -262,17 +375,17 @@ const MainLayout = () => {
         )}
       </header>
 
-      {/* ===================================== */}
-      {/* PAGE CONTENT */}
-      {/* ===================================== */}
+      {/* ==================================================
+          PAGE CONTENT
+      ================================================== */}
 
       <main className="pb-24 md:pb-0">
         <Outlet />
       </main>
 
-      {/* ===================================== */}
-      {/* MOBILE APP BOTTOM NAVIGATION */}
-      {/* ===================================== */}
+      {/* ==================================================
+          MOBILE APP BOTTOM NAVIGATION
+      ================================================== */}
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
         <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
@@ -280,11 +393,7 @@ const MainLayout = () => {
 
           <Link
             to="/"
-            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
-              isActive("/")
-                ? "text-green-700"
-                : "text-gray-400"
-            }`}
+            className={bottomNavClass("/")}
           >
             <Home
               size={20}
@@ -298,7 +407,25 @@ const MainLayout = () => {
             </span>
           </Link>
 
-          {/* POST */}
+          {/* BUSINESSES */}
+
+          <Link
+            to="/businesses"
+            className={bottomNavClass("/businesses")}
+          >
+            <Building2
+              size={20}
+              strokeWidth={
+                isActive("/businesses") ? 2.5 : 2
+              }
+            />
+
+            <span className="text-[10px] font-semibold">
+              Businesses
+            </span>
+          </Link>
+
+          {/* CREATE / POST */}
 
           {user ? (
             <Link
@@ -306,7 +433,10 @@ const MainLayout = () => {
               className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
             >
               <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
-                <Plus size={23} strokeWidth={2.5} />
+                <Plus
+                  size={23}
+                  strokeWidth={2.5}
+                />
               </span>
 
               <span className="-mt-2 text-[10px] font-semibold text-gray-500">
@@ -319,46 +449,41 @@ const MainLayout = () => {
               className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
             >
               <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
-                <Plus size={23} strokeWidth={2.5} />
+                <Plus
+                  size={23}
+                  strokeWidth={2.5}
+                />
               </span>
 
               <span className="-mt-2 text-[10px] font-semibold text-gray-500">
-                Post
+                Join
               </span>
             </Link>
           )}
 
-          {/* MESSAGES */}
+          {/* MARKETPLACE */}
 
           <Link
-            to="/messages"
-            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
-              isActive("/messages")
-                ? "text-green-700"
-                : "text-gray-400"
-            }`}
+            to="/products"
+            className={bottomNavClass("/products")}
           >
-            <MessageCircle
+            <ShoppingBag
               size={20}
               strokeWidth={
-                isActive("/messages") ? 2.5 : 2
+                isActive("/products") ? 2.5 : 2
               }
             />
 
             <span className="text-[10px] font-semibold">
-              Messages
+              Market
             </span>
           </Link>
 
           {/* PROFILE */}
 
           <Link
-            to="/profile"
-            className={`flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 ${
-              isActive("/profile")
-                ? "text-green-700"
-                : "text-gray-400"
-            }`}
+            to={user ? "/profile" : "/login/buyer"}
+            className={bottomNavClass("/profile")}
           >
             <User
               size={20}
@@ -368,42 +493,68 @@ const MainLayout = () => {
             />
 
             <span className="text-[10px] font-semibold">
-              Profile
+              {user ? "Profile" : "Login"}
             </span>
           </Link>
         </div>
       </nav>
 
-      {/* ===================================== */}
-      {/* DESKTOP FOOTER */}
-      {/* ===================================== */}
+      {/* ==================================================
+          DESKTOP FOOTER
+      ================================================== */}
 
       <footer className="hidden border-t border-gray-100 bg-white md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-          <div>
-            <p className="text-sm font-bold text-gray-800">
-              AgricWise Africa
-            </p>
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            {/* BRAND */}
 
-            <p className="mt-1 text-xs text-gray-500">
-              Connect. Trade. Grow.
-            </p>
+            <div>
+              <p className="text-sm font-bold text-gray-800">
+                AgricWise Africa
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Connect. Trade. Grow.
+              </p>
+            </div>
+
+            {/* NAVIGATION */}
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-gray-500">
+              <Link
+                to="/"
+                className="transition hover:text-green-700"
+              >
+                Home
+              </Link>
+
+              <Link
+                to="/businesses"
+                className="transition hover:text-green-700"
+              >
+                Businesses
+              </Link>
+
+              <Link
+                to="/products"
+                className="transition hover:text-green-700"
+              >
+                Marketplace
+              </Link>
+
+              <Link
+                to="/profile"
+                className="transition hover:text-green-700"
+              >
+                Profile
+              </Link>
+            </div>
           </div>
 
-          <div className="flex items-center gap-5 text-xs font-medium text-gray-500">
-            <Link
-              to="/"
-              className="hover:text-green-700"
-            >
-              Home
-            </Link>
-
-            <Link
-              to="/profile"
-              className="hover:text-green-700"
-            >
-              Profile
-            </Link>
+          <div className="mt-6 border-t border-gray-100 pt-5">
+            <p className="text-center text-[11px] text-gray-400 sm:text-left">
+              Agriculture works better together.
+            </p>
           </div>
         </div>
       </footer>

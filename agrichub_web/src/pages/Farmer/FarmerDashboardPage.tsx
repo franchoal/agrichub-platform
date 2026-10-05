@@ -1,5 +1,20 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Bell,
+  CheckCircle2,
+  ChevronRight,
+  CircleAlert,
+  Eye,
+  MapPin,
+  Package,
+  Plus,
+  ShoppingCart,
+  Store,
+  UserRound,
+  Wrench,
+} from "lucide-react";
 
 import { useAuthStore } from "../../store/authStore";
 
@@ -29,7 +44,7 @@ const FarmerDashboardPage = () => {
   const user = useAuthStore((state) => state.user);
 
   /* =========================================================
-     BUSINESS DATA
+     CORE BUSINESS DATA
   ========================================================= */
 
   const {
@@ -109,7 +124,7 @@ const FarmerDashboardPage = () => {
       : [];
 
   /* =========================================================
-     DERIVED DATA
+     DERIVED BUSINESS DATA
   ========================================================= */
 
   const productCount =
@@ -122,7 +137,9 @@ const FarmerDashboardPage = () => {
   );
 
   const unavailableProducts = products.filter(
-    (product) => !product.is_available
+    (product) =>
+      !product.is_available ||
+      product.quantity <= 0
   );
 
   const availableServices = services.filter(
@@ -133,9 +150,9 @@ const FarmerDashboardPage = () => {
     (order) => order.status === "pending"
   );
 
-  const completedOrders = orders.filter(
-    (order) => order.status === "completed"
-  );
+  /* =========================================================
+     PROFILE COMPLETION
+  ========================================================= */
 
   const profileCompletionItems = [
     Boolean(profile?.farm_name?.trim()),
@@ -153,13 +170,10 @@ const FarmerDashboardPage = () => {
       100
   );
 
-  /*
-   * AuthUser does not contain a username.
-   *
-   * Use the authenticated user's first name first,
-   * then last name, then the email prefix as a safe
-   * fallback.
-   */
+  /* =========================================================
+     USER DISPLAY NAME
+  ========================================================= */
+
   const firstName =
     user?.first_name?.trim() ||
     user?.last_name?.trim() ||
@@ -167,7 +181,7 @@ const FarmerDashboardPage = () => {
     "Business Owner";
 
   /* =========================================================
-     AUTHENTICATION / PROFILE
+     AUTHENTICATION / PROFILE GUARDS
   ========================================================= */
 
   if (!user) {
@@ -185,12 +199,12 @@ const FarmerDashboardPage = () => {
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-green-100 border-t-green-600" />
 
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-semibold text-gray-700">
             Loading your AgricWise Business Workspace...
           </p>
 
           <p className="mt-1 text-xs text-gray-400">
-            Preparing your products, services and business activity.
+            Preparing your business activity.
           </p>
         </div>
       </main>
@@ -232,10 +246,7 @@ const FarmerDashboardPage = () => {
     resetUpdateService();
   };
 
-  const openCreateServiceForm = () => {
-    resetServiceForm();
-    setShowServiceForm(true);
-
+  const scrollToServiceForm = () => {
     window.setTimeout(() => {
       document
         .getElementById("service-form")
@@ -244,6 +255,12 @@ const FarmerDashboardPage = () => {
           block: "start",
         });
     }, 50);
+  };
+
+  const openCreateServiceForm = () => {
+    resetServiceForm();
+    setShowServiceForm(true);
+    scrollToServiceForm();
   };
 
   const openEditServiceForm = (
@@ -255,14 +272,7 @@ const FarmerDashboardPage = () => {
     setEditingService(service);
     setShowServiceForm(true);
 
-    window.setTimeout(() => {
-      document
-        .getElementById("service-form")
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-    }, 50);
+    scrollToServiceForm();
   };
 
   const closeServiceForm = () => {
@@ -327,69 +337,95 @@ const FarmerDashboardPage = () => {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
 
         {/* =====================================================
-            PAGE INTRO
+            PAGE HEADER
         ===================================================== */}
 
         <section className="mb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">
-                AgricWise Business Workspace
-              </p>
-
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                Welcome back, {firstName}
-              </h1>
-
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-                Manage your agricultural business, products,
-                services and customer activity from one place.
-              </p>
-            </div>
-
-            <Link
-              to="/farmer/profile"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-green-200 hover:text-green-700 sm:w-auto"
-            >
-              Edit Business Profile
-            </Link>
-          </div>
-        </section>
-
-        {/* =====================================================
-            BUSINESS COMMAND CENTER HERO
-        ===================================================== */}
-
-        <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-emerald-700 p-6 text-white shadow-lg sm:p-8">
-          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10" />
-          <div className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-white/5" />
-
-          <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="max-w-3xl">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-                  Business Command Center
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-green-700">
+                  <Store className="h-3.5 w-3.5" />
+                  My AgricWise Business
                 </span>
 
                 {profile.is_verified && (
-                  <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-                    ✓ Verified Business
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Verified
                   </span>
                 )}
               </div>
 
-              <h2 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                Welcome back, {firstName}
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500 sm:text-base">
+                Manage your business presence, products,
+                services and customer activity from one
+                AgricWise workspace.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                to={`/businesses/${profile.id}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-green-200 hover:text-green-700"
+              >
+                <Eye className="h-4 w-4" />
+                View Public Profile
+              </Link>
+
+              <Link
+                to="/farmer/profile"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
+              >
+                <UserRound className="h-4 w-4" />
+                Manage Profile
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            BUSINESS COMMAND CENTER
+        ===================================================== */}
+
+        <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-green-950 via-green-900 to-emerald-800 p-6 text-white shadow-lg sm:p-8">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10" />
+          <div className="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-white/5" />
+
+          <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+            <div className="max-w-3xl">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold ring-1 ring-white/10">
+                  Business Command Center
+                </span>
+
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold ring-1 ring-white/10">
+                  {profileCompletion}% profile complete
+                </span>
+              </div>
+
+              <h2 className="mt-5 text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
                 {profile.farm_name ||
-                  "Grow your business on AgricWise."}
+                  "Build your AgricWise presence."}
               </h2>
 
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-green-50 sm:text-base">
-                Showcase what you offer, connect with customers
-                and build a stronger digital presence across the
-                AgricWise agricultural ecosystem.
+              <div className="mt-3 flex items-start gap-2 text-sm text-green-100">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+
+                <span>{profile.farm_location}</span>
+              </div>
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-green-50 sm:text-base">
+                Your AgricWise business presence brings your
+                identity, products, services and agricultural
+                opportunities together in one place.
               </p>
 
               {businessCategories.length > 0 && (
@@ -414,21 +450,31 @@ const FarmerDashboardPage = () => {
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:w-48 lg:grid-cols-1">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
                 to="/farmer/products/create"
-                className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-green-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-sm font-bold text-green-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
               >
-                + Add Product
+                <Plus className="h-4 w-4" />
+                Add Product
               </Link>
 
               <button
                 type="button"
                 onClick={openCreateServiceForm}
-                className="rounded-2xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-5 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
               >
-                + Add Service
+                <Plus className="h-4 w-4" />
+                Add Service
               </button>
+
+              <Link
+                to="/products"
+                className="hidden items-center justify-center gap-2 rounded-2xl border border-white/15 px-5 py-3 text-sm font-semibold text-green-50 transition hover:bg-white/10 sm:inline-flex"
+              >
+                Explore Marketplace
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </section>
@@ -441,8 +487,8 @@ const FarmerDashboardPage = () => {
           <section className="mb-6 rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-xl">
-                  ✨
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                  <CircleAlert className="h-5 w-5" />
                 </div>
 
                 <div className="min-w-0">
@@ -457,8 +503,9 @@ const FarmerDashboardPage = () => {
                   </div>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    A complete profile helps customers understand
-                    who you are and what you offer.
+                    Complete your identity, location,
+                    categories and description so your public
+                    business presence is more useful.
                   </p>
 
                   <div className="mt-4 max-w-xl">
@@ -476,39 +523,43 @@ const FarmerDashboardPage = () => {
 
               <Link
                 to="/farmer/profile"
-                className="shrink-0 rounded-xl bg-green-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700"
               >
                 Complete Profile
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </section>
         )}
 
         {/* =====================================================
-            BUSINESS OVERVIEW
+            KEY BUSINESS METRICS
         ===================================================== */}
 
         <section className="mb-8">
           <div className="mb-4">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              At a glance
+              Business overview
             </p>
 
             <h2 className="mt-1 text-xl font-bold text-gray-900">
-              Business Overview
+              At a Glance
             </h2>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            {/* PRODUCTS */}
+
+            <Link
+              to="#products"
+              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-green-200 hover:shadow-md"
+            >
               <div className="flex items-center justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-xl">
-                  📦
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                  <Package className="h-5 w-5" />
                 </span>
 
-                <span className="text-xs font-medium text-gray-400">
-                  Products
-                </span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
               </div>
 
               <p className="mt-5 text-3xl font-bold text-gray-900">
@@ -516,19 +567,22 @@ const FarmerDashboardPage = () => {
               </p>
 
               <p className="mt-1 text-xs text-gray-500">
-                {inStockProducts.length} currently in stock
+                {inStockProducts.length} currently available
               </p>
-            </div>
+            </Link>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            {/* SERVICES */}
+
+            <Link
+              to="#services"
+              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+            >
               <div className="flex items-center justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-xl">
-                  🛠️
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                  <Wrench className="h-5 w-5" />
                 </span>
 
-                <span className="text-xs font-medium text-gray-400">
-                  Services
-                </span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
               </div>
 
               <p className="mt-5 text-3xl font-bold text-gray-900">
@@ -538,17 +592,20 @@ const FarmerDashboardPage = () => {
               <p className="mt-1 text-xs text-gray-500">
                 {availableServices.length} currently available
               </p>
-            </div>
+            </Link>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            {/* ORDERS */}
+
+            <Link
+              to="/farmer/orders"
+              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+            >
               <div className="flex items-center justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-xl">
-                  🛒
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700">
+                  <ShoppingCart className="h-5 w-5" />
                 </span>
 
-                <span className="text-xs font-medium text-gray-400">
-                  Orders
-                </span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
               </div>
 
               <p className="mt-5 text-3xl font-bold text-gray-900">
@@ -558,23 +615,30 @@ const FarmerDashboardPage = () => {
               <p className="mt-1 text-xs text-gray-500">
                 {pendingOrders.length} awaiting action
               </p>
-            </div>
+            </Link>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            {/* TRUST */}
+
+            <Link
+              to="/farmer/profile"
+              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+            >
               <div className="flex items-center justify-between">
                 <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                     profile.is_verified
-                      ? "bg-green-50"
-                      : "bg-yellow-50"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-yellow-50 text-yellow-700"
                   }`}
                 >
-                  {profile.is_verified ? "✓" : "⏳"}
+                  {profile.is_verified ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <CircleAlert className="h-5 w-5" />
+                  )}
                 </span>
 
-                <span className="text-xs font-medium text-gray-400">
-                  Trust
-                </span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
               </div>
 
               <p
@@ -592,59 +656,46 @@ const FarmerDashboardPage = () => {
               <p className="mt-1 text-xs text-gray-500">
                 Business verification status
               </p>
-            </div>
+            </Link>
           </div>
         </section>
 
         {/* =====================================================
-            VERIFICATION
+            VERIFICATION STATUS
         ===================================================== */}
 
         {!profile.is_verified && (
           <section className="mb-8 rounded-2xl border border-yellow-200 bg-yellow-50 p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1.5 text-xs font-bold text-yellow-700">
-                  ⏳ Verification Pending
-                </span>
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
+                  <CircleAlert className="h-5 w-5" />
+                </div>
 
-                <h2 className="mt-3 text-lg font-bold text-yellow-900">
-                  Your business is awaiting verification
-                </h2>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wide text-yellow-700">
+                    Verification Pending
+                  </span>
 
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-yellow-700">
-                  You can continue adding products and services
-                  while your business profile is awaiting review.
-                </p>
+                  <h2 className="mt-1 text-lg font-bold text-yellow-900">
+                    Your business is awaiting verification
+                  </h2>
+
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-yellow-700">
+                    You can continue building your AgricWise
+                    presence while your business profile is
+                    awaiting review.
+                  </p>
+                </div>
               </div>
 
               <Link
                 to="/farmer/profile"
-                className="shrink-0 rounded-xl bg-yellow-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-yellow-700"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-yellow-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-700"
               >
                 Review Profile
+                <ArrowRight className="h-4 w-4" />
               </Link>
-            </div>
-          </section>
-        )}
-
-        {profile.is_verified && (
-          <section className="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-100 text-xl text-green-700">
-                ✓
-              </div>
-
-              <div>
-                <h2 className="font-bold text-green-900">
-                  Your business is verified
-                </h2>
-
-                <p className="mt-1 text-sm leading-6 text-green-700">
-                  Keep your business information, products and
-                  services accurate and up to date.
-                </p>
-              </div>
             </div>
           </section>
         )}
@@ -656,17 +707,12 @@ const FarmerDashboardPage = () => {
         <section className="mb-8">
           <div className="mb-4">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              Manage
+              Manage your business
             </p>
 
             <h2 className="mt-1 text-xl font-bold text-gray-900">
               Quick Actions
             </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Jump directly to the part of your business you want
-              to manage.
-            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -674,8 +720,8 @@ const FarmerDashboardPage = () => {
               to="/farmer/products/create"
               className="group rounded-2xl bg-green-600 p-5 text-white shadow-sm transition hover:-translate-y-1 hover:bg-green-700 hover:shadow-lg"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-2xl">
-                📦
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+                <Package className="h-5 w-5" />
               </div>
 
               <h3 className="mt-4 font-bold">
@@ -686,8 +732,9 @@ const FarmerDashboardPage = () => {
                 List products, supplies or agricultural goods.
               </p>
 
-              <span className="mt-4 inline-block text-xs font-bold text-white">
-                Get started →
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold">
+                Get started
+                <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </Link>
 
@@ -696,8 +743,8 @@ const FarmerDashboardPage = () => {
               onClick={openCreateServiceForm}
               className="rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-2xl">
-                🛠️
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <Wrench className="h-5 w-5" />
               </div>
 
               <h3 className="mt-4 font-bold text-gray-900">
@@ -705,11 +752,13 @@ const FarmerDashboardPage = () => {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Showcase professional or technical services.
+                Showcase professional, technical or
+                operational services.
               </p>
 
-              <span className="mt-4 inline-block text-xs font-bold text-green-700">
-                Add service →
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-green-700">
+                Add service
+                <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </button>
 
@@ -717,8 +766,8 @@ const FarmerDashboardPage = () => {
               to="/farmer/orders"
               className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-2xl">
-                🛒
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-orange-700">
+                <ShoppingCart className="h-5 w-5" />
               </div>
 
               <h3 className="mt-4 font-bold text-gray-900">
@@ -726,11 +775,12 @@ const FarmerDashboardPage = () => {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Review and manage customer purchases.
+                Review customer purchases and business activity.
               </p>
 
-              <span className="mt-4 inline-block text-xs font-bold text-green-700">
-                View orders →
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-green-700">
+                View orders
+                <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </Link>
 
@@ -738,8 +788,8 @@ const FarmerDashboardPage = () => {
               to="/notifications"
               className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-2xl">
-                🔔
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-700">
+                <Bell className="h-5 w-5" />
               </div>
 
               <h3 className="mt-4 font-bold text-gray-900">
@@ -747,11 +797,13 @@ const FarmerDashboardPage = () => {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Stay informed about activity affecting your business.
+                Stay informed about activity affecting your
+                business.
               </p>
 
-              <span className="mt-4 inline-block text-xs font-bold text-green-700">
-                View notifications →
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-green-700">
+                View notifications
+                <ArrowRight className="h-3.5 w-3.5" />
               </span>
             </Link>
           </div>
@@ -794,16 +846,15 @@ const FarmerDashboardPage = () => {
                 aria-label="Close service form"
                 className="rounded-full bg-gray-100 px-3 py-2 text-gray-600 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                ✕
+                ×
               </button>
             </div>
 
             {(isCreateServiceError ||
               isUpdateServiceError) && (
               <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                We could not save this service.
-                Please check the information and try
-                again.
+                We could not save this service. Please check
+                the information and try again.
               </div>
             )}
 
@@ -830,7 +881,7 @@ const FarmerDashboardPage = () => {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-                What You Offer
+                What you offer
               </p>
 
               <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
@@ -838,17 +889,18 @@ const FarmerDashboardPage = () => {
               </h2>
 
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Showcase the professional, technical or operational
-                services your business provides.
+                Showcase professional, technical and
+                operational services your business provides.
               </p>
             </div>
 
             <button
               type="button"
               onClick={openCreateServiceForm}
-              className="rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
             >
-              + Add Service
+              <Plus className="h-4 w-4" />
+              Add Service
             </button>
           </div>
 
@@ -862,7 +914,7 @@ const FarmerDashboardPage = () => {
             </div>
           ) : isServicesError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-              <div className="text-3xl">⚠️</div>
+              <CircleAlert className="mx-auto h-8 w-8 text-red-500" />
 
               <p className="mt-3 font-medium text-red-700">
                 Unable to load your services.
@@ -874,8 +926,8 @@ const FarmerDashboardPage = () => {
             </div>
           ) : services.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl">
-                🛠️
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+                <Wrench className="h-6 w-6" />
               </div>
 
               <h3 className="mt-4 text-lg font-semibold text-gray-900">
@@ -883,16 +935,17 @@ const FarmerDashboardPage = () => {
               </h3>
 
               <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
-                Add the agricultural services you provide so
-                customers and other businesses can understand
+                Add the services you provide so customers
+                and agricultural businesses can understand
                 the full value you offer.
               </p>
 
               <button
                 type="button"
                 onClick={openCreateServiceForm}
-                className="mt-5 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
               >
+                <Plus className="h-4 w-4" />
                 Add Your First Service
               </button>
             </div>
@@ -912,7 +965,7 @@ const FarmerDashboardPage = () => {
         </section>
 
         {/* =====================================================
-            ORDERS
+            RECENT ORDERS
         ===================================================== */}
 
         <section
@@ -922,7 +975,7 @@ const FarmerDashboardPage = () => {
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-                Sales Activity
+                Sales activity
               </p>
 
               <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
@@ -930,36 +983,38 @@ const FarmerDashboardPage = () => {
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                Keep track of recent purchases from your customers.
+                Monitor recent purchases from your customers.
               </p>
             </div>
 
             <Link
               to="/farmer/orders"
-              className="text-sm font-semibold text-green-700 hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800"
             >
-              View All →
+              View All
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
           {orders.length === 0 ? (
             <div className="rounded-2xl bg-gray-50 px-6 py-10 text-center">
-              <div className="text-3xl">🛒</div>
+              <ShoppingCart className="mx-auto h-9 w-9 text-gray-300" />
 
               <p className="mt-3 font-medium text-gray-700">
                 No customer orders yet
               </p>
 
               <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
-                Orders will appear here when customers purchase
-                your products.
+                Orders will appear here when customers
+                purchase your products.
               </p>
 
               {productCount === 0 && (
                 <Link
                   to="/farmer/products/create"
-                  className="mt-5 inline-flex rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
                 >
+                  <Plus className="h-4 w-4" />
                   Add Your First Product
                 </Link>
               )}
@@ -986,7 +1041,7 @@ const FarmerDashboardPage = () => {
                       ₦
                       {Number(
                         order.total
-                      ).toLocaleString()}
+                      ).toLocaleString("en-NG")}
                     </p>
 
                     <p className="mt-1 text-sm capitalize text-gray-500">
@@ -1013,7 +1068,7 @@ const FarmerDashboardPage = () => {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-                What You Sell
+                What you sell
               </p>
 
               <h2 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
@@ -1021,16 +1076,17 @@ const FarmerDashboardPage = () => {
               </h2>
 
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Manage the products, agricultural supplies and goods
-                your business offers.
+                Manage the products, agricultural supplies and
+                goods your business offers.
               </p>
             </div>
 
             <Link
               to="/farmer/products/create"
-              className="inline-flex items-center justify-center rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
             >
-              + Add Product
+              <Plus className="h-4 w-4" />
+              Add Product
             </Link>
           </div>
 
@@ -1047,7 +1103,7 @@ const FarmerDashboardPage = () => {
 
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
               <p className="text-sm text-emerald-700">
-                In Stock
+                Available
               </p>
 
               <p className="mt-2 text-2xl font-bold text-emerald-800">
@@ -1076,8 +1132,8 @@ const FarmerDashboardPage = () => {
             </div>
           ) : products.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-6 py-14 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
-                📦
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+                <Package className="h-7 w-7" />
               </div>
 
               <p className="mt-4 font-medium text-gray-700">
@@ -1085,14 +1141,16 @@ const FarmerDashboardPage = () => {
               </p>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-                Add products, agricultural supplies or goods so
-                customers can discover what your business offers.
+                Add products, agricultural supplies or goods
+                so customers can discover what your business
+                offers.
               </p>
 
               <Link
                 to="/farmer/products/create"
-                className="mt-6 inline-flex rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
               >
+                <Plus className="h-4 w-4" />
                 Add Your First Product
               </Link>
             </div>
@@ -1116,8 +1174,9 @@ const FarmerDashboardPage = () => {
                   </p>
 
                   <p className="mt-1 text-xs text-yellow-600">
-                    Product pagination will be added to the
-                    business management experience later.
+                    Additional product pagination can be
+                    introduced as the business management
+                    experience grows.
                   </p>
                 </div>
               )}
@@ -1126,65 +1185,177 @@ const FarmerDashboardPage = () => {
         </section>
 
         {/* =====================================================
-            BUSINESS SNAPSHOT
+            PUBLIC BUSINESS PRESENCE
         ===================================================== */}
 
-        <section className="mb-8">
-          <div className="mb-4">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              Business Snapshot
-            </p>
+        <section className="mb-8 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="p-6 sm:p-8">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                <Eye className="h-5 w-5" />
+              </div>
 
-            <h2 className="mt-1 text-xl font-bold text-gray-900">
-              Your Business at a Glance
-            </h2>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">
-                Products listed
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-green-600">
+                Your public AgricWise presence
               </p>
 
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {productCount}
+              <h2 className="mt-2 text-2xl font-bold text-gray-900">
+                This is how people discover your business.
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
+                Your public business profile connects your
+                business identity with the products and
+                services you offer across AgricWise.
               </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-gray-50 p-4">
+                  <Store className="h-5 w-5 text-green-700" />
+
+                  <p className="mt-3 text-sm font-semibold text-gray-900">
+                    Business identity
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Name, location, categories and description.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-gray-50 p-4">
+                  <Package className="h-5 w-5 text-green-700" />
+
+                  <p className="mt-3 text-sm font-semibold text-gray-900">
+                    Products
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Products and agricultural goods you offer.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-gray-50 p-4">
+                  <Wrench className="h-5 w-5 text-green-700" />
+
+                  <p className="mt-3 text-sm font-semibold text-gray-900">
+                    Services
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Professional and technical capabilities.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-gray-50 p-4">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
+
+                  <p className="mt-3 text-sm font-semibold text-gray-900">
+                    Trust
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Verification and accurate business
+                    information.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to={`/businesses/${profile.id}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                >
+                  <Eye className="h-4 w-4" />
+                  View Public Profile
+                </Link>
+
+                <Link
+                  to="/farmer/profile"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-green-200 hover:text-green-700"
+                >
+                  Edit Business Profile
+                </Link>
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">
-                Services listed
+            <div className="bg-gradient-to-br from-green-900 to-emerald-800 p-6 text-white sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-200">
+                Presence status
               </p>
 
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {services.length}
-              </p>
-            </div>
+              <div className="mt-6">
+                <div className="flex items-end justify-between">
+                  <span className="text-sm text-green-100">
+                    Profile completion
+                  </span>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">
-                Pending orders
-              </p>
+                  <span className="text-3xl font-bold">
+                    {profileCompletion}%
+                  </span>
+                </div>
 
-              <p className="mt-2 text-2xl font-bold text-yellow-700">
-                {pendingOrders.length}
-              </p>
-            </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className="h-full rounded-full bg-white transition-all duration-500"
+                    style={{
+                      width: `${profileCompletion}%`,
+                    }}
+                  />
+                </div>
+              </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-gray-500">
-                Completed orders
-              </p>
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-sm text-green-100">
+                    Categories
+                  </span>
 
-              <p className="mt-2 text-2xl font-bold text-green-700">
-                {completedOrders.length}
-              </p>
+                  <span className="font-semibold">
+                    {businessCategories.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-sm text-green-100">
+                    Products
+                  </span>
+
+                  <span className="font-semibold">
+                    {productCount}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-sm text-green-100">
+                    Services
+                  </span>
+
+                  <span className="font-semibold">
+                    {services.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-green-100">
+                    Verification
+                  </span>
+
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    {profile.is_verified && (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    {profile.is_verified
+                      ? "Verified"
+                      : "Pending"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* =====================================================
-            AGRICWISE ECOSYSTEM
+            AGRICWISE BUSINESS ECOSYSTEM
         ===================================================== */}
 
         <section className="mb-8 overflow-hidden rounded-3xl bg-gray-950 p-6 text-white sm:p-8">
@@ -1194,52 +1365,69 @@ const FarmerDashboardPage = () => {
             </p>
 
             <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
-              More opportunities are coming.
+              Your business is part of something bigger.
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-gray-300 sm:text-base">
-              AgricWise is being built to connect agricultural
-              businesses and professionals with more opportunities
-              across the value chain.
+              AgricWise is being structured to connect
+              agricultural businesses, farmers, buyers,
+              professionals and opportunities across the
+              value chain.
             </p>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: "📊",
-                title: "Business Analytics",
-              },
-              {
-                icon: "👨🏾‍🌾",
-                title: "Expert Connections",
-              },
-              {
-                icon: "💡",
-                title: "Business Advisory",
-              },
-              {
-                icon: "🌍",
-                title: "Market Opportunities",
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-white/10 bg-white/5 p-5"
-              >
-                <div className="text-2xl">
-                  {item.icon}
-                </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <Store className="h-5 w-5 text-green-400" />
 
-                <h3 className="mt-3 text-sm font-semibold">
-                  {item.title}
-                </h3>
+              <h3 className="mt-3 text-sm font-semibold">
+                Business Discovery
+              </h3>
 
-                <span className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-gray-300">
-                  Coming Soon
-                </span>
-              </div>
-            ))}
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                Make your business discoverable through your
+                public AgricWise presence.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <ShoppingCart className="h-5 w-5 text-green-400" />
+
+              <h3 className="mt-3 text-sm font-semibold">
+                Marketplace
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                Put your agricultural products where buyers
+                can discover them.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <Wrench className="h-5 w-5 text-green-400" />
+
+              <h3 className="mt-3 text-sm font-semibold">
+                Services
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                Showcase capabilities beyond physical
+                products.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <UserRound className="h-5 w-5 text-green-400" />
+
+              <h3 className="mt-3 text-sm font-semibold">
+                Community
+              </h3>
+
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                Participate in a growing agricultural
+                ecosystem.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -1249,27 +1437,27 @@ const FarmerDashboardPage = () => {
 
         <section className="mb-8 rounded-3xl bg-gradient-to-r from-green-700 to-emerald-700 p-6 text-white shadow-lg sm:p-8">
           <div className="max-w-3xl">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-2xl">
-              💡
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+              <Store className="h-5 w-5" />
             </div>
 
             <h2 className="mt-4 text-2xl font-bold">
-              Build a stronger digital presence
+              Keep your AgricWise presence accurate
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-green-50 sm:text-base">
-              Keep your business information accurate, add clear
-              product details and describe your services properly.
-              A complete AgricWise presence makes it easier for
-              customers and other agricultural businesses to
+              Clear business information, accurate products
+              and well-described services make it easier for
+              people across the agricultural value chain to
               understand what you offer.
             </p>
 
             <Link
               to="/farmer/profile"
-              className="mt-5 inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-green-700 transition hover:-translate-y-0.5 hover:shadow-lg"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-green-700 transition hover:-translate-y-0.5 hover:shadow-lg"
             >
               Review Business Profile
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </section>
@@ -1280,32 +1468,34 @@ const FarmerDashboardPage = () => {
 
         <section className="rounded-3xl border border-green-100 bg-white p-6 text-center shadow-sm sm:p-10">
           <div className="mx-auto max-w-2xl">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-3xl">
-              🌱
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-700">
+              <Store className="h-6 w-6" />
             </div>
 
             <h2 className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
-              Keep growing your business on AgricWise
+              Keep building your AgricWise business
             </h2>
 
             <p className="mx-auto mt-4 text-sm leading-7 text-gray-600 sm:text-base">
-              Your AgricWise business profile brings together your
-              identity, products, services and future opportunities
-              in one digital presence.
+              Your AgricWise workspace brings your business
+              identity, products, services and customer
+              activity together in one digital presence.
             </p>
 
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                to="/farmer/profile"
-                className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+                to={`/businesses/${profile.id}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
               >
-                Manage Business Profile
+                <Eye className="h-4 w-4" />
+                View Public Profile
               </Link>
 
               <Link
                 to="/farmer/products/create"
-                className="rounded-xl border border-green-200 bg-green-50 px-6 py-3 font-semibold text-green-700 transition hover:bg-green-100"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-green-200 bg-green-50 px-6 py-3 font-semibold text-green-700 transition hover:bg-green-100"
               >
+                <Plus className="h-4 w-4" />
                 Add Product
               </Link>
             </div>

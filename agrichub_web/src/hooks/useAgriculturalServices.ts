@@ -8,9 +8,15 @@ import type {
   AgriculturalService,
   CreateAgriculturalServiceData,
   UpdateAgriculturalServiceData,
+  PaginatedPublicAgriculturalBusinesses,
+  PublicAgriculturalBusinessDetail,
 } from "../services/farmerService";
 
 import { farmerService } from "../services/farmerService";
+
+/* =========================================================
+   Agricultural Services
+========================================================= */
 
 export const AGRICULTURAL_SERVICES_QUERY_KEY = [
   "agricultural-services",
@@ -52,8 +58,7 @@ export const useUpdateAgriculturalService = () => {
     }: {
       id: number;
       data: UpdateAgriculturalServiceData;
-    }) =>
-      farmerService.updateService(id, data),
+    }) => farmerService.updateService(id, data),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -75,5 +80,47 @@ export const useDeleteAgriculturalService = () => {
         queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
       });
     },
+  });
+};
+
+/* =========================================================
+   Public Agricultural Business Directory
+========================================================= */
+
+export const PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY = [
+  "public-agricultural-businesses",
+];
+
+export const usePublicAgriculturalBusinesses = () => {
+  return useQuery<PaginatedPublicAgriculturalBusinesses>({
+    queryKey: PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+    queryFn: farmerService.getPublicBusinesses,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+};
+
+/* =========================================================
+   Public Agricultural Business Detail
+========================================================= */
+
+export const publicAgriculturalBusinessQueryKey = (
+  id: number
+) => [
+  "public-agricultural-business",
+  id,
+];
+
+export const usePublicAgriculturalBusiness = (
+  id: number
+) => {
+  return useQuery<PublicAgriculturalBusinessDetail>({
+    queryKey: publicAgriculturalBusinessQueryKey(id),
+    queryFn: () => farmerService.getPublicBusiness(id),
+    enabled: Number.isFinite(id) && id > 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 };

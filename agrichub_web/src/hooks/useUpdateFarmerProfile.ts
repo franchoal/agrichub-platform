@@ -12,6 +12,7 @@ import {
 } from "../services/farmerService";
 
 import type {
+  FarmerProfile,
   UpdateFarmerProfileData,
 } from "../services/farmerService";
 
@@ -23,15 +24,17 @@ export const useUpdateFarmerProfile = (
   return useMutation({
     mutationFn: async (
       data: UpdateFarmerProfileData
-    ) => {
+    ): Promise<FarmerProfile> => {
       try {
         return await farmerService.updateProfile(
           data
         );
       } catch (error) {
         /**
-         * If the agricultural business profile
-         * doesn't exist yet, create it instead.
+         * A 404 means the authenticated user does not
+         * have an agricultural business profile yet.
+         *
+         * In that case, create the profile instead.
          */
         if (
           axios.isAxiosError(error) &&
@@ -46,14 +49,19 @@ export const useUpdateFarmerProfile = (
       }
     },
 
-    onSuccess: () => {
+    onSuccess: (profile) => {
+      /**
+       * Keep the React Query cache immediately synchronized
+       * with the profile returned by the backend.
+       */
+      queryClient.setQueryData(
+        ["farmer-profile"],
+        profile
+      );
+
       toast.success(
         "AgricWise business profile saved successfully."
       );
-
-      queryClient.invalidateQueries({
-        queryKey: ["farmer-profile"],
-      });
 
       if (onSuccess) {
         onSuccess();
@@ -63,17 +71,39 @@ export const useUpdateFarmerProfile = (
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         console.error(
+          "AgricWise business profile error:",
           error.response?.data
         );
 
-        const message =
-          error.response?.data?.detail ||
+        const responseData =
+          error.response?.data;
+
+        let message =
           "Unable to save AgricWise business profile.";
+
+        if (
+          responseData &&
+          typeof responseData === "object"
+        ) {
+          const detail =
+            (responseData as {
+              detail?: string;
+            }).detail;
+
+          if (detail) {
+            message = detail;
+          }
+        }
 
         toast.error(message);
 
         return;
       }
+
+      console.error(
+        "Unexpected AgricWise business profile error:",
+        error
+      );
 
       toast.error(
         "Unable to save AgricWise business profile."
