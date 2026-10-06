@@ -49,15 +49,37 @@ export const useUpdateFarmerProfile = (
       }
     },
 
-    onSuccess: (profile) => {
+    onSuccess: async (profile) => {
       /**
-       * Keep the React Query cache immediately synchronized
-       * with the profile returned by the backend.
+       * Immediately synchronize the authenticated
+       * profile cache with the backend response.
        */
       queryClient.setQueryData(
         ["farmer-profile"],
         profile
       );
+
+      /**
+       * The profile is also the source of the public
+       * agricultural business identity.
+       *
+       * Invalidate the public directory and all public
+       * business-detail queries so visitors do not
+       * continue seeing stale business information.
+       */
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [
+            "public-agricultural-businesses",
+          ],
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: [
+            "public-agricultural-business",
+          ],
+        }),
+      ]);
 
       toast.success(
         "AgricWise business profile saved successfully."

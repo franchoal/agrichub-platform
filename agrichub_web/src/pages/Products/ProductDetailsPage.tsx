@@ -20,6 +20,7 @@ import { Button, Card } from "../../components/ui";
 import { useProduct } from "../../hooks/useProduct";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import { useReviews } from "../../hooks/useReviews";
+import { useAuthStore } from "../../store/authStore";
 
 import ReviewCard from "../../components/reviews/ReviewCard";
 import ReviewForm from "../../components/reviews/ReviewForm";
@@ -32,9 +33,20 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1);
 
   const {
+    isAuthenticated,
+    hasHydrated,
+  } = useAuthStore();
+
+  const {
     mutate: addToCart,
     isPending,
   } = useAddToCart();
+
+  /*
+   * --------------------------------------------------------
+   * ROUTE VALIDATION
+   * --------------------------------------------------------
+   */
 
   if (!id || Number.isNaN(productId)) {
     return (
@@ -45,15 +57,96 @@ const ProductDetailsPage = () => {
     );
   }
 
+  /*
+   * --------------------------------------------------------
+   * AUTHENTICATION GATE
+   * --------------------------------------------------------
+   *
+   * We wait for Zustand persistence to hydrate before
+   * deciding whether this visitor is authenticated.
+   *
+   * This prevents an already-authenticated user from being
+   * briefly treated as a guest during page refresh.
+   */
+
+  const canViewProduct =
+    hasHydrated && isAuthenticated;
+
+  /*
+   * --------------------------------------------------------
+   * PRODUCT / REVIEW QUERIES
+   * --------------------------------------------------------
+   *
+   * The hooks receive the authentication state so guests
+   * never make protected product/review API requests.
+   */
+
   const {
     data: product,
     isLoading,
     isError,
-  } = useProduct(productId);
+  } = useProduct(
+    productId,
+    canViewProduct,
+  );
 
   const {
     data: reviews = [],
-  } = useReviews(productId);
+  } = useReviews(
+    productId,
+    canViewProduct,
+  );
+
+  /*
+   * --------------------------------------------------------
+   * AUTH HYDRATION
+   * --------------------------------------------------------
+   */
+
+  if (!hasHydrated) {
+    return (
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 w-52 rounded bg-gray-200" />
+
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div className="h-[420px] rounded-3xl bg-gray-200 sm:h-[560px]" />
+
+            <div className="space-y-6">
+              <div className="h-12 rounded bg-gray-200" />
+              <div className="h-6 w-2/3 rounded bg-gray-200" />
+              <div className="h-36 rounded bg-gray-200" />
+              <div className="h-72 rounded bg-gray-200" />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  /*
+   * --------------------------------------------------------
+   * GUEST ACCESS
+   * --------------------------------------------------------
+   *
+   * Product browsing remains public on /products, but the
+   * actual product detail/action page requires registration.
+   */
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        replace
+        to="/register"
+      />
+    );
+  }
+
+  /*
+   * --------------------------------------------------------
+   * PRODUCT LOADING
+   * --------------------------------------------------------
+   */
 
   if (isLoading) {
     return (
@@ -75,6 +168,12 @@ const ProductDetailsPage = () => {
       </main>
     );
   }
+
+  /*
+   * --------------------------------------------------------
+   * PRODUCT NOT FOUND
+   * --------------------------------------------------------
+   */
 
   if (isError || !product) {
     return (
@@ -101,7 +200,14 @@ const ProductDetailsPage = () => {
     );
   }
 
-  const averageRating = product.average_rating ?? 0;
+  /*
+   * --------------------------------------------------------
+   * PRODUCT STATE
+   * --------------------------------------------------------
+   */
+
+  const averageRating =
+    product.average_rating ?? 0;
 
   const reviewCount =
     product.review_count ?? reviews.length;
@@ -117,7 +223,10 @@ const ProductDetailsPage = () => {
 
   const increaseQuantity = () => {
     setQuantity((current) =>
-      Math.min(current + 1, availableQuantity),
+      Math.min(
+        current + 1,
+        availableQuantity,
+      ),
     );
   };
 
@@ -173,14 +282,12 @@ const ProductDetailsPage = () => {
               className="h-[360px] w-full object-cover transition duration-700 hover:scale-105 sm:h-[520px] lg:h-[620px]"
             />
 
-            {/* Category */}
             <div className="absolute left-4 top-4 sm:left-6 sm:top-6">
               <span className="rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-green-700 shadow-lg backdrop-blur sm:px-5 sm:py-3 sm:text-sm">
                 {product.category_name}
               </span>
             </div>
 
-            {/* Availability */}
             <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6">
               <span
                 className={`rounded-full px-4 py-2 text-xs font-bold shadow-lg sm:px-5 sm:py-3 sm:text-sm ${
@@ -201,7 +308,6 @@ const ProductDetailsPage = () => {
             PRODUCT INFORMATION
         ==================================================== */}
         <div className="space-y-6 sm:space-y-8">
-          {/* Product heading */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
@@ -213,7 +319,6 @@ const ProductDetailsPage = () => {
               {product.name}
             </h1>
 
-            {/* Rating */}
             <div className="mt-5 flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <Star
@@ -234,9 +339,7 @@ const ProductDetailsPage = () => {
             </div>
           </div>
 
-          {/* ==================================================
-              SELLER / BUSINESS IDENTITY
-          ================================================== */}
+          {/* SELLER / BUSINESS IDENTITY */}
           <Card className="rounded-2xl border border-gray-100 bg-gray-50 p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
@@ -259,9 +362,7 @@ const ProductDetailsPage = () => {
             </div>
           </Card>
 
-          {/* ==================================================
-              PRICE
-          ================================================== */}
+          {/* PRICE */}
           <Card className="rounded-[26px] border-0 bg-gradient-to-r from-green-700 to-green-600 p-6 text-white shadow-xl sm:rounded-[28px] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-green-100 sm:text-sm">
               Selling Price
@@ -280,9 +381,7 @@ const ProductDetailsPage = () => {
             </div>
           </Card>
 
-          {/* ==================================================
-              PURCHASE
-          ================================================== */}
+          {/* PURCHASE */}
           <Card className="rounded-[26px] border-0 bg-gradient-to-br from-white to-green-50 p-5 shadow-xl sm:rounded-[30px] sm:p-8">
             <div>
               <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
@@ -295,7 +394,6 @@ const ProductDetailsPage = () => {
               </p>
             </div>
 
-            {/* Quantity selector */}
             <div className="mt-6 flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-2">
               <button
                 type="button"

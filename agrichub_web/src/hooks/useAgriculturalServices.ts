@@ -1,26 +1,48 @@
 import {
-  useMutation,
   useQuery,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+
+import {
+  farmerService,
+} from "../services/farmerService";
 
 import type {
   AgriculturalService,
   CreateAgriculturalServiceData,
   UpdateAgriculturalServiceData,
-  PaginatedPublicAgriculturalBusinesses,
   PublicAgriculturalBusinessDetail,
+  PublicAgriculturalBusinessesParams,
+  PaginatedPublicAgriculturalBusinesses,
 } from "../services/farmerService";
 
-import { farmerService } from "../services/farmerService";
 
 /* =========================================================
-   Agricultural Services
+   QUERY KEYS
 ========================================================= */
 
 export const AGRICULTURAL_SERVICES_QUERY_KEY = [
   "agricultural-services",
 ];
+
+
+/* =========================================================
+   PUBLIC AGRICULTURAL BUSINESS QUERY KEYS
+========================================================= */
+
+export const PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY = [
+  "public-agricultural-businesses",
+];
+
+export const PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY = [
+  "public-agricultural-business",
+];
+
+
+/* =========================================================
+   MY AGRICULTURAL SERVICES
+========================================================= */
 
 export const useAgriculturalServices = () => {
   return useQuery<AgriculturalService[]>({
@@ -32,6 +54,11 @@ export const useAgriculturalServices = () => {
   });
 };
 
+
+/* =========================================================
+   CREATE AGRICULTURAL SERVICE
+========================================================= */
+
 export const useCreateAgriculturalService = () => {
   const queryClient = useQueryClient();
 
@@ -40,13 +67,28 @@ export const useCreateAgriculturalService = () => {
       data: CreateAgriculturalServiceData
     ) => farmerService.createService(data),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
-      });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
+        }),
+      ]);
     },
   });
 };
+
+
+/* =========================================================
+   UPDATE AGRICULTURAL SERVICE
+========================================================= */
 
 export const useUpdateAgriculturalService = () => {
   const queryClient = useQueryClient();
@@ -58,69 +100,198 @@ export const useUpdateAgriculturalService = () => {
     }: {
       id: number;
       data: UpdateAgriculturalServiceData;
-    }) => farmerService.updateService(id, data),
+    }) =>
+      farmerService.updateService(
+        id,
+        data
+      ),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
-      });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
+        }),
+      ]);
     },
   });
 };
+
+
+/* =========================================================
+   DELETE AGRICULTURAL SERVICE
+========================================================= */
 
 export const useDeleteAgriculturalService = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) =>
+    mutationFn: (
+      id: number
+    ) =>
       farmerService.deleteService(id),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
-      });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: AGRICULTURAL_SERVICES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
+        }),
+      ]);
     },
   });
 };
 
+
 /* =========================================================
-   Public Agricultural Business Directory
+   PUBLIC AGRICULTURAL BUSINESS DIRECTORY
+=========================================================
+
+   Backend-driven discovery.
+
+   Supported parameters:
+
+   ?search=<term>
+   ?category=<category-slug>
+   ?verified=true
+   ?verified=false
+   ?page=<page>
+
+   The backend performs the actual filtering and pagination.
 ========================================================= */
 
-export const PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY = [
-  "public-agricultural-businesses",
-];
+export const usePublicAgriculturalBusinesses = (
+  params: PublicAgriculturalBusinessesParams = {}
+) => {
+  const normalizedSearch =
+    params.search?.trim() ?? "";
 
-export const usePublicAgriculturalBusinesses = () => {
+  const normalizedCategory =
+    params.category?.trim() ?? "";
+
+  const normalizedPage =
+    params.page && params.page > 0
+      ? params.page
+      : 1;
+
   return useQuery<PaginatedPublicAgriculturalBusinesses>({
-    queryKey: PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
-    queryFn: farmerService.getPublicBusinesses,
+    queryKey: [
+      ...PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+      {
+        search: normalizedSearch,
+        category: normalizedCategory,
+        verified: params.verified ?? "",
+        page: normalizedPage,
+      },
+    ],
+
+    queryFn: () =>
+      farmerService.getPublicBusinesses({
+        search:
+          normalizedSearch || undefined,
+
+        category:
+          normalizedCategory || undefined,
+
+        verified:
+          params.verified,
+
+        page:
+          normalizedPage,
+      }),
+
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+
+    placeholderData:
+      (previousData) =>
+        previousData,
   });
 };
 
+
 /* =========================================================
-   Public Agricultural Business Detail
+   PUBLIC AGRICULTURAL BUSINESS DETAIL
+=========================================================
+
+   Business profiles themselves are public.
+
+   This hook therefore remains usable for guests.
+
+   `enabled` is provided so callers can explicitly control
+   whether the request should run, which is useful when a
+   route depends on another piece of state being hydrated.
 ========================================================= */
 
-export const publicAgriculturalBusinessQueryKey = (
-  id: number
-) => [
-  "public-agricultural-business",
-  id,
-];
-
 export const usePublicAgriculturalBusiness = (
-  id: number
+  id: number | string | undefined,
+  enabled = true
 ) => {
+  const numericId =
+    typeof id === "string"
+      ? Number(id)
+      : id;
+
+  const isValidId =
+    typeof numericId === "number" &&
+    Number.isInteger(numericId) &&
+    numericId > 0;
+
   return useQuery<PublicAgriculturalBusinessDetail>({
-    queryKey: publicAgriculturalBusinessQueryKey(id),
-    queryFn: () => farmerService.getPublicBusiness(id),
-    enabled: Number.isFinite(id) && id > 0,
+    queryKey: [
+      ...PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
+      numericId,
+    ],
+
+    queryFn: () =>
+      farmerService.getPublicBusiness(
+        numericId as number
+      ),
+
+    enabled:
+      enabled && isValidId,
+
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
   });
+};
+
+
+/* =========================================================
+   PUBLIC BUSINESS CACHE HELPERS
+========================================================= */
+
+/**
+ * Invalidates the public agricultural business directory
+ * and all public business detail queries.
+ *
+ * Useful after a product/service/profile mutation changes
+ * what is publicly visible about a business.
+ */
+export const invalidatePublicAgriculturalBusinessQueries = async (
+  queryClient: ReturnType<typeof useQueryClient>
+) => {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey:
+        PUBLIC_AGRICULTURAL_BUSINESSES_QUERY_KEY,
+    }),
+
+    queryClient.invalidateQueries({
+      queryKey:
+        PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
+    }),
+  ]);
 };

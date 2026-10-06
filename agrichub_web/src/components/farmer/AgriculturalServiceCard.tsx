@@ -21,9 +21,15 @@ function AgriculturalServiceCard({
   onDelete,
   isDeleting = false,
 }: AgriculturalServiceCardProps) {
-  const formattedPrice =
+  const numericPrice =
     service.price !== null
-      ? `₦${Number(service.price).toLocaleString()}`
+      ? Number(service.price)
+      : null;
+
+  const formattedPrice =
+    numericPrice !== null &&
+    Number.isFinite(numericPrice)
+      ? `₦${numericPrice.toLocaleString()}`
       : null;
 
   return (
@@ -49,7 +55,7 @@ function AgriculturalServiceCard({
           </div>
 
           {service.location && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-gray-500">
               <MapPin
                 size={14}
                 className="shrink-0"
@@ -92,7 +98,7 @@ function AgriculturalServiceCard({
       </p>
 
       {formattedPrice && (
-        <div className="mt-4 flex items-baseline gap-1">
+        <div className="mt-4 flex flex-wrap items-baseline gap-1">
           <span className="text-sm font-bold text-gray-900">
             {formattedPrice}
           </span>

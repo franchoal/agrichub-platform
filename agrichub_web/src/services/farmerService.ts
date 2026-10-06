@@ -213,6 +213,21 @@ export interface PublicAgriculturalBusinessDetail
   created_at: string;
 }
 
+/* =========================================================
+   PUBLIC AGRICULTURAL BUSINESS DISCOVERY PARAMETERS
+========================================================= */
+
+export interface PublicAgriculturalBusinessesParams {
+  search?: string;
+  category?: string;
+  verified?: "true" | "false";
+  page?: number;
+}
+
+/* =========================================================
+   PAGINATED PUBLIC AGRICULTURAL BUSINESSES
+========================================================= */
+
 export interface PaginatedPublicAgriculturalBusinesses {
   count: number;
   next: string | null;
@@ -501,14 +516,23 @@ export const farmerService = {
 
   /* =======================================================
      PUBLIC AGRICULTURAL BUSINESS DIRECTORY
+     
+     Supports backend-driven discovery:
+       ?search=
+       ?category=
+       ?verified=true|false
+       ?page=
   ======================================================= */
 
-  getPublicBusinesses: async (): Promise<
-    PaginatedPublicAgriculturalBusinesses
-  > => {
+  getPublicBusinesses: async (
+    params?: PublicAgriculturalBusinessesParams
+  ): Promise<PaginatedPublicAgriculturalBusinesses> => {
     const response =
       await api.get<PaginatedPublicAgriculturalBusinesses>(
-        "/farmers/businesses/"
+        "/farmers/businesses/",
+        {
+          params,
+        }
       );
 
     return response.data;

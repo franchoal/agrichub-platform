@@ -1,6 +1,7 @@
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 
-from rest_framework import generics, permissions
+from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -26,6 +27,7 @@ from .serializers import (
 # AGRICULTURAL CATEGORIES
 # ============================================================
 
+
 class AgriculturalCategoryListView(
     generics.ListAPIView
 ):
@@ -47,6 +49,7 @@ class AgriculturalCategoryListView(
 # ============================================================
 # FARMER / AGRICULTURAL BUSINESS PROFILE
 # ============================================================
+
 
 class FarmerProfileView(
     generics.RetrieveUpdateAPIView
@@ -108,6 +111,7 @@ class FarmerProfileCreateView(
 # ============================================================
 # AGRICULTURAL SERVICES
 # ============================================================
+
 
 class AgriculturalServiceListCreateView(
     generics.ListCreateAPIView
@@ -173,6 +177,7 @@ class AgriculturalServiceDetailView(
 # ============================================================
 # FARMER PRODUCTS
 # ============================================================
+
 
 class FarmerProductListCreateView(
     generics.ListCreateAPIView
@@ -245,12 +250,30 @@ class FarmerProductDetailView(
 # PUBLIC AGRICULTURAL BUSINESS DIRECTORY
 # ============================================================
 
+
 class PublicAgriculturalBusinessListView(
     generics.ListAPIView
 ):
     """
     Public directory of AgricWise agricultural
     businesses and professionals.
+
+    Supported discovery parameters:
+
+    ?search=<term>
+    ?category=<category-slug>
+    ?verified=true
+    ?verified=false
+
+    Examples:
+
+    /api/farmers/businesses/?search=poultry
+
+    /api/farmers/businesses/?category=livestock-poultry
+
+    /api/farmers/businesses/?verified=true
+
+    /api/farmers/businesses/?search=ibadan&verified=true
 
     No authentication is required.
     """
@@ -264,20 +287,108 @@ class PublicAgriculturalBusinessListView(
     ]
 
     def get_queryset(self):
-        return (
+        queryset = (
             FarmerProfile.objects
             .prefetch_related(
                 "business_categories",
-                "products",
-                "services",
+            )
+            .annotate(
+                available_product_count=Count(
+                    "products",
+                    filter=Q(
+                        products__is_available=True,
+                        products__quantity__gt=0,
+                    ),
+                    distinct=True,
+                ),
+                available_service_count=Count(
+                    "services",
+                    filter=Q(
+                        services__is_available=True,
+                    ),
+                    distinct=True,
+                ),
             )
             .order_by("farm_name")
         )
+
+        # ----------------------------------------------------
+        # SEARCH
+        # ----------------------------------------------------
+        search_term = (
+            self.request.query_params
+            .get("search", "")
+            .strip()
+        )
+
+        if search_term:
+            queryset = queryset.filter(
+                Q(farm_name__icontains=search_term)
+                | Q(farm_location__icontains=search_term)
+                | Q(
+                    farm_description__icontains=search_term
+                )
+                | Q(
+                    business_categories__name__icontains=search_term
+                )
+                | Q(
+                    business_categories__description__icontains=search_term
+                )
+            ).distinct()
+
+        # ----------------------------------------------------
+        # CATEGORY
+        # ----------------------------------------------------
+        category_slug = (
+            self.request.query_params
+            .get("category", "")
+            .strip()
+        )
+
+        if category_slug:
+            queryset = queryset.filter(
+                business_categories__slug=category_slug,
+                business_categories__is_active=True,
+            ).distinct()
+
+        # ----------------------------------------------------
+        # VERIFICATION
+        # ----------------------------------------------------
+        verified = (
+            self.request.query_params
+            .get("verified")
+        )
+
+        if verified is not None:
+            normalized_verified = (
+                verified.strip().lower()
+            )
+
+            if normalized_verified in {
+                "true",
+                "1",
+                "yes",
+            }:
+                queryset = queryset.filter(
+                    is_verified=True
+                )
+
+            elif normalized_verified in {
+                "false",
+                "0",
+                "no",
+            }:
+                queryset = queryset.filter(
+                    is_verified=False
+                )
+
+        return queryset
 
 
 # ============================================================
 # PUBLIC AGRICULTURAL BUSINESS DETAIL
 # ============================================================
+
 
 class PublicAgriculturalBusinessDetailView(
     generics.RetrieveAPIView
@@ -286,6 +397,7 @@ class PublicAgriculturalBusinessDetailView(
     Public AgricWise business presence.
 
     Provides:
+
     - Business identity
     - Location
     - Agricultural categories

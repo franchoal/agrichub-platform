@@ -8,6 +8,8 @@ import {
 
 import type { Product } from "../../types/product";
 
+import { useAuthStore } from "../../store/authStore";
+
 import { Button, Card } from "../ui";
 
 interface ProductCardProps {
@@ -15,8 +17,26 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { isAuthenticated, hasHydrated } = useAuthStore();
+
   const isAvailable =
     product.is_available && Number(product.quantity) > 0;
+
+  /*
+   * Public marketplace browsing is intentional.
+   *
+   * Guests can see products in the marketplace, but attempting
+   * to open a product requires registration.
+   *
+   * We wait for Zustand persistence to hydrate before deciding
+   * whether the visitor is authenticated. This prevents an
+   * already-authenticated user from being briefly treated as
+   * a guest after a page refresh.
+   */
+  const productDestination =
+    hasHydrated && isAuthenticated
+      ? `/products/${product.id}`
+      : "/register";
 
   return (
     <Card className="group overflow-hidden p-0 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -24,7 +44,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           PRODUCT IMAGE
       ===================================================== */}
       <Link
-        to={`/products/${product.id}`}
+        to={productDestination}
         className="block"
       >
         <div className="relative h-52 overflow-hidden bg-gray-100 sm:h-56">
@@ -79,7 +99,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Product identity */}
         <div>
           <Link
-            to={`/products/${product.id}`}
+            to={productDestination}
             className="block"
           >
             <h3 className="line-clamp-1 text-lg font-black text-gray-900 transition group-hover:text-green-700">
@@ -162,7 +182,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         =================================================== */}
         <div className="grid grid-cols-[1fr_auto] gap-3 pt-1">
           <Link
-            to={`/products/${product.id}`}
+            to={productDestination}
             className="block"
           >
             <Button
@@ -175,7 +195,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </Link>
 
           <Link
-            to={`/products/${product.id}`}
+            to={productDestination}
             aria-label={`View ${product.name}`}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
           >

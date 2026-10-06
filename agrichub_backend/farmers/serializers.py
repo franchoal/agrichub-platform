@@ -12,6 +12,7 @@ from products.models import Product
 # AGRICULTURAL CATEGORY
 # ============================================================
 
+
 class AgriculturalCategorySerializer(
     serializers.ModelSerializer
 ):
@@ -31,6 +32,7 @@ class AgriculturalCategorySerializer(
 # ============================================================
 # FARMER / AGRICULTURAL BUSINESS PROFILE
 # ============================================================
+
 
 class FarmerProfileSerializer(
     serializers.ModelSerializer
@@ -126,6 +128,7 @@ class FarmerProfileSerializer(
 # AGRICULTURAL SERVICE
 # ============================================================
 
+
 class AgriculturalServiceSerializer(
     serializers.ModelSerializer
 ):
@@ -172,6 +175,7 @@ class AgriculturalServiceSerializer(
 # ============================================================
 # FARMER PRODUCT
 # ============================================================
+
 
 class FarmerProductSerializer(
     serializers.ModelSerializer
@@ -227,6 +231,7 @@ class FarmerProductSerializer(
 # PUBLIC AGRICULTURAL BUSINESS — PRODUCT
 # ============================================================
 
+
 class PublicBusinessProductSerializer(
     serializers.ModelSerializer
 ):
@@ -259,6 +264,7 @@ class PublicBusinessProductSerializer(
 # PUBLIC AGRICULTURAL BUSINESS — SERVICE
 # ============================================================
 
+
 class PublicBusinessServiceSerializer(
     serializers.ModelSerializer
 ):
@@ -283,6 +289,7 @@ class PublicBusinessServiceSerializer(
 # ============================================================
 # PUBLIC AGRICULTURAL BUSINESS DIRECTORY
 # ============================================================
+
 
 class PublicAgriculturalBusinessListSerializer(
     serializers.ModelSerializer
@@ -315,12 +322,30 @@ class PublicAgriculturalBusinessListSerializer(
         read_only_fields = fields
 
     def get_product_count(self, obj):
+        annotated_count = getattr(
+            obj,
+            "available_product_count",
+            None,
+        )
+
+        if annotated_count is not None:
+            return annotated_count
+
         return obj.products.filter(
             is_available=True,
             quantity__gt=0,
         ).count()
 
     def get_service_count(self, obj):
+        annotated_count = getattr(
+            obj,
+            "available_service_count",
+            None,
+        )
+
+        if annotated_count is not None:
+            return annotated_count
+
         return obj.services.filter(
             is_available=True,
         ).count()
@@ -329,6 +354,7 @@ class PublicAgriculturalBusinessListSerializer(
 # ============================================================
 # PUBLIC AGRICULTURAL BUSINESS DETAIL
 # ============================================================
+
 
 class PublicAgriculturalBusinessDetailSerializer(
     serializers.ModelSerializer

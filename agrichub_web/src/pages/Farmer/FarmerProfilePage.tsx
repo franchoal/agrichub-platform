@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Building2,
@@ -90,37 +91,25 @@ const valueChainGroups = [
     icon: Store,
     label: "Supply",
     description: "Provide products and agricultural inputs.",
-    items: [
-      "Agro-input Supplier",
-      "Agro-allied Products",
-    ],
+    items: ["Agro-input Supplier", "Agro-allied Products"],
   },
   {
     icon: Wrench,
     label: "Infrastructure",
     description: "Support farming with tools and infrastructure.",
-    items: [
-      "Equipment & Machinery",
-      "Irrigation & Greenhouse",
-    ],
+    items: ["Equipment & Machinery", "Irrigation & Greenhouse"],
   },
   {
     icon: Factory,
     label: "Value Addition",
     description: "Move agricultural products through the value chain.",
-    items: [
-      "Agro-processing",
-      "Produce Buyer / Aggregator",
-    ],
+    items: ["Agro-processing", "Produce Buyer / Aggregator"],
   },
   {
     icon: Compass,
     label: "Knowledge & Services",
     description: "Provide expertise, support, and professional services.",
-    items: [
-      "Agricultural Services",
-      "Training & Consultancy",
-    ],
+    items: ["Agricultural Services", "Training & Consultancy"],
   },
 ];
 
@@ -352,7 +341,7 @@ const FarmerProfilePage = () => {
                   >
                     <div className="flex items-center gap-2">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-green-700 shadow-sm">
-                        <Icon className="h-4.5 w-4.5" />
+                        <Icon className="h-[18px] w-[18px]" />
                       </span>
 
                       <h3 className="text-sm font-bold text-slate-900">
@@ -494,8 +483,12 @@ const FarmerProfilePage = () => {
                 </div>
               </div>
 
-              <div className="shrink-0 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm lg:min-w-[250px]">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-500/15 text-green-400">
+              <Link
+                to="/farmer/dashboard"
+                className="group shrink-0 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition duration-200 hover:border-green-400/30 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-green-400/70 focus:ring-offset-2 focus:ring-offset-slate-950 lg:min-w-[280px]"
+                aria-label="Open AgricWise Business Workspace"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-500/15 text-green-400 transition duration-200 group-hover:bg-green-500/20">
                   <Building2 className="h-5 w-5" />
                 </div>
 
@@ -504,14 +497,19 @@ const FarmerProfilePage = () => {
                 </p>
 
                 <p className="mt-2 text-base font-semibold text-white">
-                  Your AgricWise Command Center
+                  Open your AgricWise Command Center
                 </p>
 
                 <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-                  Build your presence one step at a time
+                  Manage your business presence
                 </div>
-              </div>
+
+                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-400">
+                  Open Workspace
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
             </div>
           </div>
         </section>

@@ -16,6 +16,8 @@ import {
   usePublicAgriculturalBusiness,
 } from "../../hooks/useAgriculturalServices";
 
+import { useAuthStore } from "../../store/authStore";
+
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
@@ -40,12 +42,45 @@ No private account information is exposed.
 
 This page represents the public digital presence of an
 agricultural business on AgricWise.
+
+ACCESS MODEL
+
+Guests can:
+
+- Browse businesses
+- View public business profiles
+- See public products
+- See public agricultural services
+
+Guests cannot:
+
+- Open a product detail page
+- Proceed into protected product interactions
+- Engage with protected agricultural service interactions
+
+When a guest attempts to move from public discovery into
+a protected product/service interaction, they are routed
+to registration.
+
+Authenticated users can continue into protected product
+details.
+
+IMPORTANT:
+
+The business profile itself must remain public.
+
+Do NOT put an authentication guard around this page.
 =========================================================
 */
 
 const AgriculturalBusinessDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const {
+    isAuthenticated,
+    hasHydrated,
+  } = useAuthStore();
 
   const businessId = Number(id);
 
@@ -55,6 +90,43 @@ const AgriculturalBusinessDetailsPage = () => {
     isError,
     refetch,
   } = usePublicAgriculturalBusiness(businessId);
+
+  /*
+  =======================================================
+  ACCESS STATE
+  =======================================================
+
+  Authentication state is only trusted after Zustand has
+  completed persistence hydration.
+
+  This prevents a persisted authenticated user from being
+  temporarily treated as a guest while the application is
+  starting.
+  */
+
+  const canAccessProtectedContent =
+    hasHydrated && isAuthenticated;
+
+  /*
+  =======================================================
+  PROTECTED PRODUCT DESTINATION
+  =======================================================
+
+  Business profiles remain public.
+
+  Product detail pages are protected.
+
+  Therefore:
+
+  Guest            -> /register
+  Authenticated    -> /products/:id
+  */
+
+  const getProductDestination = (productId: number) => {
+    return canAccessProtectedContent
+      ? `/products/${productId}`
+      : "/register";
+  };
 
   /*
   =======================================================
@@ -264,8 +336,6 @@ const AgriculturalBusinessDetailsPage = () => {
 
         <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            {/* BUSINESS IDENTITY */}
-
             <div className="flex min-w-0 gap-4 sm:gap-5">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20 backdrop-blur sm:h-20 sm:w-20">
                 <Store className="h-8 w-8 sm:h-10 sm:w-10" />
@@ -307,8 +377,6 @@ const AgriculturalBusinessDetailsPage = () => {
               </div>
             </div>
 
-            {/* BUSINESS COUNTS */}
-
             <div className="grid grid-cols-2 gap-3 sm:flex lg:shrink-0">
               <div className="min-w-[120px] rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/10 backdrop-blur">
                 <div className="flex items-center gap-2 text-green-100">
@@ -339,8 +407,6 @@ const AgriculturalBusinessDetailsPage = () => {
               </div>
             </div>
           </div>
-
-          {/* HERO ACTIONS */}
 
           {(hasProducts || hasServices) && (
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -377,10 +443,6 @@ const AgriculturalBusinessDetailsPage = () => {
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          {/* =================================================
-              MAIN CONTENT
-          ================================================= */}
-
           <div className="min-w-0 space-y-8">
             {/* BUSINESS DESCRIPTION */}
 
@@ -461,13 +523,16 @@ const AgriculturalBusinessDetailsPage = () => {
                       product.price
                     );
 
+                    const productDestination =
+                      getProductDestination(product.id);
+
                     return (
                       <Card
                         key={product.id}
                         className="overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
                       >
                         <Link
-                          to={`/products/${product.id}`}
+                          to={productDestination}
                           className="group block"
                         >
                           <div className="aspect-[4/3] overflow-hidden bg-gray-100">
@@ -489,7 +554,7 @@ const AgriculturalBusinessDetailsPage = () => {
                         <div className="p-4">
                           <div className="flex items-start justify-between gap-3">
                             <Link
-                              to={`/products/${product.id}`}
+                              to={productDestination}
                               className="min-w-0"
                             >
                               <h3 className="line-clamp-2 font-semibold text-gray-900 transition hover:text-green-700">
@@ -498,7 +563,7 @@ const AgriculturalBusinessDetailsPage = () => {
                             </Link>
 
                             {product.category_name && (
-                              <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-600">
+                              <span className="max-w-[45%] shrink-0 truncate rounded-full bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-600">
                                 {product.category_name}
                               </span>
                             )}
@@ -526,7 +591,7 @@ const AgriculturalBusinessDetailsPage = () => {
                             </div>
 
                             <Link
-                              to={`/products/${product.id}`}
+                              to={productDestination}
                               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-800"
                             >
                               View
@@ -597,9 +662,43 @@ const AgriculturalBusinessDetailsPage = () => {
                     return (
                       <Card
                         key={service.id}
-                        className="overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        className={`overflow-hidden transition duration-200 ${
+                          !canAccessProtectedContent
+                            ? "hover:-translate-y-0.5 hover:shadow-md"
+                            : ""
+                        }`}
                       >
-                        {service.image ? (
+                        {/* =================================================
+                            SERVICE IMAGE
+
+                            There is currently no dedicated public service
+                            detail route.
+
+                            Guests therefore receive a registration CTA
+                            instead of being sent to a nonexistent route.
+                        ================================================= */}
+
+                        {!canAccessProtectedContent ? (
+                          <Link
+                            to="/register"
+                            className="group block"
+                          >
+                            {service.image ? (
+                              <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                                <img
+                                  src={service.image}
+                                  alt={service.name}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex aspect-[4/3] items-center justify-center bg-gray-50">
+                                <Wrench className="h-10 w-10 text-gray-300" />
+                              </div>
+                            )}
+                          </Link>
+                        ) : service.image ? (
                           <div className="aspect-[4/3] overflow-hidden bg-gray-100">
                             <img
                               src={service.image}
@@ -645,6 +744,29 @@ const AgriculturalBusinessDetailsPage = () => {
                                 </p>
                               )}
                             </div>
+                          )}
+
+                          {/* =================================================
+                              SERVICE ENGAGEMENT
+
+                              There is currently no dedicated public service
+                              detail/action endpoint.
+
+                              Guests are therefore routed to registration.
+
+                              Authenticated users can currently inspect the
+                              service information, but no artificial service
+                              route is created.
+                          ================================================= */}
+
+                          {!canAccessProtectedContent && (
+                            <Link
+                              to="/register"
+                              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800"
+                            >
+                              Register to engage
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
                           )}
                         </div>
                       </Card>

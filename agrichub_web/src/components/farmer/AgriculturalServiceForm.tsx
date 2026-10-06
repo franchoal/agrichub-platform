@@ -92,44 +92,73 @@ function AgriculturalServiceForm({
     event.preventDefault();
 
     const trimmedName = form.name.trim();
+
     const trimmedDescription =
       form.description.trim();
+
     const trimmedLocation =
       form.location.trim();
+
     const trimmedPriceUnit =
       form.price_unit.trim();
 
-    if (!trimmedName || !trimmedDescription) {
+    if (
+      !trimmedName ||
+      !trimmedDescription
+    ) {
       return;
     }
 
+    const rawPrice = form.price.trim();
+
+    if (rawPrice !== "") {
+      const numericPrice = Number(rawPrice);
+
+      if (
+        !Number.isFinite(numericPrice) ||
+        numericPrice < 0
+      ) {
+        return;
+      }
+    }
+
     const price =
-      form.price.trim() === ""
+      rawPrice === ""
         ? null
-        : form.price.trim();
+        : rawPrice;
 
     if (isEditing) {
-      const updateData: UpdateAgriculturalServiceData = {
-        name: trimmedName,
-        description: trimmedDescription,
-        location: trimmedLocation,
-        price,
-        price_unit: trimmedPriceUnit,
-        is_available: form.is_available,
-      };
+      const updateData: UpdateAgriculturalServiceData =
+        {
+          name: trimmedName,
+          description:
+            trimmedDescription,
+          location:
+            trimmedLocation,
+          price,
+          price_unit:
+            trimmedPriceUnit,
+          is_available:
+            form.is_available,
+        };
 
       await onSubmit(updateData);
       return;
     }
 
-    const createData: CreateAgriculturalServiceData = {
-      name: trimmedName,
-      description: trimmedDescription,
-      location: trimmedLocation,
-      price,
-      price_unit: trimmedPriceUnit,
-      is_available: form.is_available,
-    };
+    const createData: CreateAgriculturalServiceData =
+      {
+        name: trimmedName,
+        description:
+          trimmedDescription,
+        location:
+          trimmedLocation,
+        price,
+        price_unit:
+          trimmedPriceUnit,
+        is_available:
+          form.is_available,
+      };
 
     await onSubmit(createData);
   };
@@ -254,7 +283,9 @@ function AgriculturalServiceForm({
         <input
           type="checkbox"
           checked={form.is_available}
-          onChange={handleAvailabilityChange}
+          onChange={
+            handleAvailabilityChange
+          }
           disabled={isSubmitting}
           className="mt-0.5 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
         />
@@ -265,8 +296,9 @@ function AgriculturalServiceForm({
           </span>
 
           <span className="mt-1 block text-xs text-gray-500">
-            Turn this off when you temporarily stop
-            accepting requests for this service.
+            Turn this off when you temporarily
+            stop accepting requests for this
+            service.
           </span>
         </span>
       </label>
