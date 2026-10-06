@@ -831,7 +831,7 @@ const AgriculturalBusinessesPage = () => {
 
                   <Link
                     key={business.id}
-                    to={`/businesses/${business.id}`}
+                    to={`/businesses/${business.slug}`}
                     className="group block"
                   >
 

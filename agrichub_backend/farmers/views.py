@@ -396,6 +396,17 @@ class PublicAgriculturalBusinessDetailView(
     """
     Public AgricWise business presence.
 
+    Supports both:
+
+    - Legacy numeric business IDs
+    - Stable public business slugs
+
+    Examples:
+
+    /api/farmers/businesses/4/
+
+    /api/farmers/businesses/ades-poultry-farm/
+
     Provides:
 
     - Business identity
@@ -417,11 +428,51 @@ class PublicAgriculturalBusinessDetailView(
         AllowAny,
     ]
 
-    queryset = (
-        FarmerProfile.objects
-        .prefetch_related(
-            "business_categories",
-            "products__category",
-            "services",
+    def get_queryset(self):
+        return (
+            FarmerProfile.objects
+            .prefetch_related(
+                "business_categories",
+                "products__category",
+                "services",
+            )
         )
-    )
+
+    def get_object(self):
+        identifier = (
+            self.kwargs["identifier"].strip()
+        )
+
+        queryset = self.get_queryset()
+
+        # ----------------------------------------------------
+        # BACKWARD COMPATIBILITY
+        # ----------------------------------------------------
+        # Existing numeric business URLs continue to work.
+        #
+        # Example:
+        #
+        # /api/farmers/businesses/4/
+        # ----------------------------------------------------
+
+        if identifier.isdigit():
+            return get_object_or_404(
+                queryset,
+                pk=int(identifier),
+            )
+
+        # ----------------------------------------------------
+        # STABLE PUBLIC BUSINESS SLUG
+        # ----------------------------------------------------
+        # New AgricWise business presence URLs use the
+        # stable business slug.
+        #
+        # Example:
+        #
+        # /api/farmers/businesses/ades-poultry-farm/
+        # ----------------------------------------------------
+
+        return get_object_or_404(
+            queryset,
+            slug=identifier,
+        )

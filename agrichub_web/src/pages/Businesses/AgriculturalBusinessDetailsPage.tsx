@@ -10,7 +10,12 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import {
   usePublicAgriculturalBusiness,
@@ -75,21 +80,44 @@ Do NOT put an authentication guard around this page.
 
 const AgriculturalBusinessDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+
+  const {
+    identifier,
+  } = useParams<{
+    identifier: string;
+  }>();
 
   const {
     isAuthenticated,
     hasHydrated,
   } = useAuthStore();
 
-  const businessId = Number(id);
+  /*
+  =======================================================
+  BUSINESS IDENTIFIER
+  =======================================================
+
+  The public business route now supports both:
+
+  /businesses/12
+  /businesses/abekoko-farms
+
+  The backend remains backward-compatible with numeric
+  identifiers while slugs become the preferred public
+  business identity.
+  */
+
+  const businessIdentifier =
+    identifier?.trim() ?? "";
 
   const {
     data: business,
     isLoading,
     isError,
     refetch,
-  } = usePublicAgriculturalBusiness(businessId);
+  } = usePublicAgriculturalBusiness(
+    businessIdentifier
+  );
 
   /*
   =======================================================
@@ -168,15 +196,20 @@ const AgriculturalBusinessDetailsPage = () => {
 
   /*
   =======================================================
-  INVALID BUSINESS ID
+  INVALID BUSINESS IDENTIFIER
   =======================================================
+
+  The route accepts either:
+
+  - A numeric legacy business ID
+  - A public business slug
+
+  Therefore we only validate that an identifier exists.
+  The backend determines whether the identifier resolves
+  to an actual business.
   */
 
-  if (
-    !id ||
-    !Number.isFinite(businessId) ||
-    businessId <= 0
-  ) {
+  if (!businessIdentifier) {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center px-4 py-10">
@@ -233,6 +266,44 @@ const AgriculturalBusinessDetailsPage = () => {
           </div>
         </div>
       </main>
+    );
+  }
+
+  /*
+  =======================================================
+  LEGACY NUMERIC URL CANONICALIZATION
+  =======================================================
+
+  Numeric business URLs remain supported for backward
+  compatibility.
+
+  Example:
+
+  /businesses/12
+
+  becomes:
+
+  /businesses/abekoko-farms
+
+  once the backend successfully resolves the business.
+
+  This gives AgricWise a stable human-readable public
+  business identity without breaking existing links.
+  */
+
+  const isLegacyIdentifier =
+    /^\d+$/.test(businessIdentifier);
+
+  if (
+    business &&
+    isLegacyIdentifier &&
+    business.slug
+  ) {
+    return (
+      <Navigate
+        replace
+        to={`/businesses/${business.slug}`}
+      />
     );
   }
 

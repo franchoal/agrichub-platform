@@ -83,7 +83,7 @@ urlpatterns = [
     ),
 
     path(
-        "businesses/<int:pk>/",
+        "businesses/<str:identifier>/",
         PublicAgriculturalBusinessDetailView.as_view(),
         name="public-agricultural-business-detail",
     ),

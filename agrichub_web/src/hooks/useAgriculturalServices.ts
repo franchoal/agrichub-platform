@@ -231,38 +231,47 @@ export const usePublicAgriculturalBusinesses = (
 
    This hook therefore remains usable for guests.
 
+   The business identifier may be either:
+
+   - A numeric legacy business ID
+   - A human-readable business slug
+
+   The identifier is intentionally preserved exactly as
+   supplied so the backend can resolve both formats.
+
    `enabled` is provided so callers can explicitly control
    whether the request should run, which is useful when a
    route depends on another piece of state being hydrated.
 ========================================================= */
 
 export const usePublicAgriculturalBusiness = (
-  id: number | string | undefined,
+  identifier: string | number | undefined,
   enabled = true
 ) => {
-  const numericId =
-    typeof id === "string"
-      ? Number(id)
-      : id;
+  const normalizedIdentifier =
+    typeof identifier === "string"
+      ? identifier.trim()
+      : identifier;
 
-  const isValidId =
-    typeof numericId === "number" &&
-    Number.isInteger(numericId) &&
-    numericId > 0;
+  const isValidIdentifier =
+    typeof normalizedIdentifier === "number"
+      ? Number.isInteger(normalizedIdentifier) &&
+        normalizedIdentifier > 0
+      : Boolean(normalizedIdentifier);
 
   return useQuery<PublicAgriculturalBusinessDetail>({
     queryKey: [
       ...PUBLIC_AGRICULTURAL_BUSINESS_QUERY_KEY,
-      numericId,
+      normalizedIdentifier,
     ],
 
     queryFn: () =>
       farmerService.getPublicBusiness(
-        numericId as number
+        normalizedIdentifier as string | number
       ),
 
     enabled:
-      enabled && isValidId,
+      enabled && isValidIdentifier,
 
     staleTime: 1000 * 60 * 5,
   });

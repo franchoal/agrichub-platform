@@ -270,8 +270,18 @@ export const router = createBrowserRouter([
       /businesses
         Business directory
 
-      /businesses/:id
+      /businesses/:identifier
         Public business presence
+
+      :identifier supports both:
+
+        Numeric legacy ID
+        Human-readable business slug
+
+      The business details page resolves the
+      identifier through the backend and
+      canonicalizes legacy numeric URLs to
+      the business slug.
       ========================================
       */
 
@@ -281,7 +291,7 @@ export const router = createBrowserRouter([
       },
 
       {
-        path: "businesses/:id",
+        path: "businesses/:identifier",
         element: <AgriculturalBusinessDetailsPage />,
       },
 

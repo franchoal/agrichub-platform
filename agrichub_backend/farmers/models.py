@@ -1,39 +1,15 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 
 class AgriculturalCategory(models.Model):
-    """
-    Represents an agricultural business or professional category.
-
-    A business can belong to multiple categories.
-    """
-
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-    )
-
-    slug = models.SlugField(
-        max_length=120,
-        unique=True,
-    )
-
-    description = models.TextField(
-        blank=True,
-    )
-
-    is_active = models.BooleanField(
-        default=True,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
@@ -64,6 +40,13 @@ class FarmerProfile(models.Model):
         help_text="Business, farm, organization or professional name.",
     )
 
+    slug = models.SlugField(
+        max_length=280,
+        unique=True,
+        blank=True,
+        help_text="Stable public URL identity for the AgricWise business presence.",
+    )
+
     farm_location = models.CharField(
         max_length=255,
         help_text="Primary business or operating location.",
@@ -83,17 +66,10 @@ class FarmerProfile(models.Model):
         related_name="business_profiles",
     )
 
-    is_verified = models.BooleanField(
-        default=False,
-    )
+    is_verified = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Agricultural Business Profile"
@@ -101,6 +77,25 @@ class FarmerProfile(models.Model):
 
     def __str__(self):
         return self.farm_name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.farm_name) or "agricultural-business"
+            candidate = base_slug
+            counter = 2
+
+            while (
+                FarmerProfile.objects
+                .filter(slug=candidate)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                candidate = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = candidate
+
+        super().save(*args, **kwargs)
 
 
 class AgriculturalService(models.Model):
@@ -117,10 +112,7 @@ class AgriculturalService(models.Model):
         related_name="services",
     )
 
-    name = models.CharField(
-        max_length=255,
-    )
-
+    name = models.CharField(max_length=255)
     description = models.TextField()
 
     location = models.CharField(
@@ -155,17 +147,10 @@ class AgriculturalService(models.Model):
         null=True,
     )
 
-    is_available = models.BooleanField(
-        default=True,
-    )
+    is_available = models.BooleanField(default=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]

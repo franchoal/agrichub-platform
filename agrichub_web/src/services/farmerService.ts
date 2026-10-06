@@ -26,6 +26,12 @@ export interface FarmerProfile {
   id: number;
 
   /**
+   * Stable public URL identity for the
+   * AgricWise business presence.
+   */
+  slug: string;
+
+  /**
    * Legacy API field names retained for backend compatibility.
    * User-facing UI should refer to these as business/professional
    * identity fields.
@@ -197,11 +203,23 @@ export interface PublicBusinessService {
 
 export interface PublicAgriculturalBusiness {
   id: number;
+
+  /**
+   * Stable public URL identity.
+   *
+   * Example:
+   * /businesses/abekoko-farms/
+   */
+  slug: string;
+
   farm_name: string;
   farm_location: string;
   farm_description: string;
+
   business_categories: AgriculturalCategory[];
+
   is_verified: boolean;
+
   product_count: number;
   service_count: number;
 }
@@ -516,7 +534,7 @@ export const farmerService = {
 
   /* =======================================================
      PUBLIC AGRICULTURAL BUSINESS DIRECTORY
-     
+
      Supports backend-driven discovery:
        ?search=
        ?category=
@@ -540,14 +558,18 @@ export const farmerService = {
 
   /* =======================================================
      PUBLIC AGRICULTURAL BUSINESS DETAIL
+
+     Supports both:
+       - legacy numeric business IDs
+       - stable public business slugs
   ======================================================= */
 
   getPublicBusiness: async (
-    id: number
+    identifier: string | number
   ): Promise<PublicAgriculturalBusinessDetail> => {
     const response =
       await api.get<PublicAgriculturalBusinessDetail>(
-        `/farmers/businesses/${id}/`
+        `/farmers/businesses/${identifier}/`
       );
 
     return response.data;

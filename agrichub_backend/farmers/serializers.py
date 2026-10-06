@@ -66,6 +66,7 @@ class FarmerProfileSerializer(
             "id",
             "email",
             "farm_name",
+            "slug",
             "farm_location",
             "farm_description",
             "business_categories",
@@ -78,6 +79,7 @@ class FarmerProfileSerializer(
         read_only_fields = (
             "id",
             "email",
+            "slug",
             "business_categories",
             "is_verified",
             "created_at",
@@ -310,6 +312,7 @@ class PublicAgriculturalBusinessListSerializer(
 
         fields = (
             "id",
+            "slug",
             "farm_name",
             "farm_location",
             "farm_description",
@@ -379,6 +382,7 @@ class PublicAgriculturalBusinessDetailSerializer(
 
         fields = (
             "id",
+            "slug",
             "farm_name",
             "farm_location",
             "farm_description",

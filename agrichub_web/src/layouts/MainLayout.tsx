@@ -81,37 +81,48 @@ const MainLayout = () => {
     }`;
 
   const mobileNavClass = (path: string) =>
-    `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
+    `flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
       isActive(path)
         ? "bg-green-50 text-green-700"
         : "text-gray-700 hover:bg-gray-50 hover:text-green-700"
     }`;
 
+  /*
+  ========================================================
+  MOBILE BOTTOM NAVIGATION STYLES
+  ========================================================
+
+  Each navigation item is allowed to shrink and share
+  the available viewport width. This prevents the bottom
+  navigation from contributing to horizontal page overflow
+  on narrow devices.
+  */
+
   const bottomNavClass = (path: string) =>
-    `flex min-w-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 transition ${
+    `flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition ${
       isActive(path)
         ? "text-green-700"
         : "text-gray-400"
     }`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-gray-50">
       {/* ==================================================
           HEADER
       ================================================== */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 min-w-0 border-b border-gray-100 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-16 min-w-0 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* =================================================
               LOGO
           ================================================= */}
 
           <Link
             to="/"
-            className="flex items-center gap-2"
+            className="flex min-w-0 shrink items-center gap-2"
             onClick={closeMobileMenu}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-700">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-700">
               <img
                 src={logoIcon}
                 alt="AgricWise Africa"
@@ -119,12 +130,12 @@ const MainLayout = () => {
               />
             </div>
 
-            <div className="hidden sm:block">
-              <div className="text-lg font-black leading-none text-green-800">
+            <div className="hidden min-w-0 sm:block">
+              <div className="truncate text-lg font-black leading-none text-green-800">
                 AgricWise
               </div>
 
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                 Connect. Trade. Grow.
               </div>
             </div>
@@ -134,7 +145,7 @@ const MainLayout = () => {
               DESKTOP NAVIGATION
           ================================================= */}
 
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden min-w-0 items-center gap-1 md:flex">
             <Link
               to="/"
               className={desktopNavClass("/")}
@@ -170,14 +181,14 @@ const MainLayout = () => {
               DESKTOP ACTIONS
           ================================================= */}
 
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden min-w-0 items-center gap-2 md:flex">
             {user ? (
               <>
                 {/* NOTIFICATIONS */}
 
                 <Link
                   to="/notifications"
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                  className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
                     isActive("/notifications")
                       ? "bg-green-50 text-green-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
@@ -191,13 +202,13 @@ const MainLayout = () => {
 
                 <Link
                   to="/profile"
-                  className={`ml-1 flex items-center gap-2 rounded-xl px-3 py-2 transition ${
+                  className={`ml-1 flex min-w-0 shrink items-center gap-2 rounded-xl px-3 py-2 transition ${
                     isActive("/profile")
                       ? "bg-green-50"
                       : "hover:bg-gray-50"
                   }`}
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <User size={16} />
                   </div>
 
@@ -211,7 +222,7 @@ const MainLayout = () => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-red-50 hover:text-red-600"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-500 transition hover:bg-red-50 hover:text-red-600"
                   aria-label="Logout"
                 >
                   <LogOut size={18} />
@@ -221,14 +232,14 @@ const MainLayout = () => {
               <>
                 <Link
                   to="/login/buyer"
-                  className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
+                  className="shrink-0 rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-green-700"
                 >
                   Login
                 </Link>
 
                 <Link
                   to="/register"
-                  className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                  className="shrink-0 rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
                 >
                   Join AgricWise
                 </Link>
@@ -245,7 +256,7 @@ const MainLayout = () => {
             onClick={() =>
               setMobileMenuOpen((current) => !current)
             }
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-50 md:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-50 md:hidden"
             aria-label={
               mobileMenuOpen
                 ? "Close menu"
@@ -266,8 +277,8 @@ const MainLayout = () => {
         ================================================== */}
 
         {mobileMenuOpen && (
-          <div className="border-t border-gray-100 bg-white px-4 py-4 shadow-sm md:hidden">
-            <div className="space-y-1">
+          <div className="min-w-0 border-t border-gray-100 bg-white px-4 py-4 shadow-sm md:hidden">
+            <div className="min-w-0 space-y-1">
               {/* HOME */}
 
               <Link
@@ -275,8 +286,13 @@ const MainLayout = () => {
                 onClick={closeMobileMenu}
                 className={mobileNavClass("/")}
               >
-                <Home size={18} />
-                Home
+                <Home
+                  size={18}
+                  className="shrink-0"
+                />
+                <span className="min-w-0 truncate">
+                  Home
+                </span>
               </Link>
 
               {/* BUSINESSES */}
@@ -284,10 +300,17 @@ const MainLayout = () => {
               <Link
                 to="/businesses"
                 onClick={closeMobileMenu}
-                className={mobileNavClass("/businesses")}
+                className={mobileNavClass(
+                  "/businesses"
+                )}
               >
-                <Building2 size={18} />
-                Agricultural Businesses
+                <Building2
+                  size={18}
+                  className="shrink-0"
+                />
+                <span className="min-w-0 truncate">
+                  Agricultural Businesses
+                </span>
               </Link>
 
               {/* MARKETPLACE */}
@@ -297,8 +320,13 @@ const MainLayout = () => {
                 onClick={closeMobileMenu}
                 className={mobileNavClass("/products")}
               >
-                <ShoppingBag size={18} />
-                Marketplace
+                <ShoppingBag
+                  size={18}
+                  className="shrink-0"
+                />
+                <span className="min-w-0 truncate">
+                  Marketplace
+                </span>
               </Link>
 
               {user && (
@@ -310,8 +338,13 @@ const MainLayout = () => {
                     onClick={closeMobileMenu}
                     className={mobileNavClass("/farmer")}
                   >
-                    <Building2 size={18} />
-                    My Business
+                    <Building2
+                      size={18}
+                      className="shrink-0"
+                    />
+                    <span className="min-w-0 truncate">
+                      My Business
+                    </span>
                   </Link>
 
                   {/* NOTIFICATIONS */}
@@ -323,8 +356,13 @@ const MainLayout = () => {
                       "/notifications"
                     )}
                   >
-                    <Bell size={18} />
-                    Notifications
+                    <Bell
+                      size={18}
+                      className="shrink-0"
+                    />
+                    <span className="min-w-0 truncate">
+                      Notifications
+                    </span>
                   </Link>
 
                   {/* PROFILE */}
@@ -334,8 +372,13 @@ const MainLayout = () => {
                     onClick={closeMobileMenu}
                     className={mobileNavClass("/profile")}
                   >
-                    <User size={18} />
-                    Profile
+                    <User
+                      size={18}
+                      className="shrink-0"
+                    />
+                    <span className="min-w-0 truncate">
+                      Profile
+                    </span>
                   </Link>
 
                   {/* LOGOUT */}
@@ -343,30 +386,39 @@ const MainLayout = () => {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                    className="flex min-w-0 w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                   >
-                    <LogOut size={18} />
-                    Logout
+                    <LogOut
+                      size={18}
+                      className="shrink-0"
+                    />
+                    <span className="min-w-0 truncate">
+                      Logout
+                    </span>
                   </button>
                 </>
               )}
 
               {!user && (
-                <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <div className="mt-3 min-w-0 space-y-2 border-t border-gray-100 pt-3">
                   <Link
                     to="/login/buyer"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-center rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                    className="flex min-w-0 items-center justify-center rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                   >
-                    Login
+                    <span className="truncate">
+                      Login
+                    </span>
                   </Link>
 
                   <Link
                     to="/register"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-800"
+                    className="flex min-w-0 items-center justify-center rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-800"
                   >
-                    Join AgricWise
+                    <span className="truncate">
+                      Join AgricWise
+                    </span>
                   </Link>
                 </div>
               )}
@@ -379,7 +431,7 @@ const MainLayout = () => {
           PAGE CONTENT
       ================================================== */}
 
-      <main className="pb-24 md:pb-0">
+      <main className="min-w-0 overflow-x-hidden pb-24 md:pb-0">
         <Outlet />
       </main>
 
@@ -387,8 +439,8 @@ const MainLayout = () => {
           MOBILE APP BOTTOM NAVIGATION
       ================================================== */}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
-        <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 min-w-0 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
+        <div className="mx-auto flex h-16 min-w-0 max-w-lg items-center justify-around px-2">
           {/* HOME */}
 
           <Link
@@ -400,9 +452,10 @@ const MainLayout = () => {
               strokeWidth={
                 isActive("/") ? 2.5 : 2
               }
+              className="shrink-0"
             />
 
-            <span className="text-[10px] font-semibold">
+            <span className="max-w-full truncate text-[10px] font-semibold">
               Home
             </span>
           </Link>
@@ -411,16 +464,19 @@ const MainLayout = () => {
 
           <Link
             to="/businesses"
-            className={bottomNavClass("/businesses")}
+            className={bottomNavClass(
+              "/businesses"
+            )}
           >
             <Building2
               size={20}
               strokeWidth={
                 isActive("/businesses") ? 2.5 : 2
               }
+              className="shrink-0"
             />
 
-            <span className="text-[10px] font-semibold">
+            <span className="max-w-full truncate text-[10px] font-semibold">
               Businesses
             </span>
           </Link>
@@ -430,32 +486,32 @@ const MainLayout = () => {
           {user ? (
             <Link
               to="/"
-              className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
+              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-1.5"
             >
-              <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
+              <span className="flex h-10 w-10 shrink-0 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
                 <Plus
                   size={23}
                   strokeWidth={2.5}
                 />
               </span>
 
-              <span className="-mt-2 text-[10px] font-semibold text-gray-500">
+              <span className="-mt-2 max-w-full truncate text-[10px] font-semibold text-gray-500">
                 Post
               </span>
             </Link>
           ) : (
             <Link
               to="/register"
-              className="flex min-w-14 flex-col items-center justify-center gap-1 px-2 py-1.5"
+              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-1.5"
             >
-              <span className="flex h-10 w-10 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
+              <span className="flex h-10 w-10 shrink-0 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
                 <Plus
                   size={23}
                   strokeWidth={2.5}
                 />
               </span>
 
-              <span className="-mt-2 text-[10px] font-semibold text-gray-500">
+              <span className="-mt-2 max-w-full truncate text-[10px] font-semibold text-gray-500">
                 Join
               </span>
             </Link>
@@ -472,9 +528,10 @@ const MainLayout = () => {
               strokeWidth={
                 isActive("/products") ? 2.5 : 2
               }
+              className="shrink-0"
             />
 
-            <span className="text-[10px] font-semibold">
+            <span className="max-w-full truncate text-[10px] font-semibold">
               Market
             </span>
           </Link>
@@ -490,9 +547,10 @@ const MainLayout = () => {
               strokeWidth={
                 isActive("/profile") ? 2.5 : 2
               }
+              className="shrink-0"
             />
 
-            <span className="text-[10px] font-semibold">
+            <span className="max-w-full truncate text-[10px] font-semibold">
               {user ? "Profile" : "Login"}
             </span>
           </Link>
@@ -508,7 +566,7 @@ const MainLayout = () => {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             {/* BRAND */}
 
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-bold text-gray-800">
                 AgricWise Africa
               </p>
@@ -520,7 +578,7 @@ const MainLayout = () => {
 
             {/* NAVIGATION */}
 
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-gray-500">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-gray-500">
               <Link
                 to="/"
                 className="transition hover:text-green-700"
