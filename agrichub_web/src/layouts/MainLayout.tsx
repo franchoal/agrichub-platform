@@ -6,6 +6,7 @@ import {
   Menu,
   Plus,
   ShoppingBag,
+  ShoppingCart,
   User,
   X,
 } from "lucide-react";
@@ -89,13 +90,18 @@ const MainLayout = () => {
 
   /*
   ========================================================
-  MOBILE BOTTOM NAVIGATION STYLES
+  MOBILE BOTTOM NAVIGATION
   ========================================================
 
-  Each navigation item is allowed to shrink and share
-  the available viewport width. This prevents the bottom
-  navigation from contributing to horizontal page overflow
-  on narrow devices.
+  The bottom navigation is intentionally kept to five
+  primary actions for a native-app feel:
+
+      Home
+      Businesses
+      Business / Join
+      Cart
+      Profile
+  ========================================================
   */
 
   const bottomNavClass = (path: string) =>
@@ -107,6 +113,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden bg-gray-50">
+
       {/* ==================================================
           HEADER
       ================================================== */}
@@ -185,6 +192,20 @@ const MainLayout = () => {
           <div className="hidden min-w-0 items-center gap-2 md:flex">
             {user ? (
               <>
+                {/* CART */}
+
+                <Link
+                  to="/cart"
+                  className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
+                    isActive("/cart")
+                      ? "bg-green-50 text-green-700"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
+                  }`}
+                  aria-label="Cart"
+                >
+                  <ShoppingCart size={19} />
+                </Link>
+
                 {/* NOTIFICATIONS */}
 
                 <Link
@@ -336,6 +357,23 @@ const MainLayout = () => {
 
               {user && (
                 <>
+                  {/* CART */}
+
+                  <Link
+                    to="/cart"
+                    onClick={closeMobileMenu}
+                    className={mobileNavClass("/cart")}
+                  >
+                    <ShoppingCart
+                      size={18}
+                      className="shrink-0"
+                    />
+
+                    <span className="min-w-0 truncate">
+                      Cart
+                    </span>
+                  </Link>
+
                   {/* BUSINESS WORKSPACE */}
 
                   <Link
@@ -440,7 +478,7 @@ const MainLayout = () => {
           PAGE CONTENT
       ================================================== */}
 
-      <main className="min-w-0 overflow-x-hidden pb-24 md:pb-0">
+      <main className="min-w-0 overflow-x-hidden pb-20 md:pb-0">
         <Outlet />
       </main>
 
@@ -449,7 +487,7 @@ const MainLayout = () => {
       ================================================== */}
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 min-w-0 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
-        <div className="mx-auto flex h-16 min-w-0 max-w-lg items-center justify-around px-2">
+        <div className="mx-auto flex h-16 min-w-0 max-w-lg items-center px-2">
 
           {/* HOME */}
 
@@ -529,22 +567,22 @@ const MainLayout = () => {
             </Link>
           )}
 
-          {/* MARKETPLACE */}
+          {/* CART */}
 
           <Link
-            to="/products"
-            className={bottomNavClass("/products")}
+            to="/cart"
+            className={bottomNavClass("/cart")}
           >
-            <ShoppingBag
+            <ShoppingCart
               size={20}
               strokeWidth={
-                isActive("/products") ? 2.5 : 2
+                isActive("/cart") ? 2.5 : 2
               }
               className="shrink-0"
             />
 
             <span className="max-w-full truncate text-[10px] font-semibold">
-              Market
+              Cart
             </span>
           </Link>
 
@@ -611,6 +649,13 @@ const MainLayout = () => {
                 className="transition hover:text-green-700"
               >
                 Marketplace
+              </Link>
+
+              <Link
+                to="/cart"
+                className="transition hover:text-green-700"
+              >
+                Cart
               </Link>
 
               <Link
