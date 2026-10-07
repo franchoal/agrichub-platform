@@ -1,11 +1,23 @@
 import { api } from "./api";
 
 
+/*
+======================================================
+CHECKOUT
+======================================================
+*/
+
 export interface CheckoutData {
   delivery_address: string;
   payment_method: "card" | "bank_transfer";
 }
 
+
+/*
+======================================================
+ORDER ITEMS
+======================================================
+*/
 
 export interface OrderItem {
   id: number;
@@ -17,6 +29,51 @@ export interface OrderItem {
 }
 
 
+/*
+======================================================
+ORDER PAYMENT
+======================================================
+*/
+
+export interface OrderPayment {
+  id: number;
+  method: "card" | "bank_transfer";
+  status:
+    | "pending"
+    | "successful"
+    | "failed"
+    | "refunded";
+  amount: string;
+  created_at: string;
+  updated_at: string;
+}
+
+
+/*
+======================================================
+ORDER DELIVERY
+======================================================
+*/
+
+export interface OrderDelivery {
+  id: number;
+  address: string;
+  status:
+    | "pending"
+    | "assigned"
+    | "picked_up"
+    | "in_transit"
+    | "delivered";
+  tracking_number: string | null;
+}
+
+
+/*
+======================================================
+ORDER
+======================================================
+*/
+
 export interface Order {
   id: number;
   buyer: string;
@@ -24,10 +81,18 @@ export interface Order {
   status: string;
   total: string;
   items: OrderItem[];
+  payment: OrderPayment | null;
+  delivery: OrderDelivery | null;
   created_at: string;
   updated_at: string;
 }
 
+
+/*
+======================================================
+CHECKOUT PAYMENT
+======================================================
+*/
 
 export interface CheckoutPayment {
   id: number;
@@ -40,6 +105,12 @@ export interface CheckoutPayment {
   amount: string;
 }
 
+
+/*
+======================================================
+CHECKOUT DELIVERY
+======================================================
+*/
 
 export interface CheckoutDelivery {
   id: number;
@@ -54,6 +125,12 @@ export interface CheckoutDelivery {
 }
 
 
+/*
+======================================================
+CHECKOUT ORDER RESULT
+======================================================
+*/
+
 export interface CheckoutOrderResult {
   order: Order;
   payment: CheckoutPayment;
@@ -61,11 +138,23 @@ export interface CheckoutOrderResult {
 }
 
 
+/*
+======================================================
+CHECKOUT RESPONSE
+======================================================
+*/
+
 export interface CheckoutResponse {
   message: string;
   orders: CheckoutOrderResult[];
 }
 
+
+/*
+======================================================
+PAGINATED ORDERS
+======================================================
+*/
 
 export interface PaginatedOrders {
   count: number;
@@ -74,6 +163,12 @@ export interface PaginatedOrders {
   results: Order[];
 }
 
+
+/*
+======================================================
+FARMER ORDER STATUS UPDATE
+======================================================
+*/
 
 export interface UpdateOrderStatusData {
   status:
@@ -86,6 +181,12 @@ export interface UpdateOrderStatusData {
     | "cancelled";
 }
 
+
+/*
+======================================================
+ORDER SERVICE
+======================================================
+*/
 
 export const orderService = {
 

@@ -17,6 +17,7 @@ class OrderListView(generics.ListAPIView):
         return (
             Order.objects
             .filter(buyer=self.request.user)
+            .select_related("payment", "delivery")
             .prefetch_related("items__product")
         )
 
@@ -29,6 +30,7 @@ class OrderDetailView(generics.RetrieveAPIView):
         return (
             Order.objects
             .filter(buyer=self.request.user)
+            .select_related("payment", "delivery")
             .prefetch_related("items__product")
         )
 
@@ -38,25 +40,15 @@ class CheckoutView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = self.get_serializer(
-            data=request.data
-        )
-
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         try:
             results = checkout(
                 buyer=request.user,
-                delivery_address=serializer.validated_data[
-                    "delivery_address"
-                ],
-                payment_method=serializer.validated_data[
-                    "payment_method"
-                ],
+                delivery_address=serializer.validated_data["delivery_address"],
+                payment_method=serializer.validated_data["payment_method"],
             )
-
         except ValueError as exc:
             return Response(
                 {"detail": str(exc)},
@@ -83,9 +75,7 @@ class CheckoutView(generics.GenericAPIView):
                         "id": delivery.id,
                         "address": delivery.address,
                         "status": delivery.status,
-                        "tracking_number": (
-                            delivery.tracking_number
-                        ),
+                        "tracking_number": delivery.tracking_number,
                     },
                 }
             )
@@ -101,38 +91,31 @@ class CheckoutView(generics.GenericAPIView):
 
 class FarmerOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [
-        permissions.IsAuthenticated,
-        IsFarmer,
-    ]
+    permission_classes = [permissions.IsAuthenticated, IsFarmer]
 
     def get_queryset(self):
         return (
             Order.objects
             .filter(farmer__user=self.request.user)
+            .select_related("payment", "delivery")
             .prefetch_related("items__product")
         )
 
 
-class FarmerOrderDetailView(
-    generics.RetrieveUpdateAPIView
-):
+class FarmerOrderDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [
-        permissions.IsAuthenticated,
-        IsFarmer,
-    ]
+    permission_classes = [permissions.IsAuthenticated, IsFarmer]
 
     def get_queryset(self):
         return (
             Order.objects
             .filter(farmer__user=self.request.user)
+            .select_related("payment", "delivery")
             .prefetch_related("items__product")
         )
 
     def perform_update(self, serializer):
         old_status = serializer.instance.status
-
         order = serializer.save()
 
         if old_status != order.status:

@@ -91,25 +91,40 @@ const FarmerOrderDetailsPage = () => {
 
   const formattedStatus = order.status
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/\b\w/g, (character) =>
+      character.toUpperCase()
+    );
+
+  const formattedPaymentStatus =
+    order.payment?.status
+      ? order.payment.status
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (character) =>
+            character.toUpperCase()
+          )
+      : "Unavailable";
+
+  const formattedDeliveryStatus =
+    order.delivery?.status
+      ? order.delivery.status
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (character) =>
+            character.toUpperCase()
+          )
+      : "Unavailable";
+
+  const isCompleted = order.status === "completed";
+  const isCancelled = order.status === "cancelled";
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-50/50 via-white to-white px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        {/* ========================================== */}
-        {/* BACK */}
-        {/* ========================================== */}
-
         <Link
           to="/farmer/orders"
           className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 transition hover:text-green-800"
         >
           ← Back to Orders
         </Link>
-
-        {/* ========================================== */}
-        {/* HEADER */}
-        {/* ========================================== */}
 
         <section className="mt-6 overflow-hidden rounded-[30px] bg-gradient-to-r from-green-800 via-green-700 to-emerald-600 text-white shadow-xl sm:rounded-[36px]">
           <div className="relative p-6 sm:p-10 lg:p-12">
@@ -132,6 +147,10 @@ const FarmerOrderDetailsPage = () => {
                       {order.buyer}
                     </span>
                   </p>
+
+                  <p className="mt-1 text-sm text-green-100">
+                    {order.farmer}
+                  </p>
                 </div>
 
                 <div className="rounded-2xl bg-white/15 px-5 py-4 backdrop-blur">
@@ -148,9 +167,90 @@ const FarmerOrderDetailsPage = () => {
           </div>
         </section>
 
-        {/* ========================================== */}
-        {/* ORDER ITEMS */}
-        {/* ========================================== */}
+        <section className="mt-6 grid gap-5 sm:mt-8 md:grid-cols-2">
+          <Card className="rounded-[28px] border-0 bg-white p-6 shadow-lg sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl">
+                ₦
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-500">
+                  Payment
+                </p>
+
+                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                  {formattedPaymentStatus}
+                </h2>
+
+                {order.payment ? (
+                  <>
+                    <p className="mt-2 text-sm text-gray-500">
+                      Method:{" "}
+                      <span className="font-semibold text-gray-700">
+                        {order.payment.method === "bank_transfer"
+                          ? "Bank Transfer"
+                          : "Card"}
+                      </span>
+                    </p>
+
+                    <p className="mt-1 text-lg font-bold text-green-700">
+                      ₦
+                      {Number(
+                        order.payment.amount
+                      ).toLocaleString()}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">
+                    Payment information is not available.
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          <Card className="rounded-[28px] border-0 bg-white p-6 shadow-lg sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-xl">
+                🚚
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-500">
+                  Delivery
+                </p>
+
+                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                  {formattedDeliveryStatus}
+                </h2>
+
+                {order.delivery ? (
+                  <>
+                    <p className="mt-2 text-sm leading-6 text-gray-600">
+                      <span className="font-semibold text-gray-700">
+                        Address:
+                      </span>{" "}
+                      {order.delivery.address}
+                    </p>
+
+                    <p className="mt-2 text-sm text-gray-500">
+                      Tracking:{" "}
+                      <span className="font-semibold text-gray-700">
+                        {order.delivery.tracking_number ??
+                          "Not assigned"}
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">
+                    Delivery information is not available.
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        </section>
 
         <Card className="mt-6 overflow-hidden rounded-[28px] border-0 shadow-lg sm:mt-8">
           <div className="border-b border-gray-100 px-5 py-5 sm:px-8">
@@ -175,13 +275,19 @@ const FarmerOrderDetailsPage = () => {
                   </h3>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    ₦{Number(item.price).toLocaleString()} ×{" "}
-                    {item.quantity}
+                    ₦
+                    {Number(
+                      item.price
+                    ).toLocaleString()}{" "}
+                    × {item.quantity}
                   </p>
                 </div>
 
                 <span className="text-lg font-bold text-green-700 sm:text-right">
-                  ₦{Number(item.subtotal).toLocaleString()}
+                  ₦
+                  {Number(
+                    item.subtotal
+                  ).toLocaleString()}
                 </span>
               </div>
             ))}
@@ -193,14 +299,13 @@ const FarmerOrderDetailsPage = () => {
             </span>
 
             <span className="text-3xl font-extrabold text-green-700">
-              ₦{Number(order.total).toLocaleString()}
+              ₦
+              {Number(
+                order.total
+              ).toLocaleString()}
             </span>
           </div>
         </Card>
-
-        {/* ========================================== */}
-        {/* ORDER ACTION */}
-        {/* ========================================== */}
 
         {canUpdate ? (
           <Card className="mt-6 rounded-[28px] border-0 bg-white p-5 shadow-lg sm:mt-8 sm:p-8">
@@ -250,30 +355,44 @@ const FarmerOrderDetailsPage = () => {
                 : nextLabel[order.status]}
             </Button>
           </Card>
-        ) : (
-          <Card className="mt-6 rounded-[28px] border-0 bg-white p-6 shadow-lg sm:mt-8 sm:p-8">
+        ) : isCancelled ? (
+          <Card className="mt-6 rounded-[28px] border-0 bg-red-50 p-6 shadow-lg sm:mt-8 sm:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-2xl">
+                ×
+              </div>
+
+              <div>
+                <h2 className="text-xl font-bold text-red-800">
+                  Order Cancelled
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-red-700">
+                  This order has been cancelled and no further fulfillment
+                  actions are available.
+                </p>
+              </div>
+            </div>
+          </Card>
+        ) : isCompleted ? (
+          <Card className="mt-6 rounded-[28px] border-0 bg-green-50 p-6 shadow-lg sm:mt-8 sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">
                 ✓
               </div>
 
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Order Processing Complete
+                <h2 className="text-xl font-bold text-green-800">
+                  Order Completed
                 </h2>
 
-                <p className="mt-1 text-sm leading-6 text-gray-500">
-                  There are no further actions available for this order at
-                  its current stage.
+                <p className="mt-1 text-sm leading-6 text-green-700">
+                  This order has completed the full fulfillment process.
                 </p>
               </div>
             </div>
           </Card>
-        )}
-
-        {/* ========================================== */}
-        {/* BUSINESS GUIDANCE */}
-        {/* ========================================== */}
+        ) : null}
 
         <section className="mt-8 rounded-[28px] bg-white p-6 shadow-lg sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">

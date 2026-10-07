@@ -40,6 +40,33 @@ class OrderItemSerializer(serializers.ModelSerializer):
         ]
 
 
+class OrderPaymentSerializer(serializers.ModelSerializer):
+    """
+    Compact payment information included with an order.
+    """
+
+    class Meta:
+        model = Payment
+
+        fields = [
+            "id",
+            "method",
+            "status",
+            "amount",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "method",
+            "status",
+            "amount",
+            "created_at",
+            "updated_at",
+        ]
+
+
 class OrderSerializer(serializers.ModelSerializer):
     """
     Serializer for order information.
@@ -62,6 +89,12 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    payment = OrderPaymentSerializer(
+        read_only=True,
+    )
+
+    delivery = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
 
@@ -72,6 +105,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "status",
             "items",
             "total",
+            "payment",
+            "delivery",
             "created_at",
             "updated_at",
         ]
@@ -82,6 +117,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "farmer",
             "items",
             "total",
+            "payment",
+            "delivery",
             "created_at",
             "updated_at",
         ]
@@ -148,6 +185,23 @@ class OrderSerializer(serializers.ModelSerializer):
             item.subtotal
             for item in obj.items.all()
         )
+
+    def get_delivery(self, obj):
+        """
+        Return delivery information associated with the order.
+        """
+
+        delivery = getattr(obj, "delivery", None)
+
+        if not delivery:
+            return None
+
+        return {
+            "id": delivery.id,
+            "address": delivery.address,
+            "status": delivery.status,
+            "tracking_number": delivery.tracking_number,
+        }
 
 
 class CheckoutSerializer(serializers.Serializer):

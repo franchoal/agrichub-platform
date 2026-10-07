@@ -42,6 +42,7 @@ import EditProductPage from "../pages/Products/EditProductPage";
 
 import CartPage from "../pages/Cart/CartPage";
 import CheckoutPage from "../pages/Checkout/CheckoutPage";
+import CheckoutSuccessPage from "../pages/Checkout/CheckoutSuccessPage";
 
 /* =========================================================
    ORDERS
@@ -426,6 +427,11 @@ export const router = createBrowserRouter([
           {
             path: "checkout",
             element: <CheckoutPage />,
+          },
+
+          {
+            path: "checkout/success",
+            element: <CheckoutSuccessPage />,
           },
 
 

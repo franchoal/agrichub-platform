@@ -40,15 +40,11 @@ const CheckoutPage = () => {
   if (isLoading) {
     return (
       <main className="mx-auto max-w-7xl px-6 py-16">
-
         <div className="animate-pulse">
-
           <div className="h-10 w-72 rounded bg-gray-200" />
 
           <div className="mt-4 h-5 w-96 rounded bg-gray-100" />
-
         </div>
-
       </main>
     );
   }
@@ -56,65 +52,61 @@ const CheckoutPage = () => {
   if (isError || !cart) {
     return (
       <main className="mx-auto max-w-6xl px-6 py-16">
-
         <Card className="rounded-3xl border-red-200 bg-red-50 p-10">
-
           <h2 className="text-3xl font-bold text-red-700">
-
             Unable to load checkout
-
           </h2>
 
           <p className="mt-4 text-red-600">
-
             Please refresh the page and try again.
-
           </p>
-
         </Card>
-
       </main>
     );
   }
 
   const handleCheckout = () => {
+    if (!deliveryAddress.trim()) {
+      toast.error(
+        "Please enter your delivery address."
+      );
+      return;
+    }
 
     checkout(
       {
         delivery_address:
-          deliveryAddress,
+          deliveryAddress.trim(),
 
         payment_method:
           paymentMethod,
       },
       {
-        onSuccess: () => {
-
+        onSuccess: (response) => {
           toast.success(
-            "Order placed successfully!"
+            "Order created successfully!"
           );
 
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
-
+          navigate(
+            "/checkout/success",
+            {
+              state: response,
+              replace: true,
+            }
+          );
         },
 
         onError: (error: any) => {
-
           toast.error(
             error?.response?.data?.detail ??
               "Checkout failed."
           );
-
         },
       }
     );
-
   };
 
   return (
-
     <main className="mx-auto max-w-7xl px-6 py-12">
 
       {/* Hero */}
@@ -122,23 +114,17 @@ const CheckoutPage = () => {
       <section className="mb-12 rounded-[32px] bg-gradient-to-r from-green-700 via-green-600 to-green-500 p-10 text-white shadow-xl">
 
         <span className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold backdrop-blur">
-
           Secure Checkout
-
         </span>
 
         <h1 className="mt-6 text-5xl font-extrabold">
-
           Complete Your Purchase
-
         </h1>
 
         <p className="mt-5 max-w-3xl text-lg leading-8 text-green-50">
-
           You're just one step away from receiving fresh,
           quality farm produce directly from trusted
           Nigerian farmers.
-
         </p>
 
       </section>
@@ -167,15 +153,11 @@ const CheckoutPage = () => {
               <div>
 
                 <h2 className="text-2xl font-bold">
-
                   Order Summary
-
                 </h2>
 
                 <p className="text-gray-500">
-
                   Review the products you're purchasing.
-
                 </p>
 
               </div>
@@ -194,9 +176,7 @@ const CheckoutPage = () => {
                   <div>
 
                     <h3 className="text-lg font-bold">
-
                       {item.product_name}
-
                     </h3>
 
                     <p className="mt-2 text-sm text-gray-500">
@@ -205,7 +185,9 @@ const CheckoutPage = () => {
                       {Number(
                         item.product_price
                       ).toLocaleString()}
+
                       {" × "}
+
                       {item.quantity}
 
                     </p>
@@ -215,9 +197,7 @@ const CheckoutPage = () => {
                   <div className="text-right">
 
                     <p className="text-sm text-gray-500">
-
                       Subtotal
-
                     </p>
 
                     <h3 className="text-2xl font-bold text-green-700">
@@ -238,7 +218,8 @@ const CheckoutPage = () => {
             </div>
 
           </Card>
-                    {/* Delivery Address */}
+
+          {/* Delivery Address */}
 
           <Card className="rounded-[30px] p-8 shadow-sm">
 
@@ -256,15 +237,11 @@ const CheckoutPage = () => {
               <div>
 
                 <h2 className="text-2xl font-bold">
-
                   Delivery Address
-
                 </h2>
 
                 <p className="text-gray-500">
-
                   Tell us exactly where you want your order delivered.
-
                 </p>
 
               </div>
@@ -303,15 +280,11 @@ const CheckoutPage = () => {
               <div>
 
                 <h2 className="text-2xl font-bold">
-
                   Payment Method
-
                 </h2>
 
                 <p className="text-gray-500">
-
                   Select how you would like to pay.
-
                 </p>
 
               </div>
@@ -338,15 +311,11 @@ const CheckoutPage = () => {
                   <div>
 
                     <h3 className="font-bold">
-
                       Card Payment
-
                     </h3>
 
                     <p className="text-sm text-gray-500">
-
                       Debit or Credit Card
-
                     </p>
 
                   </div>
@@ -357,13 +326,10 @@ const CheckoutPage = () => {
                   type="radio"
                   value="card"
                   checked={
-                    paymentMethod ===
-                    "card"
+                    paymentMethod === "card"
                   }
                   onChange={() =>
-                    setPaymentMethod(
-                      "card"
-                    )
+                    setPaymentMethod("card")
                   }
                 />
 
@@ -371,8 +337,7 @@ const CheckoutPage = () => {
 
               <label
                 className={`flex cursor-pointer items-center justify-between rounded-2xl border p-5 transition ${
-                  paymentMethod ===
-                  "bank_transfer"
+                  paymentMethod === "bank_transfer"
                     ? "border-green-600 bg-green-50"
                     : "border-gray-200 hover:border-green-300"
                 }`}
@@ -388,15 +353,11 @@ const CheckoutPage = () => {
                   <div>
 
                     <h3 className="font-bold">
-
                       Bank Transfer
-
                     </h3>
 
                     <p className="text-sm text-gray-500">
-
                       Pay directly from your bank.
-
                     </p>
 
                   </div>
@@ -428,7 +389,8 @@ const CheckoutPage = () => {
         {/* RIGHT */}
 
         <aside className="space-y-6">
-                  {/* Payment Summary */}
+
+          {/* Payment Summary */}
 
           <Card className="sticky top-28 rounded-[30px] p-8 shadow-xl">
 
@@ -518,17 +480,13 @@ const CheckoutPage = () => {
                 <div>
 
                   <h3 className="font-semibold text-gray-900">
-
                     Secure Checkout
-
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-gray-600">
-
                     Your order is securely processed.
                     Payments and personal information are protected,
                     and you'll receive order updates after checkout.
-
                   </p>
 
                 </div>
@@ -544,9 +502,7 @@ const CheckoutPage = () => {
       </div>
 
     </main>
-
   );
-
 };
 
 export default CheckoutPage;

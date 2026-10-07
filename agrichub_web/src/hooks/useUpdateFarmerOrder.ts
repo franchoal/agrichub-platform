@@ -31,7 +31,7 @@ export const useUpdateFarmerOrder = () => {
 
       queryClient.invalidateQueries({
         queryKey: [
-          "farmer-orders",
+          "farmer-order",
           variables.id,
         ],
       });
