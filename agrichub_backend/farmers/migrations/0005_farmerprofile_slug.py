@@ -42,6 +42,8 @@ def populate_farmer_profile_slugs(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    atomic = False
+
     dependencies = [
         (
             "farmers",
