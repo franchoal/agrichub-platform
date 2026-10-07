@@ -171,6 +171,19 @@ const FarmerDashboardPage = () => {
   );
 
   /* =========================================================
+     BUSINESS LIFECYCLE
+  ========================================================= */
+
+  const isPublished = Boolean(profile?.is_published);
+  const isVerified = Boolean(profile?.is_verified);
+
+  const publicBusinessPath = profile?.slug
+    ? `/businesses/${profile.slug}`
+    : profile
+      ? `/businesses/${profile.id}`
+      : "/businesses";
+
+  /* =========================================================
      USER DISPLAY NAME
   ========================================================= */
 
@@ -215,6 +228,21 @@ const FarmerDashboardPage = () => {
     return (
       <Navigate
         to="/farmer/profile"
+        replace
+      />
+    );
+  }
+
+  /*
+   * FarmerRoute normally catches this before the dashboard
+   * renders. Keep the guard here as a defensive boundary so
+   * an unpublished business can never operate the workspace
+   * if this page is reached directly.
+   */
+  if (!isPublished) {
+    return (
+      <Navigate
+        to="/farmer/onboarding/review"
         replace
       />
     );
@@ -352,7 +380,14 @@ const FarmerDashboardPage = () => {
                   My AgricWise Business
                 </span>
 
-                {profile.is_verified && (
+                {isPublished && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Published
+                  </span>
+                )}
+
+                {isVerified && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Verified
@@ -373,7 +408,7 @@ const FarmerDashboardPage = () => {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
-                to={`/businesses/${profile.id}`}
+                to={publicBusinessPath}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-green-200 hover:text-green-700"
               >
                 <Eye className="h-4 w-4" />
@@ -381,7 +416,7 @@ const FarmerDashboardPage = () => {
               </Link>
 
               <Link
-                to="/farmer/profile"
+                to="/farmer/profile?edit=true"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
               >
                 <UserRound className="h-4 w-4" />
@@ -522,7 +557,7 @@ const FarmerDashboardPage = () => {
               </div>
 
               <Link
-                to="/farmer/profile"
+                to="/farmer/profile?edit=true"
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-700"
               >
                 Complete Profile
@@ -620,18 +655,18 @@ const FarmerDashboardPage = () => {
             {/* TRUST */}
 
             <Link
-              to="/farmer/profile"
+              to="/farmer/profile?edit=true"
               className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    profile.is_verified
+                    isVerified
                       ? "bg-green-50 text-green-700"
                       : "bg-yellow-50 text-yellow-700"
                   }`}
                 >
-                  {profile.is_verified ? (
+                  {isVerified ? (
                     <CheckCircle2 className="h-5 w-5" />
                   ) : (
                     <CircleAlert className="h-5 w-5" />
@@ -643,12 +678,12 @@ const FarmerDashboardPage = () => {
 
               <p
                 className={`mt-5 text-lg font-bold ${
-                  profile.is_verified
+                  isVerified
                     ? "text-green-700"
                     : "text-orange-600"
                 }`}
               >
-                {profile.is_verified
+                {isVerified
                   ? "Verified"
                   : "Pending"}
               </p>
@@ -664,7 +699,7 @@ const FarmerDashboardPage = () => {
             VERIFICATION STATUS
         ===================================================== */}
 
-        {!profile.is_verified && (
+        {!isVerified && (
           <section className="mb-8 rounded-2xl border border-yellow-200 bg-yellow-50 p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-3">
@@ -682,15 +717,15 @@ const FarmerDashboardPage = () => {
                   </h2>
 
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-yellow-700">
-                    You can continue building your AgricWise
-                    presence while your business profile is
-                    awaiting review.
+                    Your business is published and can be
+                    discovered while AgricWise verification
+                    is pending.
                   </p>
                 </div>
               </div>
 
               <Link
-                to="/farmer/profile"
+                to="/farmer/profile?edit=true"
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-yellow-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-700"
               >
                 Review Profile
@@ -764,7 +799,7 @@ const FarmerDashboardPage = () => {
 
             <Link
               to="/farmer/orders"
-              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
+              className="rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-orange-700">
                 <ShoppingCart className="h-5 w-5" />
@@ -786,7 +821,7 @@ const FarmerDashboardPage = () => {
 
             <Link
               to="/notifications"
-              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
+              className="rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-700">
                 <Bell className="h-5 w-5" />
@@ -1262,7 +1297,7 @@ const FarmerDashboardPage = () => {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  to={`/businesses/${profile.id}`}
+                  to={publicBusinessPath}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
                 >
                   <Eye className="h-4 w-4" />
@@ -1270,7 +1305,7 @@ const FarmerDashboardPage = () => {
                 </Link>
 
                 <Link
-                  to="/farmer/profile"
+                  to="/farmer/profile?edit=true"
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-green-200 hover:text-green-700"
                 >
                   Edit Business Profile
@@ -1307,6 +1342,17 @@ const FarmerDashboardPage = () => {
               <div className="mt-8 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
                   <span className="text-sm text-green-100">
+                    Publication
+                  </span>
+
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Published
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-sm text-green-100">
                     Categories
                   </span>
 
@@ -1341,10 +1387,10 @@ const FarmerDashboardPage = () => {
                   </span>
 
                   <span className="inline-flex items-center gap-1.5 font-semibold">
-                    {profile.is_verified && (
+                    {isVerified && (
                       <CheckCircle2 className="h-4 w-4" />
                     )}
-                    {profile.is_verified
+                    {isVerified
                       ? "Verified"
                       : "Pending"}
                   </span>
@@ -1453,7 +1499,7 @@ const FarmerDashboardPage = () => {
             </p>
 
             <Link
-              to="/farmer/profile"
+              to="/farmer/profile?edit=true"
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-green-700 transition hover:-translate-y-0.5 hover:shadow-lg"
             >
               Review Business Profile
@@ -1484,7 +1530,7 @@ const FarmerDashboardPage = () => {
 
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                to={`/businesses/${profile.id}`}
+                to={publicBusinessPath}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
               >
                 <Eye className="h-4 w-4" />

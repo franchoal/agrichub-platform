@@ -1,6 +1,6 @@
 import {
   ArrowLeft,
-  Package,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 import {
@@ -9,69 +9,29 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import ProductForm from "../../components/products/ProductForm";
+import AgriculturalServiceForm from "../../components/farmer/AgriculturalServiceForm";
 
-import { useCreateProduct } from "../../hooks/useCreateProduct";
+import {
+  useCreateAgriculturalService,
+} from "../../hooks/useAgriculturalServices";
 
 import type {
-  ProductFormData,
-} from "../../validators/productSchemas";
+  CreateAgriculturalServiceData,
+  UpdateAgriculturalServiceData,
+} from "../../services/farmerService";
 
-const CreateProductPage = () => {
+const CreateServicePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /*
-  =========================================================
-  PAGE CONTEXT
-  =========================================================
-
-  The same product creation infrastructure serves two
-  different experiences:
-
-  1. Normal business workspace
-     /farmer/products/create
-
-  2. Guided business onboarding
-     /farmer/onboarding/products
-
-  One ProductForm and one creation mutation are deliberately
-  shared so validation and persistence remain consistent.
-  */
-
   const isOnboarding =
     location.pathname ===
-    "/farmer/onboarding/products";
-
-
-  /*
-  =========================================================
-  SUCCESS NAVIGATION
-  =========================================================
-  */
+    "/farmer/onboarding/services";
 
   const {
     mutate,
     isPending,
-  } = useCreateProduct(() => {
-    if (isOnboarding) {
-      navigate(
-        "/farmer/onboarding/services",
-        {
-          replace: true,
-        },
-      );
-
-      return;
-    }
-
-    navigate(
-      "/farmer/dashboard",
-      {
-        replace: true,
-      },
-    );
-  });
+  } = useCreateAgriculturalService();
 
 
   /*
@@ -80,36 +40,82 @@ const CreateProductPage = () => {
   =========================================================
   */
 
-  const handleSubmit = (
-    data: ProductFormData,
+  const handleSubmit = async (
+    data:
+      | CreateAgriculturalServiceData
+      | UpdateAgriculturalServiceData
   ) => {
-    mutate(data);
+    /*
+     * This page is create-only.
+     *
+     * AgriculturalServiceForm is reusable for both create
+     * and update operations, so its onSubmit contract accepts
+     * both payload types. Because this page has no `service`
+     * prop and therefore can never edit an existing service,
+     * only the create payload is valid here.
+     */
+
+    if (!data.name || !data.description) {
+      return;
+    }
+
+    const createData: CreateAgriculturalServiceData = {
+      name: data.name,
+      description: data.description,
+      location: data.location,
+      price: data.price,
+      price_unit: data.price_unit,
+      is_available: data.is_available,
+    };
+
+    mutate(createData, {
+      onSuccess: () => {
+        if (isOnboarding) {
+          navigate(
+            "/farmer/onboarding/review",
+            {
+              replace: true,
+            }
+          );
+
+          return;
+        }
+
+        navigate(
+          "/farmer/dashboard",
+          {
+            replace: true,
+          }
+        );
+      },
+    });
   };
 
 
   /*
   =========================================================
-  SKIP PRODUCT STEP
+  SKIP SERVICE STEP
   =========================================================
 
-  Products are optional for publication.
+  Services are optional for publication.
 
-  The backend publication requirements are only:
+  The business can still publish when it has completed
+  the required Business Foundation:
 
     - business name
     - business location
     - at least one active business category
 
-  Therefore an onboarding user may continue without
-  creating a product.
+  Therefore onboarding users can continue directly to
+  Review & Publish without creating a service.
   */
 
   const handleSkip = () => {
     navigate(
-      "/farmer/onboarding/services",
+      "/farmer/onboarding/review",
       {
         replace: true,
-      },
+      }
     );
   };
 
@@ -121,11 +127,11 @@ const CreateProductPage = () => {
   */
 
   const backPath = isOnboarding
-    ? "/farmer/profile"
+    ? "/farmer/onboarding/products"
     : "/farmer/dashboard";
 
   const backLabel = isOnboarding
-    ? "Back to Business Foundation"
+    ? "Back to Products"
     : "Back to Business Workspace";
 
 
@@ -164,12 +170,12 @@ const CreateProductPage = () => {
               </p>
 
               <p className="text-sm font-semibold text-gray-500">
-                Step 2 of 4
+                Step 3 of 4
               </p>
             </div>
 
             <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-              <div className="h-full w-1/2 rounded-full bg-green-600" />
+              <div className="h-full w-3/4 rounded-full bg-green-600" />
             </div>
 
             <div className="mt-3 grid grid-cols-4 gap-2 text-[11px] font-semibold sm:text-xs">
@@ -181,7 +187,7 @@ const CreateProductPage = () => {
                 Products
               </div>
 
-              <div className="text-gray-400">
+              <div className="text-green-700">
                 Services
               </div>
 
@@ -201,26 +207,26 @@ const CreateProductPage = () => {
           <div className="flex items-start gap-4">
 
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700">
-              <Package size={23} />
+              <BriefcaseBusiness size={23} />
             </div>
 
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-700">
                 {isOnboarding
-                  ? "Step 2 · What You Offer"
-                  : "Business Inventory"}
+                  ? "Step 3 · What You Provide"
+                  : "Business Services"}
               </p>
 
               <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">
                 {isOnboarding
-                  ? "Add Your Products"
-                  : "Add a Product"}
+                  ? "Add Your Services"
+                  : "Add a Service"}
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
                 {isOnboarding
-                  ? "Tell potential customers what your agricultural business produces or sells. You can add more products later from your business workspace."
-                  : "Create a clear product listing for your AgricWise business and make it available to potential buyers."}
+                  ? "Tell potential customers about the agricultural services your business provides. You can manage and add more services later."
+                  : "Create a clear service listing for your AgricWise business and make it available to potential customers."}
               </p>
             </div>
 
@@ -235,10 +241,11 @@ const CreateProductPage = () => {
         {isOnboarding && (
           <div className="mb-6 rounded-2xl border border-green-100 bg-green-50 px-5 py-4">
             <p className="text-sm leading-6 text-green-900">
-              Your products become part of your public AgricWise
-              business presence. Add the products you currently
-              offer; you will be able to manage and update them
-              later.
+              Services help customers understand the expertise,
+              support, and agricultural solutions your business
+              provides. Add the services you currently offer;
+              you can update them later from your business
+              workspace.
             </p>
           </div>
         )}
@@ -249,27 +256,22 @@ const CreateProductPage = () => {
         ================================================= */}
 
         <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm sm:p-8 lg:p-10">
-          <ProductForm
+          <AgriculturalServiceForm
             onSubmit={handleSubmit}
             isSubmitting={isPending}
-            submitLabel={
-              isOnboarding
-                ? "Save Product & Continue"
-                : "Add Product"
-            }
           />
         </div>
 
 
         {/* =================================================
-            OPTIONAL PRODUCT STEP
+            OPTIONAL SERVICE STEP
         ================================================= */}
 
         {isOnboarding && (
           <div className="mt-6 flex flex-col items-center gap-3 text-center">
             <p className="text-xs leading-5 text-gray-500">
-              Products are optional. You can add them later from
-              your AgricWise business workspace.
+              Services are optional. You can add them later
+              from your AgricWise business workspace.
             </p>
 
             <button
@@ -278,7 +280,7 @@ const CreateProductPage = () => {
               disabled={isPending}
               className="text-sm font-semibold text-gray-600 underline decoration-gray-300 underline-offset-4 transition hover:text-green-700 hover:decoration-green-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Skip Products for Now
+              Skip Services for Now
             </button>
           </div>
         )}
@@ -288,4 +290,4 @@ const CreateProductPage = () => {
   );
 };
 
-export default CreateProductPage;
+export default CreateServicePage;

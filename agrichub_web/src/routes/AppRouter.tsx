@@ -14,6 +14,13 @@ import AboutPage from "../pages/About/AboutPage";
 import LandingPage from "../pages/Landing/LandingPage";
 
 /* =========================================================
+   AGRICULTURAL BUSINESS ONBOARDING
+========================================================= */
+
+import FarmerOnboardingReviewPage from "../pages/Farmer/FarmerOnboardingReviewPage";
+import CreateServicePage from "../pages/Farmer/CreateServicePage";
+
+/* =========================================================
    AGRICULTURAL BUSINESS DISCOVERY
 ========================================================= */
 
@@ -144,7 +151,42 @@ their first agricultural business profile.
 Public agricultural business discovery also
 remains outside ProtectedRoute so visitors
 can discover businesses before registration.
+
+ONBOARDING ARCHITECTURE
+
+The guided agricultural business onboarding
+flow is now:
+
+    /farmer/profile
+          ↓
+    /farmer/onboarding/products
+          ↓
+    /farmer/onboarding/services
+          ↓
+    /farmer/onboarding/review
+          ↓
+    POST /farmers/profile/publish/
+          ↓
+    /businesses/:slug
+
+The profile creation step happens outside
+FarmerRoute because the user does not yet
+have a FarmerProfile.
+
+Once the profile exists, the remaining
+onboarding steps are protected by
+FarmerRoute.
+
+The existing workspace routes remain
+available independently:
+
+    /farmer/dashboard
+    /farmer/products/create
+    /farmer/products/:id/edit
+    /farmer/orders
+    /farmer/orders/:id
 */
+
 
 export const router = createBrowserRouter([
   /*
@@ -227,13 +269,6 @@ export const router = createBrowserRouter([
       ========================================
       ROOT / COMMUNITY HOME
       ========================================
-
-      Unauthenticated:
-        LandingPage
-
-      Authenticated:
-        HomePage
-      ========================================
       */
 
       {
@@ -261,11 +296,8 @@ export const router = createBrowserRouter([
 
       These pages are intentionally public.
 
-      AgricWise business presence is part of
-      the platform's discovery layer. Visitors
-      should be able to discover agricultural
-      businesses, products and services without
-      being forced to register first.
+      Visitors can discover agricultural
+      businesses before registration.
 
       /businesses
         Business directory
@@ -277,11 +309,6 @@ export const router = createBrowserRouter([
 
         Numeric legacy ID
         Human-readable business slug
-
-      The business details page resolves the
-      identifier through the backend and
-      canonicalizes legacy numeric URLs to
-      the business slug.
       ========================================
       */
 
@@ -320,9 +347,6 @@ export const router = createBrowserRouter([
 
       Existing farmer portal is retained
       temporarily for compatibility.
-
-      The underlying concept is now the
-      AgricWise agricultural business workspace.
       ========================================
       */
 
@@ -372,13 +396,13 @@ export const router = createBrowserRouter([
           AGRICULTURAL BUSINESS PROFILE
           ====================================
 
-          This is intentionally outside
+          This intentionally remains outside
           FarmerRoute.
 
           A normal authenticated user must
           be able to create their agricultural
-          business profile before accessing
-          the business workspace.
+          business profile before they have
+          a FarmerProfile.
           ====================================
           */
 
@@ -442,13 +466,9 @@ export const router = createBrowserRouter([
           These routes require an existing
           FarmerProfile.
 
-          FarmerRoute does not represent a
-          permanent user account type.
-
-          It only verifies that the user has
-          an agricultural business / professional
-          profile and can therefore access the
-          business workspace.
+          FarmerRoute verifies that the
+          authenticated user has an agricultural
+          business / professional profile.
           ====================================
           */
 
@@ -456,6 +476,60 @@ export const router = createBrowserRouter([
             element: <FarmerRoute />,
 
             children: [
+
+              /*
+              ==================================
+              BUSINESS ONBOARDING
+              ==================================
+
+              Step 1 happens outside FarmerRoute:
+
+                  /farmer/profile
+
+              Once the FarmerProfile exists,
+              the guided onboarding continues
+              here.
+
+              Step 2:
+                  /farmer/onboarding/products
+
+              Step 3:
+                  /farmer/onboarding/services
+
+              Step 4:
+                  /farmer/onboarding/review
+
+              Final action:
+
+                  POST /farmers/profile/publish/
+
+              Successful publication:
+
+                  /businesses/:slug
+              ==================================
+              */
+
+              {
+                path: "farmer/onboarding/products",
+                element: <CreateProductPage />,
+              },
+
+              {
+                path: "farmer/onboarding/services",
+                element: <CreateServicePage />,
+              },
+
+              {
+                path: "farmer/onboarding/review",
+                element: <FarmerOnboardingReviewPage />,
+              },
+
+
+              /*
+              ==================================
+              BUSINESS WORKSPACE
+              ==================================
+              */
 
               {
                 path: "farmer/dashboard",

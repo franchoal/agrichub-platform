@@ -24,46 +24,54 @@ export const useLogin = (
 
     onSuccess: (response) => {
       /*
-      ==========================================
-      Save Authentication
-      ==========================================
-      */
-
+       * ==========================================
+       * SAVE AUTHENTICATION
+       * ==========================================
+       *
+       * Persist the authenticated session before
+       * navigating anywhere.
+       */
       login({
         user: response.user,
         access: response.access,
         refresh: response.refresh,
       });
 
-      toast.success(
-        "Login successful!"
-      );
+      toast.success("Login successful!");
 
       /*
-      ==========================================
-      AGRICWISE FLOW
-
-      Normal login
-        ↓
-      Authenticate person
-        ↓
-      Save session
-        ↓
-      AgricWise Home
-
-      Seller/business login
-        ↓
-      Authenticate person
-        ↓
-      Save session
-        ↓
-      Return to Farmer Portal
-        ↓
-      Existing farmer → Dashboard
-      New farmer → Profile setup
-      ==========================================
-      */
-
+       * ==========================================
+       * POST-LOGIN DESTINATION
+       * ==========================================
+       *
+       * The destination has already been validated
+       * by LoginPage.
+       *
+       * Normal login:
+       *   /login
+       *      ↓
+       *   /
+       *
+       * Business login:
+       *   /login?returnTo=/farmer
+       *      ↓
+       *   /farmer
+       *      ↓
+       *   FarmerPortalPage decides the next step:
+       *
+       *   No business profile
+       *      → /farmer/profile
+       *
+       *   Existing unpublished business
+       *      → /farmer/onboarding/review
+       *
+       *   Published business
+       *      → /farmer/dashboard
+       *
+       * The authentication hook therefore does NOT
+       * need to know anything about farmer profiles,
+       * onboarding, publication, or verification.
+       */
       navigate(
         options?.redirectTo || "/",
         {
@@ -73,23 +81,17 @@ export const useLogin = (
     },
 
     onError: (error) => {
-      if (
-        axios.isAxiosError(error)
-      ) {
+      if (axios.isAxiosError(error)) {
         const message =
           error.response?.data?.detail ||
           "Invalid email or password.";
 
-        toast.error(
-          message
-        );
+        toast.error(message);
 
         return;
       }
 
-      toast.error(
-        "Login failed."
-      );
+      toast.error("Login failed.");
     },
   });
 };

@@ -28,30 +28,47 @@ import { useLogin } from "../../hooks/useLogin";
 const LoginPage = () => {
   const [searchParams] = useSearchParams();
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   /*
-   * Preserve the destination that brought the user
+   * Preserve the internal destination that brought the user
    * to the login page.
    *
    * Example:
    * /login?returnTo=/farmer
+   *
+   * Only internal single-slash routes are allowed.
+   * This prevents protocol-relative redirects such as:
+   * //example.com
    */
-  const returnTo = searchParams.get("returnTo");
+  const requestedReturnTo = searchParams.get("returnTo");
+
+  const hasValidReturnTo =
+    Boolean(
+      requestedReturnTo &&
+        requestedReturnTo.startsWith("/") &&
+        !requestedReturnTo.startsWith("//")
+    );
+
+  const redirectTo = hasValidReturnTo
+    ? requestedReturnTo!
+    : undefined;
 
   /*
-   * Only allow internal AgricWise routes to be used
-   * as redirect destinations.
+   * Login handles the final redirect after authentication.
    *
-   * This prevents an external URL from being supplied
-   * through the query string.
+   * For business onboarding:
+   *
+   * /login?returnTo=/farmer
+   *       ↓
+   * successful login
+   *       ↓
+   * /farmer
+   *       ↓
+   * lifecycle gateway
+   *       ↓
+   * Business Foundation / Review / Dashboard
    */
-  const redirectTo =
-    returnTo && returnTo.startsWith("/")
-      ? returnTo
-      : undefined;
-
   const {
     register,
     handleSubmit,
@@ -62,12 +79,6 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  /*
-   ==========================================
-   Login Mutation
-   ==========================================
-   */
-
   const {
     mutate,
     isPending,
@@ -75,17 +86,13 @@ const LoginPage = () => {
     redirectTo,
   });
 
-  /*
-   ==========================================
-   Submit
-   ==========================================
-   */
-
-  const onSubmit = (
-    data: LoginFormData
-  ) => {
+  const onSubmit = (data: LoginFormData) => {
     mutate(data);
   };
+
+  const registerPath = redirectTo
+    ? `/register?returnTo=${encodeURIComponent(redirectTo)}`
+    : "/register";
 
   return (
     <AuthLayout>
@@ -140,11 +147,9 @@ const LoginPage = () => {
             type="submit"
             disabled={isPending}
           >
-            {
-              isPending
-                ? "Signing In..."
-                : "Sign In"
-            }
+            {isPending
+              ? "Signing In..."
+              : "Sign In"}
           </Button>
 
           <div className="border-t pt-6 text-center">
@@ -153,11 +158,7 @@ const LoginPage = () => {
             </p>
 
             <Link
-              to={
-                returnTo
-                  ? `/register?returnTo=${encodeURIComponent(returnTo)}`
-                  : "/register"
-              }
+              to={registerPath}
               className="mt-2 inline-block font-semibold text-green-700 hover:underline"
             >
               Create an AgricWise Account
@@ -182,4 +183,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

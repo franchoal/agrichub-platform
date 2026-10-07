@@ -1,10 +1,16 @@
 import { Link, Navigate } from "react-router-dom";
+
 import { useAuthStore } from "../../store/authStore";
 import { useFarmerProfile } from "../../hooks/useFarmerProfile";
 
 const FarmerPortalPage = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+  const isAuthenticated = useAuthStore(
+    (state) => state.isAuthenticated
+  );
+
+  const hasHydrated = useAuthStore(
+    (state) => state.hasHydrated
+  );
 
   const {
     data: farmerProfile,
@@ -13,10 +19,18 @@ const FarmerPortalPage = () => {
   } = useFarmerProfile();
 
   /*
-   * Wait for Zustand to restore authentication state.
-   * This prevents authenticated users from briefly seeing
-   * the public business portal during page refresh.
-   */
+  =========================================================
+  AUTH HYDRATION
+  =========================================================
+
+  Wait for Zustand to restore the persisted authentication
+  state before deciding whether this is a public visitor or
+  an authenticated business owner.
+
+  This prevents authenticated users from briefly seeing the
+  public business portal during page refresh.
+  */
+
   if (!hasHydrated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-6">
@@ -38,11 +52,27 @@ const FarmerPortalPage = () => {
   }
 
   /*
-   * Authenticated users should not remain on the public portal.
-   *
-   * Existing business profile → dashboard.
-   * No business profile → business onboarding/profile.
-   */
+  =========================================================
+  AUTHENTICATED BUSINESS LIFECYCLE
+  =========================================================
+
+  An authenticated user can be in one of three business
+  states:
+
+    1. No FarmerProfile
+       → Business Foundation
+
+    2. FarmerProfile exists but is unpublished
+       → Review & Publish
+
+    3. FarmerProfile exists and is published
+       → Business Dashboard
+
+  Publication and verification remain separate concepts.
+  A published but unverified business still gets the normal
+  business workspace.
+  */
+
   if (isAuthenticated) {
     if (isLoading) {
       return (
@@ -66,31 +96,77 @@ const FarmerPortalPage = () => {
     }
 
     /*
-     * Existing profile → business dashboard.
-     *
-     * Verification controls marketplace visibility,
-     * not access to the business workspace.
-     */
-    if (farmerProfile) {
-      return <Navigate to="/farmer/dashboard" replace />;
+    ---------------------------------------------------------
+    NO BUSINESS PROFILE
+    ---------------------------------------------------------
+
+    The user has an AgricWise account but has not yet created
+    an agricultural business profile.
+    */
+
+    if (isError || !farmerProfile) {
+      return (
+        <Navigate
+          to="/farmer/profile"
+          replace
+        />
+      );
     }
 
     /*
-     * Authenticated user without a business profile →
-     * business profile onboarding.
-     */
-    if (isError || !farmerProfile) {
-      return <Navigate to="/farmer/profile" replace />;
+    ---------------------------------------------------------
+    EXISTING UNPUBLISHED BUSINESS
+    ---------------------------------------------------------
+
+    The business foundation exists, but the owner has not
+    completed the publication process.
+
+    Send the owner directly to Review & Publish instead of
+    allowing the dashboard to become an unnecessary
+    intermediate redirect.
+    */
+
+    if (!farmerProfile.is_published) {
+      return (
+        <Navigate
+          to="/farmer/onboarding/review"
+          replace
+        />
+      );
     }
+
+    /*
+    ---------------------------------------------------------
+    PUBLISHED BUSINESS
+    ---------------------------------------------------------
+
+    Publication is the threshold for the normal business
+    workspace.
+
+    Verification remains independent and must NOT prevent
+    access to the dashboard.
+    */
+
+    return (
+      <Navigate
+        to="/farmer/dashboard"
+        replace
+      />
+    );
   }
 
   /*
-   * Public AgricWise Business Portal.
-   *
-   * The /farmer route is intentionally retained for compatibility
-   * with existing links and routing. The user-facing experience,
-   * however, is now positioned as an agricultural business workspace.
-   */
+  =========================================================
+  PUBLIC AGRICWISE BUSINESS PORTAL
+  =========================================================
+
+  /farmer remains available for compatibility with existing
+  links and navigation.
+
+  Public visitors can learn about the business workspace,
+  register, sign in, or continue to the marketplace.
+  */
+
   return (
     <main className="min-h-screen overflow-hidden bg-gradient-to-br from-green-50 via-white to-emerald-50">
       {/* Decorative background elements */}
@@ -101,7 +177,11 @@ const FarmerPortalPage = () => {
 
       <section className="relative mx-auto flex min-h-screen max-w-7xl items-center px-5 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid w-full items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          {/* Left Content */}
+
+          {/* =================================================
+              LEFT CONTENT
+          ================================================= */}
+
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/80 px-4 py-2 text-sm font-semibold text-green-700 shadow-sm backdrop-blur">
               <span className="text-base">🌿</span>
@@ -229,7 +309,10 @@ const FarmerPortalPage = () => {
             </div>
           </div>
 
-          {/* Right Action Card */}
+          {/* =================================================
+              RIGHT ACTION CARD
+          ================================================= */}
+
           <div className="relative">
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-green-200/40 to-emerald-100/20 blur-2xl" />
 
@@ -308,6 +391,7 @@ const FarmerPortalPage = () => {
                       <span className="mt-0.5 font-bold text-green-600">
                         ✓
                       </span>
+
                       <span>{benefit}</span>
                     </div>
                   ))}
@@ -322,6 +406,7 @@ const FarmerPortalPage = () => {
               </p>
             </div>
           </div>
+
         </div>
       </section>
     </main>

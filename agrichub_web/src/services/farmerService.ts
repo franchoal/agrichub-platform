@@ -42,6 +42,15 @@ export interface FarmerProfile {
 
   business_categories: AgriculturalCategory[];
 
+  /**
+   * Whether the business has intentionally completed its
+   * core setup and has been published publicly.
+   */
+  is_published: boolean;
+
+  /**
+   * Whether AgricWise has independently verified the business.
+   */
   is_verified: boolean;
 }
 
@@ -305,6 +314,24 @@ export const farmerService = {
       await api.put<FarmerProfile>(
         "/farmers/profile/",
         data
+      );
+
+    return response.data;
+  },
+
+  /**
+   * Publish the authenticated agricultural business.
+   *
+   * Publication is deliberately separate from saving the
+   * profile. The backend performs the final publication
+   * readiness validation.
+   *
+   * POST /api/farmers/profile/publish/
+   */
+  publishProfile: async (): Promise<FarmerProfile> => {
+    const response =
+      await api.post<FarmerProfile>(
+        "/farmers/profile/publish/"
       );
 
     return response.data;

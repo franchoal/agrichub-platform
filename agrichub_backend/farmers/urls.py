@@ -6,6 +6,7 @@ from .views import (
     AgriculturalServiceDetailView,
     FarmerProfileView,
     FarmerProfileCreateView,
+    FarmerProfilePublishView,
     FarmerProductListCreateView,
     FarmerProductDetailView,
     PublicAgriculturalBusinessListView,
@@ -38,6 +39,12 @@ urlpatterns = [
         "profile/create/",
         FarmerProfileCreateView.as_view(),
         name="farmer-profile-create",
+    ),
+
+    path(
+        "profile/publish/",
+        FarmerProfilePublishView.as_view(),
+        name="farmer-profile-publish",
     ),
 
     # ========================================================

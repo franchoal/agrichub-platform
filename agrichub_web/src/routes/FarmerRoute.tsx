@@ -1,24 +1,22 @@
-import {
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { useAuthStore } from "../store/authStore";
 import { useFarmerProfile } from "../hooks/useFarmerProfile";
+import { useAuthStore } from "../store/authStore";
 
 const FarmerRoute = () => {
-  const user = useAuthStore(
-    (state) => state.user
-  );
+  const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+
+  const {
+    isLoading,
+    isError,
+    data: farmerProfile,
+  } = useFarmerProfile();
 
   /*
   ==========================================
-  Authentication
+  AUTHENTICATION
   ==========================================
-
-  The agricultural business workspace is
-  available only to authenticated AgricWise
-  members.
   */
 
   if (!user) {
@@ -30,90 +28,117 @@ const FarmerRoute = () => {
     );
   }
 
-  /*
-  ==========================================
-  AgricWise Business Workspace
-  ==========================================
-
-  FarmerProfile is retained internally for
-  backend compatibility.
-
-  From the user's perspective, this profile
-  represents their agricultural business,
-  farm, enterprise, service operation, or
-  professional activity on AgricWise.
-
-  We intentionally keep the existing
-  FarmerProfile implementation and routes
-  until the broader architecture is fully
-  migrated.
-  */
-
-  const {
-    isLoading,
-    isError,
-    data: farmerProfile,
-  } = useFarmerProfile();
 
   /*
   ==========================================
-  Loading State
+  PROFILE LOADING
   ==========================================
   */
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="text-center">
-          <div className="mb-4 text-5xl">
-            🌾
-          </div>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-green-600" />
 
-          <h2 className="text-xl font-semibold text-gray-900">
-            Loading AgricWise Business Workspace...
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-600">
-            Preparing your agricultural business workspace.
+          <p className="text-sm font-medium text-slate-600">
+            Loading your agricultural business...
           </p>
         </div>
       </div>
     );
   }
 
+
   /*
   ==========================================
-  No Agricultural Business Profile
+  PROFILE DOES NOT EXIST
   ==========================================
 
-  The universal /profile page remains the
-  personal profile for every AgricWise member.
+  FarmerRoute is only entered by routes
+  that require an existing FarmerProfile.
 
-  Users without an agricultural business
-  profile should not be forced into the
-  business workspace.
-
-  They can create their agricultural business
-  profile through the appropriate onboarding
-  flow.
+  The profile creation page itself remains
+  outside FarmerRoute.
   */
 
   if (isError || !farmerProfile) {
     return (
       <Navigate
-        to="/profile"
+        to="/farmer/profile"
         replace
       />
     );
   }
 
+
   /*
   ==========================================
-  Agricultural Business Profile Exists
+  GUIDED ONBOARDING
   ==========================================
 
-  Allow access to the protected AgricWise
-  business workspace.
+  These routes must remain accessible while
+  the business is still unpublished.
+
+  The user needs to be able to:
+
+    - add products
+    - add services
+    - review the business
+    - return to the foundation step
+  */
+
+  const onboardingPaths = [
+    "/farmer/onboarding/products",
+    "/farmer/onboarding/services",
+    "/farmer/onboarding/review",
+  ];
+
+  const isOnboardingRoute = onboardingPaths.includes(
+    location.pathname
+  );
+
+
+  /*
+  ==========================================
+  UNPUBLISHED BUSINESS
+  ==========================================
+
+  An existing but unpublished business has
+  not completed the publication lifecycle.
+
+  Allow the guided onboarding routes.
+
+  Prevent direct access to the normal
+  business workspace until publication.
+
+  This preserves the distinction between:
+
+    PROFILE EXISTS
+          ≠
+    BUSINESS IS PUBLISHED
+  */
+
+  if (
+    !farmerProfile.is_published &&
+    !isOnboardingRoute
+  ) {
+    return (
+      <Navigate
+        to="/farmer/onboarding/review"
+        replace
+      />
+    );
+  }
+
+
+  /*
+  ==========================================
+  PUBLISHED BUSINESS
+  ==========================================
+
+  Published businesses can use the normal
+  AgricWise business workspace.
   */
 
   return <Outlet />;

@@ -16,8 +16,28 @@ import type {
   UpdateFarmerProfileData,
 } from "../services/farmerService";
 
+/**
+ * Saves the authenticated user's AgricWise business foundation.
+ *
+ * This mutation intentionally does NOT publish the business.
+ *
+ * Onboarding flow:
+ *
+ * Step 1
+ *   Business Foundation
+ *        ↓
+ *   saveProfile()
+ *        ↓
+ * Step 2 Products
+ *        ↓
+ * Step 3 Services
+ *        ↓
+ * Step 4 Review
+ *        ↓
+ *   publishProfile()
+ */
 export const useUpdateFarmerProfile = (
-  onSuccess?: () => void
+  onSuccess?: (profile: FarmerProfile) => void
 ) => {
   const queryClient = useQueryClient();
 
@@ -26,23 +46,20 @@ export const useUpdateFarmerProfile = (
       data: UpdateFarmerProfileData
     ): Promise<FarmerProfile> => {
       try {
-        return await farmerService.updateProfile(
-          data
-        );
+        return await farmerService.updateProfile(data);
       } catch (error) {
         /**
          * A 404 means the authenticated user does not
          * have an agricultural business profile yet.
          *
-         * In that case, create the profile instead.
+         * For the onboarding foundation step, creating
+         * the profile is the correct fallback.
          */
         if (
           axios.isAxiosError(error) &&
           error.response?.status === 404
         ) {
-          return farmerService.createProfile(
-            data
-          );
+          return farmerService.createProfile(data);
         }
 
         throw error;
@@ -51,8 +68,8 @@ export const useUpdateFarmerProfile = (
 
     onSuccess: async (profile) => {
       /**
-       * Immediately synchronize the authenticated
-       * profile cache with the backend response.
+       * Keep the authenticated business profile cache
+       * synchronized immediately.
        */
       queryClient.setQueryData(
         ["farmer-profile"],
@@ -63,9 +80,8 @@ export const useUpdateFarmerProfile = (
        * The profile is also the source of the public
        * agricultural business identity.
        *
-       * Invalidate the public directory and all public
-       * business-detail queries so visitors do not
-       * continue seeing stale business information.
+       * Invalidate public business queries so updated
+       * information can be reflected wherever relevant.
        */
       await Promise.all([
         queryClient.invalidateQueries({
@@ -85,8 +101,14 @@ export const useUpdateFarmerProfile = (
         "AgricWise business profile saved successfully."
       );
 
+      /**
+       * The onboarding page decides what happens next.
+       *
+       * We deliberately do NOT automatically navigate
+       * to the farmer dashboard here.
+       */
       if (onSuccess) {
-        onSuccess();
+        onSuccess(profile);
       }
     },
 
@@ -108,9 +130,11 @@ export const useUpdateFarmerProfile = (
           typeof responseData === "object"
         ) {
           const detail =
-            (responseData as {
-              detail?: string;
-            }).detail;
+            (
+              responseData as {
+                detail?: string;
+              }
+            ).detail;
 
           if (detail) {
             message = detail;

@@ -1,9 +1,10 @@
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 
-from rest_framework import generics, serializers
+from rest_framework import generics, serializers, status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
 from products.models import Product
 
@@ -57,6 +58,9 @@ class FarmerProfileView(
     """
     Retrieve or update the authenticated user's
     AgricWise agricultural business profile.
+
+    A business owner can continue editing a profile
+    whether it is published or still a draft.
     """
 
     serializer_class = FarmerProfileSerializer
@@ -81,6 +85,8 @@ class FarmerProfileCreateView(
     """
     Create the authenticated user's AgricWise
     agricultural business profile.
+
+    New profiles are created as unpublished drafts.
     """
 
     serializer_class = FarmerProfileSerializer
@@ -105,6 +111,120 @@ class FarmerProfileCreateView(
 
         serializer.save(
             user=self.request.user
+        )
+
+
+class FarmerProfilePublishView(
+    generics.GenericAPIView
+):
+    """
+    Publish the authenticated user's AgricWise
+    agricultural business presence.
+
+    Publication is an explicit action and cannot be
+    performed by simply PATCHing is_published.
+
+    Minimum publication requirements:
+
+    - Business name
+    - Business location
+    - At least one active agricultural business category
+
+    Products and services are intentionally NOT required.
+
+    Verification remains a separate AgricWise process.
+    """
+
+    serializer_class = FarmerProfileSerializer
+
+    permission_classes = [
+        IsAuthenticated,
+        IsFarmer,
+    ]
+
+    def get_object(self):
+        try:
+            return self.request.user.farmer_profile
+        except FarmerProfile.DoesNotExist:
+            raise NotFound(
+                "AgricWise agricultural business profile not found."
+            )
+
+    def post(self, request, *args, **kwargs):
+        profile = self.get_object()
+
+        errors = {}
+
+        # ----------------------------------------------------
+        # BUSINESS NAME
+        # ----------------------------------------------------
+
+        if not profile.farm_name.strip():
+            errors["farm_name"] = (
+                "A business name is required before publishing."
+            )
+
+        # ----------------------------------------------------
+        # BUSINESS LOCATION
+        # ----------------------------------------------------
+
+        if not profile.farm_location.strip():
+            errors["farm_location"] = (
+                "A business location is required before publishing."
+            )
+
+        # ----------------------------------------------------
+        # BUSINESS CATEGORY
+        # ----------------------------------------------------
+
+        has_active_category = (
+            profile.business_categories
+            .filter(is_active=True)
+            .exists()
+        )
+
+        if not has_active_category:
+            errors["category_ids"] = (
+                "Select at least one active agricultural "
+                "business category before publishing."
+            )
+
+        # ----------------------------------------------------
+        # VALIDATION FAILURE
+        # ----------------------------------------------------
+
+        if errors:
+            return Response(
+                {
+                    "detail": (
+                        "Your business profile is not ready "
+                        "to be published."
+                    ),
+                    "errors": errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ----------------------------------------------------
+        # PUBLISH
+        # ----------------------------------------------------
+
+        profile.is_published = True
+        profile.save(
+            update_fields=[
+                "is_published",
+                "updated_at",
+            ]
+        )
+
+        return Response(
+            FarmerProfileSerializer(
+                profile,
+                context={
+                    "request": request,
+                },
+            ).data,
+            status=status.HTTP_200_OK,
         )
 
 
@@ -255,8 +375,10 @@ class PublicAgriculturalBusinessListView(
     generics.ListAPIView
 ):
     """
-    Public directory of AgricWise agricultural
-    businesses and professionals.
+    Public directory of published AgricWise
+    agricultural businesses and professionals.
+
+    Only businesses with is_published=True appear here.
 
     Supported discovery parameters:
 
@@ -264,16 +386,6 @@ class PublicAgriculturalBusinessListView(
     ?category=<category-slug>
     ?verified=true
     ?verified=false
-
-    Examples:
-
-    /api/farmers/businesses/?search=poultry
-
-    /api/farmers/businesses/?category=livestock-poultry
-
-    /api/farmers/businesses/?verified=true
-
-    /api/farmers/businesses/?search=ibadan&verified=true
 
     No authentication is required.
     """
@@ -289,6 +401,9 @@ class PublicAgriculturalBusinessListView(
     def get_queryset(self):
         queryset = (
             FarmerProfile.objects
+            .filter(
+                is_published=True,
+            )
             .prefetch_related(
                 "business_categories",
             )
@@ -315,6 +430,7 @@ class PublicAgriculturalBusinessListView(
         # ----------------------------------------------------
         # SEARCH
         # ----------------------------------------------------
+
         search_term = (
             self.request.query_params
             .get("search", "")
@@ -339,6 +455,7 @@ class PublicAgriculturalBusinessListView(
         # ----------------------------------------------------
         # CATEGORY
         # ----------------------------------------------------
+
         category_slug = (
             self.request.query_params
             .get("category", "")
@@ -354,6 +471,7 @@ class PublicAgriculturalBusinessListView(
         # ----------------------------------------------------
         # VERIFICATION
         # ----------------------------------------------------
+
         verified = (
             self.request.query_params
             .get("verified")
@@ -396,6 +514,8 @@ class PublicAgriculturalBusinessDetailView(
     """
     Public AgricWise business presence.
 
+    Only published businesses are publicly accessible.
+
     Supports both:
 
     - Legacy numeric business IDs
@@ -431,6 +551,9 @@ class PublicAgriculturalBusinessDetailView(
     def get_queryset(self):
         return (
             FarmerProfile.objects
+            .filter(
+                is_published=True,
+            )
             .prefetch_related(
                 "business_categories",
                 "products__category",
@@ -453,6 +576,8 @@ class PublicAgriculturalBusinessDetailView(
         # Example:
         #
         # /api/farmers/businesses/4/
+        #
+        # The business must still be published.
         # ----------------------------------------------------
 
         if identifier.isdigit():
@@ -470,6 +595,8 @@ class PublicAgriculturalBusinessDetailView(
         # Example:
         #
         # /api/farmers/businesses/ades-poultry-farm/
+        #
+        # The business must still be published.
         # ----------------------------------------------------
 
         return get_object_or_404(

@@ -30,30 +30,49 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   /*
-   * Preserve the destination that brought the user
+   * Preserve the internal destination that brought the user
    * to registration.
    *
    * Example:
    * /register?returnTo=/farmer
+   *
+   * Only internal single-slash routes are allowed.
+   * This prevents protocol-relative redirects such as:
+   * //example.com
    */
-  const returnTo = searchParams.get("returnTo");
+  const requestedReturnTo = searchParams.get("returnTo");
+
+  const hasValidReturnTo =
+    Boolean(
+      requestedReturnTo &&
+        requestedReturnTo.startsWith("/") &&
+        !requestedReturnTo.startsWith("//")
+    );
+
+  const redirectTo = hasValidReturnTo
+    ? requestedReturnTo!
+    : undefined;
 
   /*
-   * Only allow internal AgricWise routes to be used
-   * as redirect destinations.
-   */
-  const redirectTo =
-    returnTo && returnTo.startsWith("/")
-      ? returnTo
-      : undefined;
-
-  /*
-   * After registration, send the user to login while
-   * preserving the original destination.
+   * After registration, the account still needs to sign in.
+   *
+   * Preserve the original destination through the login step so
+   * that the complete flow remains:
+   *
+   * Register → Login → Original destination
+   *
+   * For business onboarding:
+   *
+   * /register?returnTo=/farmer
+   *       ↓
+   * /login?returnTo=/farmer
+   *       ↓
+   * /farmer
+   *       ↓
+   * Business Foundation / Review / Dashboard
    */
   const registerMutation = useRegister(() => {
     navigate(
@@ -82,11 +101,13 @@ const RegisterPage = () => {
     },
   });
 
-  const onSubmit = (
-    data: RegisterFormData
-  ) => {
+  const onSubmit = (data: RegisterFormData) => {
     registerMutation.mutate(data);
   };
+
+  const loginPath = redirectTo
+    ? `/login?returnTo=${encodeURIComponent(redirectTo)}`
+    : "/login";
 
   return (
     <AuthLayout>
@@ -180,11 +201,7 @@ const RegisterPage = () => {
             </p>
 
             <Link
-              to={
-                redirectTo
-                  ? `/login?returnTo=${encodeURIComponent(redirectTo)}`
-                  : "/login"
-              }
+              to={loginPath}
               className="mt-2 inline-block font-semibold text-green-700 hover:underline"
             >
               Sign In

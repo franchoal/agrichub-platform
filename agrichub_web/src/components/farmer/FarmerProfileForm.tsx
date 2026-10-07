@@ -29,16 +29,41 @@ const FarmerProfileForm = () => {
 
   /*
   ==========================================
-  RETURN DESTINATION
+  ONBOARDING / RETURN DESTINATION
   ==========================================
   */
 
   const requestedReturnTo = searchParams.get("returnTo");
 
-  const returnTo =
-    requestedReturnTo && requestedReturnTo.startsWith("/")
-      ? requestedReturnTo
-      : "/farmer/dashboard";
+  /*
+   * Explicit return destinations are respected when supplied.
+   *
+   * Otherwise the destination is determined from the
+   * business lifecycle after the existing profile has
+   * been loaded below.
+   *
+   * This prevents an unpublished business from being
+   * incorrectly returned to the dashboard before it has
+   * completed the publication journey.
+   */
+  const hasValidRequestedReturn =
+    Boolean(
+      requestedReturnTo &&
+        requestedReturnTo.startsWith("/") &&
+        !requestedReturnTo.startsWith("//")
+    );
+
+  /*
+  ==========================================
+  GUIDED ONBOARDING
+  ==========================================
+  */
+
+  const nextOnboardingStep =
+    "/farmer/onboarding/products";
+
+  const reviewAndPublishStep =
+    "/farmer/onboarding/review";
 
   /*
   ==========================================
@@ -53,15 +78,45 @@ const FarmerProfileForm = () => {
 
   /*
   ==========================================
+  PROFILE MODE
+  ==========================================
+  */
+
+  const isEditMode = Boolean(existingProfile);
+
+  const isPublished = Boolean(
+    existingProfile?.is_published
+  );
+
+  /*
+  ==========================================
+  DEFAULT RETURN DESTINATION
+  ==========================================
+  */
+
+  const defaultReturnTo = isPublished
+    ? "/farmer/dashboard"
+    : reviewAndPublishStep;
+
+  const returnTo = hasValidRequestedReturn
+    ? requestedReturnTo!
+    : defaultReturnTo;
+
+  /*
+  ==========================================
   AGRICULTURAL CATEGORIES
   ==========================================
   */
 
-  const [categories, setCategories] = useState<AgriculturalCategory[]>([]);
+  const [categories, setCategories] = useState<
+    AgriculturalCategory[]
+  >([]);
 
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] =
+    useState(true);
 
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [categoriesError, setCategoriesError] =
+    useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -71,7 +126,8 @@ const FarmerProfileForm = () => {
         setCategoriesLoading(true);
         setCategoriesError(null);
 
-        const data = await farmerService.getCategories();
+        const data =
+          await farmerService.getCategories();
 
         if (!isMounted) {
           return;
@@ -92,7 +148,10 @@ const FarmerProfileForm = () => {
           );
         }
       } catch (error) {
-        console.error("Failed to load agricultural categories:", error);
+        console.error(
+          "Failed to load agricultural categories:",
+          error
+        );
 
         if (isMounted) {
           setCategoriesError(
@@ -153,23 +212,21 @@ const FarmerProfileForm = () => {
     reset({
       farm_name: existingProfile.farm_name || "",
 
-      farm_location: existingProfile.farm_location || "",
+      farm_location:
+        existingProfile.farm_location || "",
 
-      farm_description: existingProfile.farm_description || "",
+      farm_description:
+        existingProfile.farm_description || "",
 
-      category_ids: Array.isArray(existingProfile.business_categories)
-        ? existingProfile.business_categories.map((category) => category.id)
+      category_ids: Array.isArray(
+        existingProfile.business_categories
+      )
+        ? existingProfile.business_categories.map(
+            (category) => category.id
+          )
         : [],
     });
   }, [existingProfile, reset]);
-
-  /*
-  ==========================================
-  PROFILE MODE
-  ==========================================
-  */
-
-  const isEditMode = !!existingProfile;
 
   /*
   ==========================================
@@ -178,6 +235,26 @@ const FarmerProfileForm = () => {
   */
 
   const saveProfile = useUpdateFarmerProfile(() => {
+    /*
+     * A newly created business has not yet entered the
+     * onboarding sequence, so continue to Products.
+     */
+    if (!isEditMode) {
+      navigate(nextOnboardingStep, {
+        replace: true,
+      });
+      return;
+    }
+
+    /*
+     * Existing businesses follow their current lifecycle:
+     *
+     * unpublished → Review & Publish
+     * published   → Business Dashboard
+     *
+     * An explicit returnTo query parameter takes priority
+     * through the returnTo value calculated above.
+     */
     navigate(returnTo, {
       replace: true,
     });
@@ -189,9 +266,12 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const watchedCategoryIds = watch("category_ids");
+  const watchedCategoryIds =
+    watch("category_ids");
 
-  const selectedCategoryIds = Array.isArray(watchedCategoryIds)
+  const selectedCategoryIds = Array.isArray(
+    watchedCategoryIds
+  )
     ? watchedCategoryIds
     : [];
 
@@ -202,10 +282,13 @@ const FarmerProfileForm = () => {
   */
 
   const toggleCategory = (categoryId: number) => {
-    const isSelected = selectedCategoryIds.includes(categoryId);
+    const isSelected =
+      selectedCategoryIds.includes(categoryId);
 
     const next = isSelected
-      ? selectedCategoryIds.filter((id) => id !== categoryId)
+      ? selectedCategoryIds.filter(
+          (id) => id !== categoryId
+        )
       : [...selectedCategoryIds, categoryId];
 
     setValue("category_ids", next, {
@@ -221,7 +304,9 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const onSubmit: SubmitHandler<FarmerProfileFormData> = (data) => {
+  const onSubmit: SubmitHandler<
+    FarmerProfileFormData
+  > = (data) => {
     saveProfile.mutate(data);
   };
 
@@ -257,7 +342,8 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const selectedCount = selectedCategoryIds.length;
+  const selectedCount =
+    selectedCategoryIds.length;
 
   /*
   ==========================================
@@ -271,6 +357,46 @@ const FarmerProfileForm = () => {
       className="space-y-10"
       noValidate
     >
+      {/* =====================================
+          ONBOARDING STEP INDICATOR
+      ===================================== */}
+
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">
+          1
+        </div>
+
+        <div className="h-px flex-1 bg-gray-200" />
+
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-bold text-gray-400">
+          2
+        </div>
+
+        <div className="h-px flex-1 bg-gray-200" />
+
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-bold text-gray-400">
+          3
+        </div>
+
+        <div className="h-px flex-1 bg-gray-200" />
+
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-bold text-gray-400">
+          4
+        </div>
+      </div>
+
+      {!isEditMode && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="font-semibold text-green-700">
+            Step 1 of 4
+          </span>
+
+          <span className="text-gray-500">
+            Business Foundation
+          </span>
+        </div>
+      )}
+
       {/* =====================================
           PROFILE STATUS
       ===================================== */}
@@ -291,7 +417,9 @@ const FarmerProfileForm = () => {
             <div className="flex flex-wrap items-center gap-2">
               <h2
                 className={`font-bold ${
-                  isEditMode ? "text-blue-900" : "text-green-900"
+                  isEditMode
+                    ? "text-blue-900"
+                    : "text-green-900"
                 }`}
               >
                 {isEditMode
@@ -306,18 +434,26 @@ const FarmerProfileForm = () => {
                     : "bg-green-100 text-green-700"
                 }`}
               >
-                {isEditMode ? "Existing Profile" : "New Profile"}
+                {isEditMode
+                  ? isPublished
+                    ? "Published Profile"
+                    : "Existing Profile"
+                  : "Step 1"}
               </span>
             </div>
 
             <p
               className={`mt-2 text-sm leading-6 ${
-                isEditMode ? "text-blue-800" : "text-green-800"
+                isEditMode
+                  ? "text-blue-800"
+                  : "text-green-800"
               }`}
             >
               {isEditMode
-                ? "Keep your business information accurate so customers, partners, professionals, and the AgricWise community can understand what you offer."
-                : "Create a business or professional identity for your farm, company, enterprise, organization, or agricultural activity on AgricWise."}
+                ? isPublished
+                  ? "Keep your published business information accurate so customers, partners, professionals, and the AgricWise community can understand what you offer."
+                  : "Complete and refine your business information before reviewing and publishing your AgricWise presence."
+                : "Start by establishing the core identity of your farm, company, enterprise, organization, or agricultural activity on AgricWise."}
             </p>
           </div>
         </div>
@@ -351,9 +487,9 @@ const FarmerProfileForm = () => {
               </div>
 
               <p className="mt-1 max-w-3xl text-sm leading-6 text-gray-600">
-                Select every agricultural category that accurately represents
-                your business or professional activity. You can choose more
-                than one.
+                Select every agricultural category that accurately
+                represents your business or professional activity.
+                You can choose more than one.
               </p>
             </div>
           </div>
@@ -397,13 +533,18 @@ const FarmerProfileForm = () => {
           categories.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2">
               {categories.map((category) => {
-                const selected = selectedCategoryIds.includes(category.id);
+                const selected =
+                  selectedCategoryIds.includes(
+                    category.id
+                  );
 
                 return (
                   <button
                     key={category.id}
                     type="button"
-                    onClick={() => toggleCategory(category.id)}
+                    onClick={() =>
+                      toggleCategory(category.id)
+                    }
                     aria-pressed={selected}
                     className={`group rounded-2xl border p-4 text-left transition duration-200 ${
                       selected
@@ -420,14 +561,18 @@ const FarmerProfileForm = () => {
                         }`}
                       >
                         {selected && (
-                          <span className="text-xs font-bold">✓</span>
+                          <span className="text-xs font-bold">
+                            ✓
+                          </span>
                         )}
                       </div>
 
                       <div className="min-w-0">
                         <h3
                           className={`text-sm font-semibold ${
-                            selected ? "text-green-800" : "text-gray-900"
+                            selected
+                              ? "text-green-800"
+                              : "text-gray-900"
                           }`}
                         >
                           {category.name}
@@ -451,8 +596,9 @@ const FarmerProfileForm = () => {
           categories.length === 0 && (
             <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
               <p className="text-sm text-yellow-800">
-                No agricultural categories are currently available. Please
-                refresh the page and try again.
+                No agricultural categories are currently
+                available. Please refresh the page and try
+                again.
               </p>
             </div>
           )}
@@ -486,8 +632,9 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Use the name customers, partners, suppliers, buyers, or other
-              agricultural professionals know your business by.
+              Use the name customers, partners, suppliers,
+              buyers, or other agricultural professionals know
+              your business by.
             </p>
           </div>
         </div>
@@ -500,8 +647,8 @@ const FarmerProfileForm = () => {
         />
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          This name will represent your business across your AgricWise
-          presence.
+          This name will represent your business across your
+          AgricWise presence.
         </p>
       </section>
 
@@ -524,8 +671,9 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Add the primary location of your business or the area where you
-              provide your agricultural products and services.
+              Add the primary location of your business or the
+              area where you provide your agricultural products
+              and services.
             </p>
           </div>
         </div>
@@ -538,8 +686,8 @@ const FarmerProfileForm = () => {
         />
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          A city, town, state, or useful operating-area description is enough
-          for now.
+          A city, town, state, or useful operating-area
+          description is enough for now.
         </p>
       </section>
 
@@ -562,8 +710,9 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Give customers and potential partners a clear picture of what
-              you do, what you offer, and who you serve.
+              Give customers and potential partners a clear
+              picture of what you do, what you offer, and who
+              you serve.
             </p>
           </div>
         </div>
@@ -584,14 +733,17 @@ const FarmerProfileForm = () => {
         />
 
         {errors.farm_description && (
-          <p role="alert" className="mt-2 text-sm text-red-500">
+          <p
+            role="alert"
+            className="mt-2 text-sm text-red-500"
+          >
             {errors.farm_description.message}
           </p>
         )}
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          Keep it factual and clear. This information becomes part of your
-          business identity on AgricWise.
+          Keep it factual and clear. This information becomes
+          part of your business identity on AgricWise.
         </p>
       </section>
 
@@ -618,8 +770,8 @@ const FarmerProfileForm = () => {
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                These details form the structured foundation of your business
-                presence.
+                These details form the structured foundation
+                of your business presence.
               </p>
             </div>
           </div>
@@ -638,19 +790,23 @@ const FarmerProfileForm = () => {
               description:
                 selectedCount > 0
                   ? `${selectedCount} categor${
-                      selectedCount === 1 ? "y" : "ies"
+                      selectedCount === 1
+                        ? "y"
+                        : "ies"
                     } selected`
                   : "What your business does",
             },
             {
               icon: "📍",
               title: "Operating Location",
-              description: "Where your business operates",
+              description:
+                "Where your business operates",
             },
             {
               icon: "📝",
               title: "Business Description",
-              description: "What you offer and who you serve",
+              description:
+                "What you offer and who you serve",
             },
           ].map((item) => (
             <div
@@ -666,7 +822,9 @@ const FarmerProfileForm = () => {
                   {item.title}
                 </p>
 
-                <p className="text-xs text-gray-500">{item.description}</p>
+                <p className="text-xs text-gray-500">
+                  {item.description}
+                </p>
               </div>
             </div>
           ))}
@@ -674,55 +832,143 @@ const FarmerProfileForm = () => {
       </section>
 
       {/* =====================================
-          FUTURE WORKSPACE PREVIEW
+          ONBOARDING JOURNEY
       ===================================== */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white">
-        <div className="relative p-5 sm:p-6">
-          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-green-500/10" />
-
-          <div className="relative z-10">
+      {!isEditMode && (
+        <section className="overflow-hidden rounded-2xl border border-green-100 bg-green-50">
+          <div className="p-5 sm:p-6">
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm shadow-sm">
                 ✦
               </span>
 
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-green-400">
-                What comes next
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-green-700">
+                Your setup journey
               </p>
             </div>
 
-            <h2 className="mt-3 text-lg font-bold sm:text-xl">
-              Your business profile is the foundation
+            <h2 className="mt-3 text-lg font-bold text-green-950 sm:text-xl">
+              Build your AgricWise presence step by step
             </h2>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              After setup, your Business Dashboard becomes the workspace for
-              managing products, agricultural services, orders, verification,
-              and your wider AgricWise presence.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-green-800">
+              You do not need to complete everything at once.
+              We will guide you through your business
+              information, products, services, and final
+              publication.
             </p>
 
-            <div className="mt-5 grid gap-2 sm:grid-cols-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
               {[
-                "Products",
-                "Services",
-                "Orders",
-                "Business Growth",
+                {
+                  number: "01",
+                  title: "Business Foundation",
+                  active: true,
+                },
+                {
+                  number: "02",
+                  title: "Products",
+                  active: false,
+                },
+                {
+                  number: "03",
+                  title: "Services",
+                  active: false,
+                },
+                {
+                  number: "04",
+                  title: "Review & Publish",
+                  active: false,
+                },
               ].map((item) => (
                 <div
-                  key={item}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-slate-200"
+                  key={item.number}
+                  className={`rounded-xl border p-3 ${
+                    item.active
+                      ? "border-green-300 bg-white shadow-sm"
+                      : "border-green-100 bg-green-100/40"
+                  }`}
                 >
-                  {item}
+                  <p
+                    className={`text-[10px] font-bold tracking-wider ${
+                      item.active
+                        ? "text-green-700"
+                        : "text-green-600/60"
+                    }`}
+                  >
+                    {item.number}
+                  </p>
+
+                  <p
+                    className={`mt-1 text-xs font-semibold ${
+                      item.active
+                        ? "text-green-900"
+                        : "text-green-800/60"
+                    }`}
+                  >
+                    {item.title}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* =====================================
-          SAVE
+          EDIT MODE WORKSPACE PREVIEW
+      ===================================== */}
+
+      {isEditMode && (
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white">
+          <div className="relative p-5 sm:p-6">
+            <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-green-500/10" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-sm">
+                  ✦
+                </span>
+
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-green-400">
+                  Business Workspace
+                </p>
+              </div>
+
+              <h2 className="mt-3 text-lg font-bold sm:text-xl">
+                Your business profile is the foundation
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                Keep your business information accurate. Your
+                Business Dashboard is the workspace for managing
+                products, agricultural services, orders,
+                verification, and your wider AgricWise presence.
+              </p>
+
+              <div className="mt-5 grid gap-2 sm:grid-cols-4">
+                {[
+                  "Products",
+                  "Services",
+                  "Orders",
+                  "Business Growth",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-slate-200"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================
+          SAVE / CONTINUE
       ===================================== */}
 
       <div className="border-t border-gray-100 pt-7">
@@ -736,14 +982,19 @@ const FarmerProfileForm = () => {
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
               {isEditMode
-                ? "Your changes will be reflected across your AgricWise business workspace."
-                : "You can add products and services from your Business Dashboard after creating your profile."}
+                ? isPublished
+                  ? "Your changes will be reflected across your published AgricWise business presence."
+                  : "Your changes will be saved before you continue to Review & Publish."
+                : "Save your business foundation and continue to the next step, where you can add the products your business offers."}
             </p>
           </div>
 
           <Button
             type="submit"
-            isLoading={saveProfile.isPending || categoriesLoading}
+            isLoading={
+              saveProfile.isPending ||
+              categoriesLoading
+            }
             disabled={
               categoriesLoading ||
               !!categoriesError ||
@@ -754,10 +1005,10 @@ const FarmerProfileForm = () => {
             {saveProfile.isPending
               ? isEditMode
                 ? "Saving Changes..."
-                : "Creating Business Profile..."
+                : "Saving Business Foundation..."
               : isEditMode
                 ? "Save Business Changes"
-                : "Create Business Profile"}
+                : "Save & Continue to Products"}
           </Button>
         </div>
       </div>

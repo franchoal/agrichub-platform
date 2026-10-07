@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Building2,
@@ -15,6 +14,12 @@ import {
   Wrench,
 } from "lucide-react";
 
+import {
+  Link,
+  useLocation,
+} from "react-router-dom";
+
+import { useFarmerProfile } from "../../hooks/useFarmerProfile";
 import FarmerProfileForm from "../../components/farmer/FarmerProfileForm";
 
 const profileFoundation = [
@@ -114,9 +119,68 @@ const valueChainGroups = [
 ];
 
 const FarmerProfilePage = () => {
+  const location = useLocation();
+
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+  } = useFarmerProfile();
+
+  const isEditMode =
+    new URLSearchParams(location.search).get("edit") === "true";
+
+  const hasExistingProfile = Boolean(profile);
+
+  const isPublished = Boolean(profile?.is_published);
+
+  const pageTitle = isEditMode
+    ? "Edit your AgricWise business foundation"
+    : hasExistingProfile
+      ? "Your AgricWise business foundation"
+      : "Build your AgricWise business presence";
+
+  const pageDescription = isEditMode
+    ? "Update the core information that represents your agricultural business across AgricWise."
+    : hasExistingProfile
+      ? "Your business foundation is the structured identity AgricWise uses to represent your agricultural business and connect it with the wider ecosystem."
+      : "Your AgricWise Business profile is the foundation of how people discover, understand, and connect with your agricultural business, enterprise, organization, or professional activity.";
+
+  const foundationEyebrow = isEditMode
+    ? "Business foundation"
+    : "Your agricultural identity";
+
+  const foundationTitle = isEditMode
+    ? "Update your business foundation"
+    : "Build your business foundation";
+
+  const foundationDescription = isEditMode
+    ? "Keep your core business information accurate so your AgricWise presence continues to represent your business correctly."
+    : "These core details establish the structured identity AgricWise uses to represent your business and connect it with the right parts of the ecosystem.";
+
+  const workspaceDescription = isPublished
+    ? "Your AgricWise Business Workspace is the place to manage products, agricultural services, orders, verification, and your growing presence across the ecosystem."
+    : "Once your business foundation is complete and published, your AgricWise Business Workspace becomes the place to manage products, agricultural services, orders, verification, and your growing presence across the ecosystem.";
+
+  if (isProfileLoading) {
+    return (
+      <main className="min-h-screen bg-slate-50">
+        <div className="mx-auto flex min-h-[70vh] w-full max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl bg-white px-8 py-10 text-center shadow-sm">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-green-600" />
+
+            <p className="text-sm font-medium text-slate-600">
+              Loading your AgricWise business foundation...
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+
         {/* ==================================================
             PAGE HERO
         ================================================== */}
@@ -146,18 +210,23 @@ const FarmerProfilePage = () => {
 
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-medium text-emerald-50">
                 <Settings2 className="h-3.5 w-3.5" />
-                Business Setup
+                {isEditMode ? "Edit Business" : "Business Setup"}
               </span>
+
+              {isPublished && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200/20 bg-green-400/10 px-3 py-1.5 text-[11px] font-semibold text-green-50">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Published
+                </span>
+              )}
             </div>
 
             <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              Build your AgricWise business presence
+              {pageTitle}
             </h1>
 
             <p className="mt-4 max-w-3xl text-sm leading-7 text-green-50 sm:text-base sm:leading-8">
-              Your AgricWise Business profile is the foundation of how people
-              discover, understand, and connect with your agricultural
-              business, enterprise, organization, or professional activity.
+              {pageDescription}
             </p>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -210,20 +279,18 @@ const FarmerProfilePage = () => {
         >
           <div className="mb-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              Your agricultural identity
+              {foundationEyebrow}
             </p>
 
             <h2
               id="business-foundation"
               className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
             >
-              Build your business foundation
+              {foundationTitle}
             </h2>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              These core details establish the structured identity AgricWise
-              uses to represent your business and connect it with the right
-              parts of the ecosystem.
+              {foundationDescription}
             </p>
           </div>
 
@@ -280,18 +347,24 @@ const FarmerProfilePage = () => {
                   id="business-information"
                   className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
                 >
-                  Tell us about your business
+                  {isEditMode
+                    ? "Update your business information"
+                    : "Tell us about your business"}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Provide accurate information about your farm, enterprise,
-                  company, organization, or agricultural professional activity.
+                  {isEditMode
+                    ? "Make any changes needed to keep your AgricWise business identity accurate and up to date."
+                    : "Provide accurate information about your farm, enterprise, company, organization, or agricultural professional activity."}
                 </p>
               </div>
 
               <div className="flex w-fit items-center gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
                 <CheckCircle2 className="h-4 w-4" />
-                Step 1 of your business setup
+
+                {isEditMode
+                  ? "Editing your business foundation"
+                  : "Step 1 of your business setup"}
               </div>
             </div>
           </div>
@@ -460,10 +533,7 @@ const FarmerProfilePage = () => {
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                  Once your business identity is established, your AgricWise
-                  Business Workspace becomes the place to manage products,
-                  agricultural services, orders, verification, and your growing
-                  presence across the ecosystem.
+                  {workspaceDescription}
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-2">

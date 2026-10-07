@@ -113,6 +113,7 @@ const MainLayout = () => {
 
       <header className="sticky top-0 z-50 min-w-0 border-b border-gray-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 min-w-0 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+
           {/* =================================================
               LOGO
           ================================================= */}
@@ -279,6 +280,7 @@ const MainLayout = () => {
         {mobileMenuOpen && (
           <div className="min-w-0 border-t border-gray-100 bg-white px-4 py-4 shadow-sm md:hidden">
             <div className="min-w-0 space-y-1">
+
               {/* HOME */}
 
               <Link
@@ -290,6 +292,7 @@ const MainLayout = () => {
                   size={18}
                   className="shrink-0"
                 />
+
                 <span className="min-w-0 truncate">
                   Home
                 </span>
@@ -308,6 +311,7 @@ const MainLayout = () => {
                   size={18}
                   className="shrink-0"
                 />
+
                 <span className="min-w-0 truncate">
                   Agricultural Businesses
                 </span>
@@ -324,6 +328,7 @@ const MainLayout = () => {
                   size={18}
                   className="shrink-0"
                 />
+
                 <span className="min-w-0 truncate">
                   Marketplace
                 </span>
@@ -342,6 +347,7 @@ const MainLayout = () => {
                       size={18}
                       className="shrink-0"
                     />
+
                     <span className="min-w-0 truncate">
                       My Business
                     </span>
@@ -360,6 +366,7 @@ const MainLayout = () => {
                       size={18}
                       className="shrink-0"
                     />
+
                     <span className="min-w-0 truncate">
                       Notifications
                     </span>
@@ -376,6 +383,7 @@ const MainLayout = () => {
                       size={18}
                       className="shrink-0"
                     />
+
                     <span className="min-w-0 truncate">
                       Profile
                     </span>
@@ -392,6 +400,7 @@ const MainLayout = () => {
                       size={18}
                       className="shrink-0"
                     />
+
                     <span className="min-w-0 truncate">
                       Logout
                     </span>
@@ -441,6 +450,7 @@ const MainLayout = () => {
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 min-w-0 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
         <div className="mx-auto flex h-16 min-w-0 max-w-lg items-center justify-around px-2">
+
           {/* HOME */}
 
           <Link
@@ -481,11 +491,13 @@ const MainLayout = () => {
             </span>
           </Link>
 
-          {/* CREATE / POST */}
+          {/* =================================================
+              BUSINESS ACTION
+          ================================================= */}
 
           {user ? (
             <Link
-              to="/"
+              to="/farmer"
               className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-1.5"
             >
               <span className="flex h-10 w-10 shrink-0 -translate-y-3 items-center justify-center rounded-full bg-green-700 text-white shadow-lg ring-4 ring-white">
@@ -496,7 +508,7 @@ const MainLayout = () => {
               </span>
 
               <span className="-mt-2 max-w-full truncate text-[10px] font-semibold text-gray-500">
-                Post
+                Business
               </span>
             </Link>
           ) : (
@@ -564,6 +576,7 @@ const MainLayout = () => {
       <footer className="hidden border-t border-gray-100 bg-white md:block">
         <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+
             {/* BRAND */}
 
             <div className="min-w-0">

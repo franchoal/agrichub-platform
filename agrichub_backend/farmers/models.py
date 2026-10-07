@@ -66,7 +66,29 @@ class FarmerProfile(models.Model):
         related_name="business_profiles",
     )
 
-    is_verified = models.BooleanField(default=False)
+    # Publication and verification are intentionally separate concepts.
+    #
+    # is_published:
+    #   Whether the business owner has intentionally made the
+    #   business presence publicly discoverable.
+    #
+    # is_verified:
+    #   Whether AgricWise has independently verified the business.
+    is_published = models.BooleanField(
+        default=False,
+        help_text=(
+            "Whether the business has completed its core setup "
+            "and intentionally published its AgricWise presence."
+        ),
+    )
+
+    is_verified = models.BooleanField(
+        default=False,
+        help_text=(
+            "Whether AgricWise has independently verified "
+            "this agricultural business."
+        ),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
