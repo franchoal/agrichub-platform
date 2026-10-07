@@ -4,6 +4,55 @@ from django.db import migrations, models
 from django.utils.text import slugify
 
 
+def remove_stale_slug_relation(apps, schema_editor):
+    """
+    Remove any stale PostgreSQL relation left behind by a previous
+    failed attempt to create FarmerProfile.slug.
+
+    PostgreSQL reports indexes, tables, sequences, etc. as relations.
+    We therefore inspect the catalog instead of assuming the object
+    is specifically an index.
+    """
+
+    if schema_editor.connection.vendor != "postgresql":
+        return
+
+    relation_name = "farmers_farmerprofile_slug_3e506825_like"
+
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT c.relkind
+            FROM pg_class AS c
+            INNER JOIN pg_namespace AS n
+                ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public'
+              AND c.relname = %s
+            """,
+            [relation_name],
+        )
+
+        row = cursor.fetchone()
+
+        if not row:
+            return
+
+        relkind = row[0]
+
+        if relkind in ("i", "I"):
+            cursor.execute(
+                'DROP INDEX IF EXISTS "{}"'.format(
+                    relation_name
+                )
+            )
+        elif relkind in ("r", "p", "m", "S"):
+            cursor.execute(
+                'DROP TABLE IF EXISTS "{}" CASCADE'.format(
+                    relation_name
+                )
+            )
+
+
 def populate_farmer_profile_slugs(apps, schema_editor):
     FarmerProfile = apps.get_model(
         "farmers",
@@ -52,12 +101,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql=(
-                'DROP INDEX IF EXISTS '
-                '"farmers_farmerprofile_slug_3e506825_like";'
-            ),
-            reverse_sql=migrations.RunSQL.noop,
+        migrations.RunPython(
+            remove_stale_slug_relation,
+            migrations.RunPython.noop,
         ),
 
         migrations.AddField(
