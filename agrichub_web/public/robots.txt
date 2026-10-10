@@ -1,6 +1,4 @@
-@"
 User-agent: *
 Allow: /
 
 Sitemap: https://myagricwyse.online/sitemap.xml
-"@ | Set-Content -Path .\public\robots.txt -Encoding utf8
