@@ -296,6 +296,7 @@ SIMPLE_JWT = {
 }
 
 
+
 # ==========================================================
 # CORS
 # ==========================================================
@@ -310,9 +311,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:19006",
     "http://192.168.42.193:8081",
 
-    # Production Frontend
+    # Production Frontends
     "https://agrichub-marketplace.vercel.app",
     "https://agrichub-africa.vercel.app",
+    "https://myagricwyse.online",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -320,8 +322,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://agrichub-marketplace.vercel.app",
     "https://agrichub-africa.vercel.app",
+    "https://myagricwyse.online",
 ]
-
 # ==========================================================
 # SECURITY (Production Only)
 # ==========================================================
