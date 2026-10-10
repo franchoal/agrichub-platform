@@ -2,81 +2,91 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
-    <meta
-      name="theme-color"
-      content="#15803D"
-    />
-
-    <meta
-      name="author"
-      content="Franchoal_Dev Technologies"
-    />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#15803D" />
+    <meta name="author" content="Franchoal_Dev Technologies" />
     <meta
       name="description"
-      content="AgricWise Africa — connecting farmers, buyers, agricultural businesses and communities."
+      content="AgricWise Africa — connecting farmers, buyers, agricultural businesses and communities across Nigeria."
     />
-
-    <meta
-      name="keywords"
-      content="Agriculture, Farmers, Livestock, Poultry, Fertilizer, Farm Inputs, Agro Marketplace, Food Security, Agribusiness, Africa, AgricWise"
-    />
-
-    <meta
-      property="og:title"
-      content="AgricWise Africa"
-    />
-
+    <meta property="og:title" content="AgricWise Africa | Smart Agricultural Ecosystem" />
     <meta
       property="og:description"
-      content="Connecting agriculture. Empowering communities."
+      content="Connecting agriculture. Empowering communities. Access verified agribusinesses, products, and markets."
     />
-
-    <meta
-      property="og:type"
-      content="website"
-    />
-
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="/favicon.png"
-    />
-
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <title>AgricWise Africa | Smart Agricultural Ecosystem</title>
-  </head>
-
-  <body>
-    <div
-      id="root"
-      style="
-        min-height: 100vh;
+    <style>
+      /* Keep the SEO fallback hidden visually for regular users, but readable by bots */
+      .seo-fallback-content {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      /* Clean, minimal default spinner style for users while JS is loading */
+      .app-loading-screen {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-      "
-    >
-      <img
-        src="/logo-icon.png"
-        alt="AgricWise"
-        style="
-          width: 112px;
-          height: 112px;
-          object-fit: contain;
-        "
-      />
-    </div>
+        height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        background-color: #f8fafc;
+        color: #15803D;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #15803D;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- 🤖 SEO Fallback Content: Read immediately by Googlebot -->
+      <div class="seo-fallback-content">
+        <header>
+          <h1>AgricWise Africa | Smart Agricultural Ecosystem</h1>
+          <p>The digital hub for modern African agribusiness, connecting local farmers, agro-retailers, and wholesale buyers.</p>
+        </header>
+        <main>
+          <h2>Connecting Agriculture. Empowering Communities.</h2>
+          <p>Welcome to AgricWise Africa at myagricwyse.online. Our digital ecosystem provides an advanced marketplace, discussion forum, and business directory tailored for agricultural success.</p>
+          
+          <h3>Explore Our Main Services:</h3>
+          <ul>
+            <li><a href="/businesses">Verified Agricultural Businesses Directory</a>: Discover verified corporate vendors, logistics companies, machinery suppliers, and consultancies.</li>
+            <li><a href="/products">Premium Agro-Products Marketplace</a>: Sourcing farm-fresh produce, livestock feed, grains, inputs, and accessories directly from the source.</li>
+            <li><strong>Agribusiness Community Hub</strong>: Network, create posts, share insights, manage business connections, and coordinate logistics with agro-entrepreneurs.</li>
+          </ul>
+        </main>
+        <footer>
+          <p>&copy; 2026 AgricWise Africa. Developed by Franchoal_Dev Technologies.</p>
+        </footer>
+      </div>
 
-    <script
-      type="module"
-      src="/src/main.tsx"
-    ></script>
+      <!-- 👥 Human Experience: What users see for a split second before React loads -->
+      <div class="app-loading-screen">
+        <div class="spinner"></div>
+        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">AgricWise Africa</h2>
+        <p style="margin: 4px 0 0 0; font-size: 0.875rem; color: #64748b;">Loading agricultural ecosystem...</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
