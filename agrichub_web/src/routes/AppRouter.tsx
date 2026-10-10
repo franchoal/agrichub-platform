@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   Navigate,
@@ -8,6 +9,7 @@ import MainLayout from "../layouts/MainLayout";
 /* =========================================================
    PUBLIC / CORE PAGES
 ========================================================= */
+
 import InstallPage from "../pages/Install/InstallPage";
 import HomePage from "../pages/Home/HomePage";
 import AboutPage from "../pages/About/AboutPage";
@@ -192,6 +194,31 @@ available independently:
 export const router = createBrowserRouter([
   /*
   ==========================================
+  PUBLIC PWA INSTALLATION PAGE
+  ==========================================
+
+  This route is deliberately outside MainLayout
+  and all authentication guards.
+
+  Visitors can open the installation page
+  directly without signing in.
+
+  Public installation URL:
+
+      https://myagricwyse.online/install
+
+  The page provides installation instructions
+  and uses the existing PWA configuration.
+  */
+
+  {
+    path: "/install",
+    element: <InstallPage />,
+  },
+
+
+  /*
+  ==========================================
   AUTHENTICATION
   ==========================================
   */
@@ -258,6 +285,12 @@ export const router = createBrowserRouter([
   ==========================================
   MAIN AGRICWISE APPLICATION
   ==========================================
+
+  MainLayout remains the common shell for
+  the existing AgricWise application.
+
+  The dedicated /install route is intentionally
+  not nested here.
   */
 
   {
@@ -289,10 +322,7 @@ export const router = createBrowserRouter([
         element: <AboutPage />,
       },
 
-     {
-        path: "/install",
-        element: <InstallPage />,
-     },
+
       /*
       ========================================
       AGRICULTURAL BUSINESS DISCOVERY
@@ -578,6 +608,10 @@ export const router = createBrowserRouter([
   /*
   ==========================================
   FALLBACK
+  ==========================================
+
+  Preserve the existing fallback behaviour
+  for unrecognised URLs.
   ==========================================
   */
 
