@@ -8,7 +8,7 @@ import MainLayout from "../layouts/MainLayout";
 /* =========================================================
    PUBLIC / CORE PAGES
 ========================================================= */
-
+import InstallPage from "../pages/Install/InstallPage";
 import HomePage from "../pages/Home/HomePage";
 import AboutPage from "../pages/About/AboutPage";
 import LandingPage from "../pages/Landing/LandingPage";
@@ -289,7 +289,10 @@ export const router = createBrowserRouter([
         element: <AboutPage />,
       },
 
-
+     {
+        path: "/install",
+        element: <InstallPage />,
+     },
       /*
       ========================================
       AGRICULTURAL BUSINESS DISCOVERY
