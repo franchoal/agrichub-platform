@@ -1,4 +1,19 @@
+# Global Instructions for All Search Engines
 User-agent: *
-Allow: /
 
+# Disallow private application routes and dashboard settings
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /settings
+Disallow: /profile/edit
+Disallow: /login
+Disallow: /register
+
+# Explicitly allow public marketplace directory and discovery paths
+Allow: /
+Allow: /businesses
+Allow: /products
+Allow: /assets/
+
+# Point directly to your active sitemap file
 Sitemap: https://myagricwyse.online/sitemap.xml
