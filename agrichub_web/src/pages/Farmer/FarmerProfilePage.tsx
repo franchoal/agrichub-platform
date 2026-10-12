@@ -1,18 +1,10 @@
+import { useState } from "react";
 
 import {
   ArrowRight,
   Building2,
   CheckCircle2,
-  Compass,
-  Factory,
-  MapPin,
-  Package,
-  Settings2,
   ShieldCheck,
-  Store,
-  Tractor,
-  Users,
-  Wrench,
 } from "lucide-react";
 
 import {
@@ -27,104 +19,10 @@ import {
 
 import FarmerProfileForm from "../../components/farmer/FarmerProfileForm";
 
-const profileFoundation = [
-  {
-    icon: Building2,
-    title: "Business Identity",
-    description:
-      "Create the business or professional identity customers, partners, and the wider agricultural community will see on AgricWise.",
-    className: "border-green-100 bg-green-50/60",
-    iconClassName: "bg-green-100 text-green-700",
-  },
-  {
-    icon: Settings2,
-    title: "Agricultural Focus",
-    description:
-      "Select the areas of agriculture your business operates in so your AgricWise presence accurately reflects what you do.",
-    className: "border-blue-100 bg-blue-50/60",
-    iconClassName: "bg-blue-100 text-blue-700",
-  },
-  {
-    icon: MapPin,
-    title: "Operating Location",
-    description:
-      "Add where your business operates so customers and relevant opportunities can better understand your agricultural presence.",
-    className: "border-purple-100 bg-purple-50/60",
-    iconClassName: "bg-purple-100 text-purple-700",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Build Trust",
-    description:
-      "Accurate business information creates the foundation for verification and a stronger, more credible AgricWise presence.",
-    className: "border-orange-100 bg-orange-50/60",
-    iconClassName: "bg-orange-100 text-orange-700",
-  },
-];
-
-const setupSteps = [
-  {
-    number: "01",
-    icon: Building2,
-    title: "Define your business",
-    description:
-      "Add your business name, operating location, description, and agricultural focus.",
-  },
-  {
-    number: "02",
-    icon: Package,
-    title: "Show what you offer",
-    description:
-      "Use your Business Workspace to manage products and agricultural services.",
-  },
-  {
-    number: "03",
-    icon: Users,
-    title: "Grow your presence",
-    description:
-      "Build visibility and connections with customers, businesses, professionals, and the wider agricultural community.",
-  },
-];
-
-const valueChainGroups = [
-  {
-    icon: Tractor,
-    label: "Production",
-    description: "Grow and produce agricultural goods.",
-    items: [
-      "Crop & Plant Farming",
-      "Livestock & Poultry",
-      "Fish Farming",
-    ],
-  },
-  {
-    icon: Store,
-    label: "Supply",
-    description: "Provide products and agricultural inputs.",
-    items: ["Agro-input Supplier", "Agro-allied Products"],
-  },
-  {
-    icon: Wrench,
-    label: "Infrastructure",
-    description: "Support farming with tools and infrastructure.",
-    items: ["Equipment & Machinery", "Irrigation & Greenhouse"],
-  },
-  {
-    icon: Factory,
-    label: "Value Addition",
-    description: "Move agricultural products through the value chain.",
-    items: ["Agro-processing", "Produce Buyer / Aggregator"],
-  },
-  {
-    icon: Compass,
-    label: "Knowledge & Services",
-    description: "Provide expertise, support, and professional services.",
-    items: ["Agricultural Services", "Training & Consultancy"],
-  },
-];
-
 const FarmerProfilePage = () => {
   const location = useLocation();
+
+  const [showForm, setShowForm] = useState(false);
 
   const {
     data: profile,
@@ -138,89 +36,55 @@ const FarmerProfilePage = () => {
     new URLSearchParams(location.search).get("edit") === "true";
 
   const hasExistingProfile = Boolean(profile);
+
   const isPublished = Boolean(profile?.is_published);
 
   const isMissingProfile =
-    isProfileError && isMissingFarmerProfile(profileError);
+    isProfileError &&
+    isMissingFarmerProfile(profileError);
 
   const hasUnexpectedProfileError =
     isProfileError && !isMissingProfile;
 
-  const pageTitle = isEditMode
-    ? "Edit your AgricWise business foundation"
-    : hasExistingProfile
-      ? "Your AgricWise business foundation"
-      : "Build your AgricWise business presence";
-
-  const pageDescription = isEditMode
-    ? "Update the core information that represents your agricultural business across AgricWise."
-    : hasExistingProfile
-      ? "Your business foundation is the structured identity AgricWise uses to represent your agricultural business and connect it with the wider ecosystem."
-      : "Your AgricWise Business profile is the foundation of how people discover, understand, and connect with your agricultural business, enterprise, organization, or professional activity.";
-
-  const foundationEyebrow = isEditMode
-    ? "Business foundation"
-    : "Your agricultural identity";
-
-  const foundationTitle = isEditMode
-    ? "Update your business foundation"
-    : "Build your business foundation";
-
-  const foundationDescription = isEditMode
-    ? "Keep your core business information accurate so your AgricWise presence continues to represent your business correctly."
-    : "These core details establish the structured identity AgricWise uses to represent your business and connect it with the right parts of the ecosystem.";
-
-  const workspaceDescription = isPublished
-    ? "Your AgricWise Business Workspace is the place to manage products, agricultural services, orders, verification, and your growing presence across the ecosystem."
-    : "Once your business foundation is complete and published, your AgricWise Business Workspace becomes the place to manage products, agricultural services, orders, verification, and your growing presence across the ecosystem.";
+  const showBusinessInvitation =
+    !hasExistingProfile &&
+    !isEditMode &&
+    !showForm;
 
   if (isProfileLoading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto flex min-h-[70vh] w-full max-w-7xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-white px-8 py-10 text-center shadow-sm">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-green-600" />
+      <main className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4">
+        <div
+          className="text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-green-600" />
 
-            <p className="text-sm font-medium text-slate-600">
-              Loading your AgricWise business foundation...
-            </p>
-          </div>
+          <p className="text-sm text-slate-600">
+            Loading your business profile...
+          </p>
         </div>
       </main>
     );
   }
 
-  /*
-  ==================================================
-  PROFILE REQUEST ERROR
-  ==================================================
-
-  A missing profile is expected during onboarding.
-  Other errors must not be presented as a new profile.
-  */
-
   if (hasUnexpectedProfileError) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+      <main className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4 py-10">
         <section
-          className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8"
-          aria-labelledby="profile-error-title"
+          className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm"
           role="alert"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-700">
-            <ShieldCheck className="h-7 w-7" />
-          </div>
+          <ShieldCheck className="mx-auto h-10 w-10 text-amber-600" />
 
-          <h1
-            id="profile-error-title"
-            className="mt-5 text-xl font-bold text-slate-900"
-          >
+          <h1 className="mt-4 text-xl font-bold text-slate-900">
             Unable to load your business profile
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            AgricWise could not retrieve your business information.
-            Your profile has not been assumed missing. Please try again.
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            We couldn't retrieve your AgricWise business
+            information. Please try again.
           </p>
 
           <button
@@ -228,7 +92,7 @@ const FarmerProfilePage = () => {
             onClick={() => {
               void refetchProfile();
             }}
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           >
             Try again
             <ArrowRight className="h-4 w-4" />
@@ -239,424 +103,139 @@ const FarmerProfilePage = () => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-5 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-5xl">
 
-        {/* ==================================================
-            PAGE HERO
-        ================================================== */}
+        {/* NEW BUSINESS: SIMPLE INVITATION */}
 
-        <section className="relative mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 px-5 py-7 text-white shadow-xl sm:mb-8 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-          <div
-            className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10"
-            aria-hidden="true"
-          />
+        {showBusinessInvitation && (
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
-          <div
-            className="absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-emerald-300/10"
-            aria-hidden="true"
-          />
+            {/* Agricultural business imagery */}
 
-          <div
-            className="absolute right-1/4 top-1/2 h-24 w-24 rounded-full bg-white/5"
-            aria-hidden="true"
-          />
+            <div className="relative min-h-[260px] overflow-hidden bg-green-950 sm:min-h-[340px]">
+              <img
+                src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=85"
+                alt="Green agricultural fields representing farming and agricultural businesses"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
 
-          <div className="relative z-10 max-w-4xl">
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-green-50 backdrop-blur-sm">
-                <Building2 className="h-3.5 w-3.5" />
-                My AgricWise Business
-              </span>
+              <div className="absolute inset-0 bg-gradient-to-t from-green-950/95 via-green-950/35 to-transparent" />
 
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-medium text-emerald-50">
-                <Settings2 className="h-3.5 w-3.5" />
-                {isEditMode ? "Edit Business" : "Business Setup"}
-              </span>
-
-              {isPublished && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200/20 bg-green-400/10 px-3 py-1.5 text-[11px] font-semibold text-green-50">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Published
+              <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                  <Building2 className="h-4 w-4" />
+                  My AgricWise Business
                 </span>
-              )}
+
+                <h1 className="mt-4 max-w-xl text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
+                  Your business belongs here.
+                </h1>
+              </div>
             </div>
 
-            <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              {pageTitle}
-            </h1>
+            {/* Short invitation */}
 
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-green-50 sm:text-base sm:leading-8">
-              {pageDescription}
-            </p>
+            <div className="p-5 sm:p-8">
+              <p className="max-w-2xl text-base leading-7 text-slate-600">
+                Join AgricWise Africa and create your business
+                presence. Whether you farm, supply agricultural
+                inputs, process produce, provide services, or
+                trade agricultural products, there's a place
+                for your business here.
+              </p>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                <Building2 className="h-5 w-5 text-emerald-300" />
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
+              >
+                Create My Business Presence
+                <ArrowRight className="h-4 w-4" />
+              </button>
 
-                <p className="mt-3 text-sm font-semibold text-white">
-                  Establish your identity
-                </p>
+              <div className="mt-5 flex items-start gap-2 text-sm text-slate-500">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />
 
-                <p className="mt-1 text-xs leading-5 text-green-100/75">
-                  Tell AgricWise who you are and what your business does.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                <Package className="h-5 w-5 text-emerald-300" />
-
-                <p className="mt-3 text-sm font-semibold text-white">
-                  Showcase what you offer
-                </p>
-
-                <p className="mt-1 text-xs leading-5 text-green-100/75">
-                  Products and services become part of your public presence.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                <Users className="h-5 w-5 text-emerald-300" />
-
-                <p className="mt-3 text-sm font-semibold text-white">
-                  Join the ecosystem
-                </p>
-
-                <p className="mt-1 text-xs leading-5 text-green-100/75">
-                  Become discoverable within the wider agricultural community.
+                <p>
+                  Start with your business details. Add products
+                  and services as you grow.
                 </p>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* ==================================================
-            BUSINESS FOUNDATION
-        ================================================== */}
+        {/* BUSINESS PROFILE FORM */}
 
-        <section
-          className="mb-6 sm:mb-8"
-          aria-labelledby="business-foundation"
-        >
-          <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              {foundationEyebrow}
-            </p>
-
-            <h2
-              id="business-foundation"
-              className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
-            >
-              {foundationTitle}
-            </h2>
-
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              {foundationDescription}
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {profileFoundation.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <article
-                  key={item.title}
-                  className={`rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${item.className}`}
-                >
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconClassName}`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-
-                  <h3 className="mt-4 font-semibold text-slate-900">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {item.description}
-                  </p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ==================================================
-            BUSINESS PROFILE FORM
-        ================================================== */}
-
-        <section
-          aria-labelledby="business-information"
-          className="mb-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm sm:mb-8"
-        >
-          <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-6 sm:px-8 sm:py-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="max-w-2xl">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-700">
-                    <Building2 className="h-4 w-4" />
-                  </span>
-
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700">
-                    Business foundation
-                  </p>
+        {!showBusinessInvitation && (
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 bg-white p-5 sm:p-8">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                  <Building2 className="h-5 w-5" />
                 </div>
 
-                <h2
-                  id="business-information"
-                  className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
-                >
-                  {isEditMode
-                    ? "Update your business information"
-                    : "Tell us about your business"}
-                </h2>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                      {isEditMode
+                        ? "Edit your business"
+                        : hasExistingProfile
+                          ? "Your business profile"
+                          : "Create your business presence"}
+                    </h1>
 
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  {isEditMode
-                    ? "Make any changes needed to keep your AgricWise business identity accurate and up to date."
-                    : "Provide accurate information about your farm, enterprise, company, organization, or agricultural professional activity."}
-                </p>
-              </div>
-
-              <div className="flex w-fit items-center gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                <CheckCircle2 className="h-4 w-4" />
-
-                {isEditMode
-                  ? "Editing your business foundation"
-                  : "Step 1 of your business setup"}
-              </div>
-            </div>
-          </div>
-
-          <div className="p-5 sm:p-8 lg:p-10">
-            <FarmerProfileForm />
-          </div>
-        </section>
-
-        {/* ==================================================
-            AGRICULTURAL VALUE CHAIN
-        ================================================== */}
-
-        <section
-          className="mb-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm sm:mb-8"
-          aria-labelledby="value-chain"
-        >
-          <div className="p-5 sm:p-7 lg:p-8">
-            <div className="max-w-3xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-green-700">
-                <Users className="h-3.5 w-3.5" />
-                One agricultural ecosystem
-              </span>
-
-              <h2
-                id="value-chain"
-                className="mt-3 text-2xl font-bold tracking-tight text-slate-900"
-              >
-                There is a place for your business here
-              </h2>
-
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                AgricWise connects participants across the agricultural value
-                chain. Your business does not have to fit into a single
-                traditional “farmer” or “buyer” label.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {valueChainGroups.map((group) => {
-                const Icon = group.icon;
-
-                return (
-                  <article
-                    key={group.label}
-                    className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-green-700 shadow-sm">
-                        <Icon className="h-[18px] w-[18px]" />
+                    {isPublished && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Published
                       </span>
-
-                      <h3 className="text-sm font-bold text-slate-900">
-                        {group.label}
-                      </h3>
-                    </div>
-
-                    <p className="mt-3 text-xs leading-5 text-slate-500">
-                      {group.description}
-                    </p>
-
-                    <div className="mt-4 space-y-2">
-                      {group.items.map((item) => (
-                        <div
-                          key={item}
-                          className="rounded-lg bg-white px-3 py-2 text-xs font-medium leading-5 text-slate-600"
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ==================================================
-            BUSINESS JOURNEY
-        ================================================== */}
-
-        <section
-          className="mb-6 sm:mb-8"
-          aria-labelledby="business-journey"
-        >
-          <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-600">
-              Your AgricWise journey
-            </p>
-
-            <h2
-              id="business-journey"
-              className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
-            >
-              Build it in stages
-            </h2>
-
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Start with a strong identity. Then use your Business Workspace
-              to expand what people can discover, buy, and engage with.
-            </p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            {setupSteps.map((step, index) => {
-              const Icon = step.icon;
-
-              return (
-                <article
-                  key={step.number}
-                  className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">
-                      {step.number}
-                    </span>
-
-                    <Icon className="h-5 w-5 text-green-600" />
-
-                    {index < setupSteps.length - 1 && (
-                      <ArrowRight
-                        className="hidden text-slate-200 md:absolute md:right-4 md:top-8 md:block"
-                        aria-hidden="true"
-                      />
                     )}
                   </div>
 
-                  <h3 className="mt-5 font-semibold text-slate-900">
-                    {step.title}
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {step.description}
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {hasExistingProfile
+                      ? "Manage the information that represents your business on AgricWise."
+                      : "Tell us about your business to get started."}
                   </p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+                </div>
+              </div>
+            </div>
 
-        {/* ==================================================
-            BUSINESS WORKSPACE BRIDGE
-        ================================================== */}
+            <div className="p-5 sm:p-8">
+              <FarmerProfileForm />
+            </div>
+          </section>
+        )}
 
-        <section className="mb-6 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl sm:mb-8">
-          <div className="relative p-6 sm:p-8 lg:p-10">
-            <div
-              className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-green-500/10"
-              aria-hidden="true"
-            />
+        {/* EXISTING BUSINESS WORKSPACE */}
 
-            <div
-              className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-emerald-500/5"
-              aria-hidden="true"
-            />
-
-            <div className="relative z-10 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-400">
-                  What comes next
-                </p>
-
-                <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                  Turn your profile into a business presence
+        {hasExistingProfile && (
+          <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-semibold text-slate-900">
+                  Your Business Workspace
                 </h2>
 
-                <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                  {workspaceDescription}
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Manage your agricultural business and its
+                  products and services.
                 </p>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {[
-                    "Products",
-                    "Services",
-                    "Orders",
-                    "Business Presence",
-                  ].map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
               </div>
 
               <Link
                 to="/farmer/dashboard"
-                className="group shrink-0 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition duration-200 hover:border-green-400/30 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-green-400/70 focus:ring-offset-2 focus:ring-offset-slate-950 lg:min-w-[280px]"
-                aria-label="Open AgricWise Business Workspace"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-500/15 text-green-400 transition duration-200 group-hover:bg-green-500/20">
-                  <Building2 className="h-5 w-5" />
-                </div>
-
-                <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-                  Business workspace
-                </p>
-
-                <p className="mt-2 text-base font-semibold text-white">
-                  Open your AgricWise Command Center
-                </p>
-
-                <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-                  Manage your business presence
-                </div>
-
-                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-green-400">
-                  Open Workspace
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </div>
+                Open Workspace
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* ==================================================
-            TRUST FOOTNOTE
-        ================================================== */}
-
-        <div className="flex items-center justify-center gap-2 px-1 py-6 text-center sm:py-8">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-slate-400" />
-
-          <p className="text-xs leading-5 text-slate-400">
-            Start with accurate information. Build your AgricWise presence as
-            your business grows.
-          </p>
-        </div>
       </div>
     </main>
   );

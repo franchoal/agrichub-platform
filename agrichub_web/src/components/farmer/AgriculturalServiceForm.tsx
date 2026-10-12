@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { FormEvent } from "react";
 
@@ -37,32 +37,53 @@ const initialFormState: FormState = {
   is_available: true,
 };
 
+function getInitialFormState(
+  service?: AgriculturalService | null
+): FormState {
+  if (!service) {
+    return { ...initialFormState };
+  }
+
+  return {
+    name: service.name ?? "",
+    description: service.description ?? "",
+    location: service.location ?? "",
+    price: service.price ?? "",
+    price_unit: service.price_unit ?? "",
+    is_available: service.is_available,
+  };
+}
+
 function AgriculturalServiceForm({
   service,
   isSubmitting = false,
   onSubmit,
   onCancel,
 }: AgriculturalServiceFormProps) {
-  const [form, setForm] =
-    useState<FormState>(initialFormState);
+  return (
+    <AgriculturalServiceFormFields
+      key={service?.id ?? "new-service"}
+      service={service}
+      isSubmitting={isSubmitting}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+    />
+  );
+}
+
+function AgriculturalServiceFormFields({
+  service,
+  isSubmitting,
+  onSubmit,
+  onCancel,
+}: AgriculturalServiceFormProps & {
+  isSubmitting: boolean;
+}) {
+  const [form, setForm] = useState<FormState>(() =>
+    getInitialFormState(service)
+  );
 
   const isEditing = Boolean(service);
-
-  useEffect(() => {
-    if (!service) {
-      setForm(initialFormState);
-      return;
-    }
-
-    setForm({
-      name: service.name ?? "",
-      description: service.description ?? "",
-      location: service.location ?? "",
-      price: service.price ?? "",
-      price_unit: service.price_unit ?? "",
-      is_available: service.is_available,
-    });
-  }, [service]);
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -92,20 +113,11 @@ function AgriculturalServiceForm({
     event.preventDefault();
 
     const trimmedName = form.name.trim();
+    const trimmedDescription = form.description.trim();
+    const trimmedLocation = form.location.trim();
+    const trimmedPriceUnit = form.price_unit.trim();
 
-    const trimmedDescription =
-      form.description.trim();
-
-    const trimmedLocation =
-      form.location.trim();
-
-    const trimmedPriceUnit =
-      form.price_unit.trim();
-
-    if (
-      !trimmedName ||
-      !trimmedDescription
-    ) {
+    if (!trimmedName || !trimmedDescription) {
       return;
     }
 
@@ -122,43 +134,27 @@ function AgriculturalServiceForm({
       }
     }
 
-    const price =
-      rawPrice === ""
-        ? null
-        : rawPrice;
+    const price = rawPrice === "" ? null : rawPrice;
+
+    const serviceData = {
+      name: trimmedName,
+      description: trimmedDescription,
+      location: trimmedLocation,
+      price,
+      price_unit: trimmedPriceUnit,
+      is_available: form.is_available,
+    };
 
     if (isEditing) {
       const updateData: UpdateAgriculturalServiceData =
-        {
-          name: trimmedName,
-          description:
-            trimmedDescription,
-          location:
-            trimmedLocation,
-          price,
-          price_unit:
-            trimmedPriceUnit,
-          is_available:
-            form.is_available,
-        };
+        serviceData;
 
       await onSubmit(updateData);
       return;
     }
 
     const createData: CreateAgriculturalServiceData =
-      {
-        name: trimmedName,
-        description:
-          trimmedDescription,
-        location:
-          trimmedLocation,
-        price,
-        price_unit:
-          trimmedPriceUnit,
-        is_available:
-          form.is_available,
-      };
+      serviceData;
 
     await onSubmit(createData);
   };
@@ -230,8 +226,7 @@ function AgriculturalServiceForm({
         />
 
         <p className="mt-1.5 text-xs text-gray-500">
-          Leave blank if the service is available
-          remotely or nationwide.
+          Leave blank if the service is available remotely or nationwide.
         </p>
       </div>
 
@@ -283,9 +278,7 @@ function AgriculturalServiceForm({
         <input
           type="checkbox"
           checked={form.is_available}
-          onChange={
-            handleAvailabilityChange
-          }
+          onChange={handleAvailabilityChange}
           disabled={isSubmitting}
           className="mt-0.5 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
         />
@@ -296,9 +289,7 @@ function AgriculturalServiceForm({
           </span>
 
           <span className="mt-1 block text-xs text-gray-500">
-            Turn this off when you temporarily
-            stop accepting requests for this
-            service.
+            Turn this off when you temporarily stop accepting requests for this service.
           </span>
         </span>
       </label>

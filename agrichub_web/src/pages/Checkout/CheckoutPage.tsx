@@ -15,6 +15,37 @@ import { Card, Button } from "../../components/ui";
 import { useCart } from "../../hooks/useCart";
 import { useCheckout } from "../../hooks/useCheckout";
 
+const getCheckoutErrorMessage = (
+  error: unknown,
+): string => {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error
+  ) {
+    const response = error.response;
+
+    if (
+      typeof response === "object" &&
+      response !== null &&
+      "data" in response
+    ) {
+      const data = response.data;
+
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "detail" in data &&
+        typeof data.detail === "string"
+      ) {
+        return data.detail;
+      }
+    }
+  }
+
+  return "Checkout failed.";
+};
+
 const CheckoutPage = () => {
   const navigate = useNavigate();
 
@@ -94,10 +125,9 @@ const CheckoutPage = () => {
           );
         },
 
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           toast.error(
-            error?.response?.data?.detail ??
-              "Checkout failed."
+            getCheckoutErrorMessage(error)
           );
         },
       }

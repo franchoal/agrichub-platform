@@ -30,6 +30,11 @@ const ProductDetailsPage = () => {
 
   const productId = Number(id);
 
+  const isValidProductId =
+    Boolean(id) &&
+    Number.isSafeInteger(productId) &&
+    productId > 0;
+
   const [quantity, setQuantity] = useState(1);
 
   const {
@@ -44,41 +49,26 @@ const ProductDetailsPage = () => {
 
   /*
    * --------------------------------------------------------
-   * ROUTE VALIDATION
-   * --------------------------------------------------------
-   */
-
-  if (!id || Number.isNaN(productId)) {
-    return (
-      <Navigate
-        replace
-        to="/products"
-      />
-    );
-  }
-
-  /*
-   * --------------------------------------------------------
-   * AUTHENTICATION GATE
+   * AUTHENTICATION STATE
    * --------------------------------------------------------
    *
-   * We wait for Zustand persistence to hydrate before
-   * deciding whether this visitor is authenticated.
-   *
-   * This prevents an already-authenticated user from being
-   * briefly treated as a guest during page refresh.
+   * Wait for persisted authentication state to hydrate
+   * before deciding whether the visitor can view details.
    */
 
   const canViewProduct =
-    hasHydrated && isAuthenticated;
+    hasHydrated &&
+    isAuthenticated &&
+    isValidProductId;
 
   /*
    * --------------------------------------------------------
    * PRODUCT / REVIEW QUERIES
    * --------------------------------------------------------
    *
-   * The hooks receive the authentication state so guests
-   * never make protected product/review API requests.
+   * All hooks run unconditionally and in the same order.
+   * Invalid route IDs use a safe fallback ID, while the
+   * enabled flag prevents unnecessary API requests.
    */
 
   const {
@@ -86,16 +76,31 @@ const ProductDetailsPage = () => {
     isLoading,
     isError,
   } = useProduct(
-    productId,
+    isValidProductId ? productId : 0,
     canViewProduct,
   );
 
   const {
     data: reviews = [],
   } = useReviews(
-    productId,
+    isValidProductId ? productId : 0,
     canViewProduct,
   );
+
+  /*
+   * --------------------------------------------------------
+   * ROUTE VALIDATION
+   * --------------------------------------------------------
+   */
+
+  if (!isValidProductId) {
+    return (
+      <Navigate
+        replace
+        to="/products"
+      />
+    );
+  }
 
   /*
    * --------------------------------------------------------
@@ -129,8 +134,8 @@ const ProductDetailsPage = () => {
    * GUEST ACCESS
    * --------------------------------------------------------
    *
-   * Product browsing remains public on /products, but the
-   * actual product detail/action page requires registration.
+   * Marketplace browsing remains public, but product details
+   * and purchasing actions require authentication.
    */
 
   if (!isAuthenticated) {
@@ -249,9 +254,7 @@ const ProductDetailsPage = () => {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      {/* ======================================================
-          BACK TO MARKETPLACE
-      ====================================================== */}
+      {/* BACK TO MARKETPLACE */}
       <Link
         to="/products"
         className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-green-700 transition hover:text-green-800 sm:mb-10"
@@ -260,13 +263,9 @@ const ProductDetailsPage = () => {
         Back to Marketplace
       </Link>
 
-      {/* ======================================================
-          PRODUCT OVERVIEW
-      ====================================================== */}
+      {/* PRODUCT OVERVIEW */}
       <section className="grid gap-8 lg:grid-cols-2 lg:gap-14">
-        {/* ====================================================
-            PRODUCT IMAGE
-        ==================================================== */}
+        {/* PRODUCT IMAGE */}
         <Card className="overflow-hidden rounded-[28px] border-0 p-0 shadow-xl sm:rounded-[34px]">
           <div className="relative overflow-hidden">
             <img
@@ -304,9 +303,7 @@ const ProductDetailsPage = () => {
           </div>
         </Card>
 
-        {/* ====================================================
-            PRODUCT INFORMATION
-        ==================================================== */}
+        {/* PRODUCT INFORMATION */}
         <div className="space-y-6 sm:space-y-8">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -458,9 +455,7 @@ const ProductDetailsPage = () => {
         </div>
       </section>
 
-      {/* ======================================================
-          PRODUCT INFORMATION
-      ====================================================== */}
+      {/* PRODUCT INFORMATION */}
       <section className="mt-12 sm:mt-16">
         <Card className="overflow-hidden rounded-[28px] border-0 shadow-lg">
           <div className="border-b bg-green-50 px-5 py-5 sm:px-8 sm:py-6">
@@ -525,9 +520,7 @@ const ProductDetailsPage = () => {
         </Card>
       </section>
 
-      {/* ======================================================
-          DESCRIPTION
-      ====================================================== */}
+      {/* DESCRIPTION */}
       <section className="mt-8 sm:mt-10">
         <Card className="overflow-hidden rounded-[28px] border-0 shadow-lg">
           <div className="border-b bg-gradient-to-r from-green-50 to-emerald-50 px-5 py-5 sm:px-8 sm:py-6">
@@ -548,9 +541,7 @@ const ProductDetailsPage = () => {
         </Card>
       </section>
 
-      {/* ======================================================
-          REVIEWS SUMMARY
-      ====================================================== */}
+      {/* REVIEWS SUMMARY */}
       <section className="mt-12 sm:mt-20">
         <div className="overflow-hidden rounded-[28px] bg-gradient-to-r from-green-700 via-green-600 to-emerald-600 text-white shadow-2xl sm:rounded-[34px]">
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1fr_320px] lg:items-center">
@@ -595,9 +586,7 @@ const ProductDetailsPage = () => {
         </div>
       </section>
 
-      {/* ======================================================
-          REVIEW FORM
-      ====================================================== */}
+      {/* REVIEW FORM */}
       <section className="mt-10 sm:mt-14">
         <Card className="rounded-[28px] border-0 shadow-xl">
           <div className="border-b bg-green-50 px-5 py-5 sm:px-8 sm:py-6">
@@ -619,9 +608,7 @@ const ProductDetailsPage = () => {
         </Card>
       </section>
 
-      {/* ======================================================
-          CUSTOMER REVIEWS
-      ====================================================== */}
+      {/* CUSTOMER REVIEWS */}
       <section className="mt-12 sm:mt-16">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Download,
@@ -90,7 +89,13 @@ function InstallPage() {
   const [canInstall, setCanInstall] = useState(
     () => Boolean(deferredInstallPrompt)
   );
-  const [isInstalled, setIsInstalled] = useState(false);
+
+  // Determine the initial state during initialization rather than
+  // triggering an extra render through a mount-time effect.
+  const [isInstalled, setIsInstalled] = useState(
+    () => isRunningAsInstalledApp()
+  );
+
   const [message, setMessage] = useState("");
 
   const isIOS = isIOSDevice();
@@ -109,13 +114,11 @@ function InstallPage() {
       );
     };
 
-    setIsInstalled(isRunningAsInstalledApp());
-    syncInstallState();
-
     window.addEventListener(
       "agricwise-install-available",
       syncInstallState
     );
+
     window.addEventListener("appinstalled", handleInstalled);
 
     return () => {
@@ -123,6 +126,7 @@ function InstallPage() {
         "agricwise-install-available",
         syncInstallState
       );
+
       window.removeEventListener(
         "appinstalled",
         handleInstalled

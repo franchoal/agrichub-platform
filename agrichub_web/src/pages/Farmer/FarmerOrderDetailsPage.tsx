@@ -9,26 +9,27 @@ const FarmerOrderDetailsPage = () => {
   const { id } = useParams();
 
   const orderId = Number(id);
+  const isValidOrderId =
+    Boolean(id) &&
+    Number.isSafeInteger(orderId) &&
+    orderId > 0;
 
-  if (!id || Number.isNaN(orderId)) {
-    return (
-      <Navigate
-        to="/farmer/orders"
-        replace
-      />
-    );
-  }
-
+  // Hooks must run in the same order on every render.
+  // The hooks receive a safe fallback ID when the URL is invalid.
   const {
     data: order,
     isLoading,
     isError,
-  } = useFarmerOrder(orderId);
+  } = useFarmerOrder(isValidOrderId ? orderId : 0);
 
   const {
     mutate: updateOrder,
     isPending,
   } = useUpdateFarmerOrder();
+
+  if (!isValidOrderId) {
+    return <Navigate to="/farmer/orders" replace />;
+  }
 
   if (isLoading) {
     return (
@@ -91,27 +92,19 @@ const FarmerOrderDetailsPage = () => {
 
   const formattedStatus = order.status
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) =>
-      character.toUpperCase()
-    );
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
-  const formattedPaymentStatus =
-    order.payment?.status
-      ? order.payment.status
-          .replaceAll("_", " ")
-          .replace(/\b\w/g, (character) =>
-            character.toUpperCase()
-          )
-      : "Unavailable";
+  const formattedPaymentStatus = order.payment?.status
+    ? order.payment.status
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase())
+    : "Unavailable";
 
-  const formattedDeliveryStatus =
-    order.delivery?.status
-      ? order.delivery.status
-          .replaceAll("_", " ")
-          .replace(/\b\w/g, (character) =>
-            character.toUpperCase()
-          )
-      : "Unavailable";
+  const formattedDeliveryStatus = order.delivery?.status
+    ? order.delivery.status
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase())
+    : "Unavailable";
 
   const isCompleted = order.status === "completed";
   const isCancelled = order.status === "cancelled";
@@ -195,10 +188,7 @@ const FarmerOrderDetailsPage = () => {
                     </p>
 
                     <p className="mt-1 text-lg font-bold text-green-700">
-                      ₦
-                      {Number(
-                        order.payment.amount
-                      ).toLocaleString()}
+                      ₦{Number(order.payment.amount).toLocaleString()}
                     </p>
                   </>
                 ) : (
@@ -237,8 +227,7 @@ const FarmerOrderDetailsPage = () => {
                     <p className="mt-2 text-sm text-gray-500">
                       Tracking:{" "}
                       <span className="font-semibold text-gray-700">
-                        {order.delivery.tracking_number ??
-                          "Not assigned"}
+                        {order.delivery.tracking_number ?? "Not assigned"}
                       </span>
                     </p>
                   </>
@@ -275,19 +264,12 @@ const FarmerOrderDetailsPage = () => {
                   </h3>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    ₦
-                    {Number(
-                      item.price
-                    ).toLocaleString()}{" "}
-                    × {item.quantity}
+                    ₦{Number(item.price).toLocaleString()} × {item.quantity}
                   </p>
                 </div>
 
                 <span className="text-lg font-bold text-green-700 sm:text-right">
-                  ₦
-                  {Number(
-                    item.subtotal
-                  ).toLocaleString()}
+                  ₦{Number(item.subtotal).toLocaleString()}
                 </span>
               </div>
             ))}
@@ -299,10 +281,7 @@ const FarmerOrderDetailsPage = () => {
             </span>
 
             <span className="text-3xl font-extrabold text-green-700">
-              ₦
-              {Number(
-                order.total
-              ).toLocaleString()}
+              ₦{Number(order.total).toLocaleString()}
             </span>
           </div>
         </Card>
@@ -337,9 +316,7 @@ const FarmerOrderDetailsPage = () => {
                 updateOrder({
                   id: order.id,
                   data: {
-                    status: nextStatus[
-                      order.status
-                    ] as
+                    status: nextStatus[order.status] as
                       | "accepted"
                       | "processing"
                       | "ready"
