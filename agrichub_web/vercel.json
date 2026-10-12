@@ -1,18 +1,19 @@
+
 {
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
     {
       "source": "/install",
-      "destination": "/"
+      "destination": "/index.html"
     },
     {
       "source": "/businesses",
-      "destination": "/"
+      "destination": "/businesses/index.html"
     },
     {
       "source": "/products",
-      "destination": "/"
+      "destination": "/products/index.html"
     },
     {
       "source": "/(.*)",
