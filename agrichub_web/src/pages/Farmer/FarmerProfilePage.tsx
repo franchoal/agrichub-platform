@@ -1,3 +1,4 @@
+
 import {
   ArrowRight,
   Building2,
@@ -19,7 +20,11 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import { useFarmerProfile } from "../../hooks/useFarmerProfile";
+import {
+  isMissingFarmerProfile,
+  useFarmerProfile,
+} from "../../hooks/useFarmerProfile";
+
 import FarmerProfileForm from "../../components/farmer/FarmerProfileForm";
 
 const profileFoundation = [
@@ -124,14 +129,22 @@ const FarmerProfilePage = () => {
   const {
     data: profile,
     isLoading: isProfileLoading,
+    isError: isProfileError,
+    error: profileError,
+    refetch: refetchProfile,
   } = useFarmerProfile();
 
   const isEditMode =
     new URLSearchParams(location.search).get("edit") === "true";
 
   const hasExistingProfile = Boolean(profile);
-
   const isPublished = Boolean(profile?.is_published);
+
+  const isMissingProfile =
+    isProfileError && isMissingFarmerProfile(profileError);
+
+  const hasUnexpectedProfileError =
+    isProfileError && !isMissingProfile;
 
   const pageTitle = isEditMode
     ? "Edit your AgricWise business foundation"
@@ -173,6 +186,54 @@ const FarmerProfilePage = () => {
             </p>
           </div>
         </div>
+      </main>
+    );
+  }
+
+  /*
+  ==================================================
+  PROFILE REQUEST ERROR
+  ==================================================
+
+  A missing profile is expected during onboarding.
+  Other errors must not be presented as a new profile.
+  */
+
+  if (hasUnexpectedProfileError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+        <section
+          className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8"
+          aria-labelledby="profile-error-title"
+          role="alert"
+        >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+            <ShieldCheck className="h-7 w-7" />
+          </div>
+
+          <h1
+            id="profile-error-title"
+            className="mt-5 text-xl font-bold text-slate-900"
+          >
+            Unable to load your business profile
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            AgricWise could not retrieve your business information.
+            Your profile has not been assumed missing. Please try again.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              void refetchProfile();
+            }}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+          >
+            Try again
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </section>
       </main>
     );
   }

@@ -1,6 +1,11 @@
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { useFarmerProfile } from "../hooks/useFarmerProfile";
+import {
+  isMissingFarmerProfile,
+  useFarmerProfile,
+} from "../hooks/useFarmerProfile";
+
 import { useAuthStore } from "../store/authStore";
 
 const FarmerRoute = () => {
@@ -10,6 +15,8 @@ const FarmerRoute = () => {
   const {
     isLoading,
     isError,
+    error,
+    refetch,
     data: farmerProfile,
   } = useFarmerProfile();
 
@@ -20,14 +27,8 @@ const FarmerRoute = () => {
   */
 
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+    return <Navigate to="/login" replace />;
   }
-
 
   /*
   ==========================================
@@ -49,43 +50,76 @@ const FarmerRoute = () => {
     );
   }
 
+  /*
+  ==========================================
+  PROFILE DOES NOT EXIST
+  ==========================================
+  
+  Only a confirmed 404 should be interpreted as
+  a missing profile when the query has failed.
+
+  The profile creation page remains outside
+  FarmerRoute.
+  */
+
+  if (isError && isMissingFarmerProfile(error)) {
+    return <Navigate to="/farmer/profile" replace />;
+  }
+
+  /*
+  ==========================================
+  PROFILE REQUEST FAILED
+  ==========================================
+  
+  Do not mistake authorization, server, or
+  network failures for a new user's missing profile.
+  */
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Unable to load your business
+          </h2>
+
+          <p className="mt-2 text-sm text-slate-600">
+            We couldn't retrieve your AgricWise business profile.
+            Please check your connection and try again.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              void refetch();
+            }}
+            className="mt-5 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   /*
   ==========================================
   PROFILE DOES NOT EXIST
   ==========================================
-
-  FarmerRoute is only entered by routes
-  that require an existing FarmerProfile.
-
-  The profile creation page itself remains
-  outside FarmerRoute.
+  
+  A successful query should return a profile.
+  If no profile data is available, send the user
+  to the foundation step.
   */
 
-  if (isError || !farmerProfile) {
-    return (
-      <Navigate
-        to="/farmer/profile"
-        replace
-      />
-    );
+  if (!farmerProfile) {
+    return <Navigate to="/farmer/profile" replace />;
   }
-
 
   /*
   ==========================================
   GUIDED ONBOARDING
   ==========================================
-
-  These routes must remain accessible while
-  the business is still unpublished.
-
-  The user needs to be able to:
-
-    - add products
-    - add services
-    - review the business
-    - return to the foundation step
   */
 
   const onboardingPaths = [
@@ -95,28 +129,16 @@ const FarmerRoute = () => {
   ];
 
   const isOnboardingRoute = onboardingPaths.includes(
-    location.pathname
+    location.pathname,
   );
-
 
   /*
   ==========================================
   UNPUBLISHED BUSINESS
   ==========================================
-
-  An existing but unpublished business has
-  not completed the publication lifecycle.
-
-  Allow the guided onboarding routes.
-
-  Prevent direct access to the normal
-  business workspace until publication.
-
-  This preserves the distinction between:
-
-    PROFILE EXISTS
-          ≠
-    BUSINESS IS PUBLISHED
+  
+  An existing but unpublished business can continue
+  onboarding but cannot enter the normal workspace.
   */
 
   if (
@@ -131,14 +153,10 @@ const FarmerRoute = () => {
     );
   }
 
-
   /*
   ==========================================
   PUBLISHED BUSINESS
   ==========================================
-
-  Published businesses can use the normal
-  AgricWise business workspace.
   */
 
   return <Outlet />;

@@ -1,3 +1,4 @@
+
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 
@@ -59,18 +60,46 @@ class FarmerProfileView(
     Retrieve or update the authenticated user's
     AgricWise agricultural business profile.
 
-    A business owner can continue editing a profile
-    whether it is published or still a draft.
+    Authenticated users can retrieve their profile status
+    during onboarding, even if they have not created a
+    business profile yet.
+
+    A missing profile returns HTTP 404, allowing the
+    frontend to distinguish onboarding from authorization
+    and server errors.
+
+    Updating still requires an existing FarmerProfile.
+    A business owner can edit their profile whether it
+    is published or remains a draft.
     """
 
     serializer_class = FarmerProfileSerializer
 
-    permission_classes = [
-        IsAuthenticated,
-        IsFarmer,
-    ]
+    def get_permissions(self):
+        """
+        Allow authenticated users to check profile existence.
+
+        Keep profile updates restricted to users who already
+        have an agricultural business profile.
+        """
+
+        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+            return [IsAuthenticated()]
+
+        return [
+            IsAuthenticated(),
+            IsFarmer(),
+        ]
 
     def get_object(self):
+        """
+        Return only the authenticated user's own profile.
+
+        Do not create a profile automatically during retrieval.
+        Profile creation remains the responsibility of
+        FarmerProfileCreateView.
+        """
+
         try:
             return self.request.user.farmer_profile
         except FarmerProfile.DoesNotExist:

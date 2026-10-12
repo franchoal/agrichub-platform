@@ -1,9 +1,7 @@
+
 import { useEffect, useState } from "react";
-
 import { useNavigate, useSearchParams } from "react-router-dom";
-
 import { useForm, type SubmitHandler } from "react-hook-form";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -11,7 +9,10 @@ import {
   type FarmerProfileFormData,
 } from "../../validators/farmerProfileSchema";
 
-import { useFarmerProfile } from "../../hooks/useFarmerProfile";
+import {
+  isMissingFarmerProfile,
+  useFarmerProfile,
+} from "../../hooks/useFarmerProfile";
 
 import { useUpdateFarmerProfile } from "../../hooks/useUpdateFarmerProfile";
 
@@ -24,7 +25,6 @@ import { Button, Input } from "../ui";
 
 const FarmerProfileForm = () => {
   const navigate = useNavigate();
-
   const [searchParams] = useSearchParams();
 
   /*
@@ -35,23 +35,11 @@ const FarmerProfileForm = () => {
 
   const requestedReturnTo = searchParams.get("returnTo");
 
-  /*
-   * Explicit return destinations are respected when supplied.
-   *
-   * Otherwise the destination is determined from the
-   * business lifecycle after the existing profile has
-   * been loaded below.
-   *
-   * This prevents an unpublished business from being
-   * incorrectly returned to the dashboard before it has
-   * completed the publication journey.
-   */
-  const hasValidRequestedReturn =
-    Boolean(
-      requestedReturnTo &&
-        requestedReturnTo.startsWith("/") &&
-        !requestedReturnTo.startsWith("//")
-    );
+  const hasValidRequestedReturn = Boolean(
+    requestedReturnTo &&
+      requestedReturnTo.startsWith("/") &&
+      !requestedReturnTo.startsWith("//")
+  );
 
   /*
   ==========================================
@@ -59,11 +47,8 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const nextOnboardingStep =
-    "/farmer/onboarding/products";
-
-  const reviewAndPublishStep =
-    "/farmer/onboarding/review";
+  const nextOnboardingStep = "/farmer/onboarding/products";
+  const reviewAndPublishStep = "/farmer/onboarding/review";
 
   /*
   ==========================================
@@ -74,7 +59,32 @@ const FarmerProfileForm = () => {
   const {
     data: existingProfile,
     isLoading: profileLoading,
+    isError: isProfileError,
+    error: profileError,
+    refetch: refetchProfile,
   } = useFarmerProfile();
+
+  /*
+  ==========================================
+  PROFILE REQUEST STATE
+  ==========================================
+  
+  A 404 means the authenticated user has not created
+  a business profile yet. That is a valid onboarding
+  state, so the creation form should be displayed.
+
+  Other errors must not be interpreted as a missing
+  profile. They may indicate a network, authentication,
+  permission, or server problem.
+  ==========================================
+  */
+
+  const isMissingProfile =
+    isProfileError &&
+    isMissingFarmerProfile(profileError);
+
+  const hasUnexpectedProfileError =
+    isProfileError && !isMissingProfile;
 
   /*
   ==========================================
@@ -84,9 +94,7 @@ const FarmerProfileForm = () => {
 
   const isEditMode = Boolean(existingProfile);
 
-  const isPublished = Boolean(
-    existingProfile?.is_published
-  );
+  const isPublished = Boolean(existingProfile?.is_published);
 
   /*
   ==========================================
@@ -126,8 +134,7 @@ const FarmerProfileForm = () => {
         setCategoriesLoading(true);
         setCategoriesError(null);
 
-        const data =
-          await farmerService.getCategories();
+        const data = await farmerService.getCategories();
 
         if (!isMounted) {
           return;
@@ -167,7 +174,7 @@ const FarmerProfileForm = () => {
       }
     };
 
-    loadCategories();
+    void loadCategories();
 
     return () => {
       isMounted = false;
@@ -189,7 +196,6 @@ const FarmerProfileForm = () => {
     formState: { errors },
   } = useForm<FarmerProfileFormData>({
     resolver: zodResolver(farmerProfileSchema),
-
     defaultValues: {
       farm_name: "",
       farm_location: "",
@@ -211,13 +217,8 @@ const FarmerProfileForm = () => {
 
     reset({
       farm_name: existingProfile.farm_name || "",
-
-      farm_location:
-        existingProfile.farm_location || "",
-
-      farm_description:
-        existingProfile.farm_description || "",
-
+      farm_location: existingProfile.farm_location || "",
+      farm_description: existingProfile.farm_description || "",
       category_ids: Array.isArray(
         existingProfile.business_categories
       )
@@ -236,8 +237,7 @@ const FarmerProfileForm = () => {
 
   const saveProfile = useUpdateFarmerProfile(() => {
     /*
-     * A newly created business has not yet entered the
-     * onboarding sequence, so continue to Products.
+     * A newly created business starts at Products.
      */
     if (!isEditMode) {
       navigate(nextOnboardingStep, {
@@ -247,13 +247,8 @@ const FarmerProfileForm = () => {
     }
 
     /*
-     * Existing businesses follow their current lifecycle:
-     *
-     * unpublished → Review & Publish
-     * published   → Business Dashboard
-     *
-     * An explicit returnTo query parameter takes priority
-     * through the returnTo value calculated above.
+     * Existing businesses follow their current lifecycle.
+     * An explicitly supplied returnTo takes priority.
      */
     navigate(returnTo, {
       replace: true,
@@ -266,8 +261,7 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const watchedCategoryIds =
-    watch("category_ids");
+  const watchedCategoryIds = watch("category_ids");
 
   const selectedCategoryIds = Array.isArray(
     watchedCategoryIds
@@ -304,9 +298,9 @@ const FarmerProfileForm = () => {
   ==========================================
   */
 
-  const onSubmit: SubmitHandler<
-    FarmerProfileFormData
-  > = (data) => {
+  const onSubmit: SubmitHandler<FarmerProfileFormData> = (
+    data
+  ) => {
     saveProfile.mutate(data);
   };
 
@@ -338,12 +332,71 @@ const FarmerProfileForm = () => {
 
   /*
   ==========================================
+  UNEXPECTED PROFILE REQUEST ERROR
+  ==========================================
+  
+  Only the expected missing-profile 404 should proceed
+  to the creation form. Do not let another failed request
+  lead to an accidental attempt to create a duplicate.
+  ==========================================
+  */
+
+  if (hasUnexpectedProfileError) {
+    return (
+      <section
+        role="alert"
+        aria-labelledby="profile-load-error"
+        className="mx-auto max-w-2xl rounded-2xl border border-red-200 bg-white p-6 shadow-sm sm:p-8"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
+          <span className="text-2xl" aria-hidden="true">
+            !
+          </span>
+        </div>
+
+        <h2
+          id="profile-load-error"
+          className="mt-4 text-lg font-bold text-gray-900"
+        >
+          Unable to load your business profile
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-gray-600">
+          We could not confirm your current AgricWise business
+          profile. Your existing information has not been
+          changed. Please check your connection and try again.
+        </p>
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => {
+              void refetchProfile();
+            }}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Try Again
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+          >
+            Return Home
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+  ==========================================
   CATEGORY COUNT
   ==========================================
   */
 
-  const selectedCount =
-    selectedCategoryIds.length;
+  const selectedCount = selectedCategoryIds.length;
 
   /*
   ==========================================
@@ -357,9 +410,7 @@ const FarmerProfileForm = () => {
       className="space-y-10"
       noValidate
     >
-      {/* =====================================
-          ONBOARDING STEP INDICATOR
-      ===================================== */}
+      {/* ONBOARDING STEP INDICATOR */}
 
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">
@@ -397,9 +448,7 @@ const FarmerProfileForm = () => {
         </div>
       )}
 
-      {/* =====================================
-          PROFILE STATUS
-      ===================================== */}
+      {/* PROFILE STATUS */}
 
       <div
         className={`overflow-hidden rounded-2xl border ${
@@ -459,9 +508,7 @@ const FarmerProfileForm = () => {
         </div>
       </div>
 
-      {/* =====================================
-          SECTION 1 — AGRICULTURAL CATEGORIES
-      ===================================== */}
+      {/* SECTION 1 — AGRICULTURAL CATEGORIES */}
 
       <section aria-labelledby="business-categories">
         <div className="mb-5">
@@ -533,18 +580,15 @@ const FarmerProfileForm = () => {
           categories.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2">
               {categories.map((category) => {
-                const selected =
-                  selectedCategoryIds.includes(
-                    category.id
-                  );
+                const selected = selectedCategoryIds.includes(
+                  category.id
+                );
 
                 return (
                   <button
                     key={category.id}
                     type="button"
-                    onClick={() =>
-                      toggleCategory(category.id)
-                    }
+                    onClick={() => toggleCategory(category.id)}
                     aria-pressed={selected}
                     className={`group rounded-2xl border p-4 text-left transition duration-200 ${
                       selected
@@ -596,9 +640,8 @@ const FarmerProfileForm = () => {
           categories.length === 0 && (
             <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
               <p className="text-sm text-yellow-800">
-                No agricultural categories are currently
-                available. Please refresh the page and try
-                again.
+                No agricultural categories are currently available.
+                Please refresh the page and try again.
               </p>
             </div>
           )}
@@ -613,9 +656,7 @@ const FarmerProfileForm = () => {
         )}
       </section>
 
-      {/* =====================================
-          SECTION 2 — BUSINESS IDENTITY
-      ===================================== */}
+      {/* SECTION 2 — BUSINESS IDENTITY */}
 
       <section aria-labelledby="business-identity">
         <div className="mb-5 flex items-start gap-3">
@@ -632,9 +673,8 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Use the name customers, partners, suppliers,
-              buyers, or other agricultural professionals know
-              your business by.
+              Use the name customers, partners, suppliers, buyers,
+              or other agricultural professionals know your business by.
             </p>
           </div>
         </div>
@@ -647,14 +687,12 @@ const FarmerProfileForm = () => {
         />
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          This name will represent your business across your
-          AgricWise presence.
+          This name will represent your business across your AgricWise
+          presence.
         </p>
       </section>
 
-      {/* =====================================
-          SECTION 3 — LOCATION
-      ===================================== */}
+      {/* SECTION 3 — LOCATION */}
 
       <section aria-labelledby="business-location">
         <div className="mb-5 flex items-start gap-3">
@@ -671,9 +709,8 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Add the primary location of your business or the
-              area where you provide your agricultural products
-              and services.
+              Add the primary location of your business or the area
+              where you provide your agricultural products and services.
             </p>
           </div>
         </div>
@@ -686,14 +723,12 @@ const FarmerProfileForm = () => {
         />
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          A city, town, state, or useful operating-area
-          description is enough for now.
+          A city, town, state, or useful operating-area description
+          is enough for now.
         </p>
       </section>
 
-      {/* =====================================
-          SECTION 4 — BUSINESS DESCRIPTION
-      ===================================== */}
+      {/* SECTION 4 — BUSINESS DESCRIPTION */}
 
       <section aria-labelledby="business-description">
         <div className="mb-5 flex items-start gap-3">
@@ -710,9 +745,8 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-600">
-              Give customers and potential partners a clear
-              picture of what you do, what you offer, and who
-              you serve.
+              Give customers and potential partners a clear picture
+              of what you do, what you offer, and who you serve.
             </p>
           </div>
         </div>
@@ -733,23 +767,18 @@ const FarmerProfileForm = () => {
         />
 
         {errors.farm_description && (
-          <p
-            role="alert"
-            className="mt-2 text-sm text-red-500"
-          >
+          <p role="alert" className="mt-2 text-sm text-red-500">
             {errors.farm_description.message}
           </p>
         )}
 
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          Keep it factual and clear. This information becomes
-          part of your business identity on AgricWise.
+          Keep it factual and clear. This information becomes part
+          of your business identity on AgricWise.
         </p>
       </section>
 
-      {/* =====================================
-          PROFILE FOUNDATION SUMMARY
-      ===================================== */}
+      {/* PROFILE FOUNDATION SUMMARY */}
 
       <section
         aria-labelledby="profile-foundation"
@@ -770,8 +799,8 @@ const FarmerProfileForm = () => {
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                These details form the structured foundation
-                of your business presence.
+                These details form the structured foundation of your
+                business presence.
               </p>
             </div>
           </div>
@@ -790,23 +819,19 @@ const FarmerProfileForm = () => {
               description:
                 selectedCount > 0
                   ? `${selectedCount} categor${
-                      selectedCount === 1
-                        ? "y"
-                        : "ies"
+                      selectedCount === 1 ? "y" : "ies"
                     } selected`
                   : "What your business does",
             },
             {
               icon: "📍",
               title: "Operating Location",
-              description:
-                "Where your business operates",
+              description: "Where your business operates",
             },
             {
               icon: "📝",
               title: "Business Description",
-              description:
-                "What you offer and who you serve",
+              description: "What you offer and who you serve",
             },
           ].map((item) => (
             <div
@@ -831,9 +856,7 @@ const FarmerProfileForm = () => {
         </div>
       </section>
 
-      {/* =====================================
-          ONBOARDING JOURNEY
-      ===================================== */}
+      {/* ONBOARDING JOURNEY */}
 
       {!isEditMode && (
         <section className="overflow-hidden rounded-2xl border border-green-100 bg-green-50">
@@ -853,10 +876,9 @@ const FarmerProfileForm = () => {
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-green-800">
-              You do not need to complete everything at once.
-              We will guide you through your business
-              information, products, services, and final
-              publication.
+              You do not need to complete everything at once. We will
+              guide you through your business information, products,
+              services, and final publication.
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-4">
@@ -916,9 +938,7 @@ const FarmerProfileForm = () => {
         </section>
       )}
 
-      {/* =====================================
-          EDIT MODE WORKSPACE PREVIEW
-      ===================================== */}
+      {/* EDIT MODE WORKSPACE PREVIEW */}
 
       {isEditMode && (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white">
@@ -941,10 +961,10 @@ const FarmerProfileForm = () => {
               </h2>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                Keep your business information accurate. Your
-                Business Dashboard is the workspace for managing
-                products, agricultural services, orders,
-                verification, and your wider AgricWise presence.
+                Keep your business information accurate. Your Business
+                Dashboard is the workspace for managing products,
+                agricultural services, orders, verification, and your
+                wider AgricWise presence.
               </p>
 
               <div className="mt-5 grid gap-2 sm:grid-cols-4">
@@ -967,9 +987,7 @@ const FarmerProfileForm = () => {
         </section>
       )}
 
-      {/* =====================================
-          SAVE / CONTINUE
-      ===================================== */}
+      {/* SAVE / CONTINUE */}
 
       <div className="border-t border-gray-100 pt-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -992,8 +1010,7 @@ const FarmerProfileForm = () => {
           <Button
             type="submit"
             isLoading={
-              saveProfile.isPending ||
-              categoriesLoading
+              saveProfile.isPending || categoriesLoading
             }
             disabled={
               categoriesLoading ||
