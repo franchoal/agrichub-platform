@@ -42,7 +42,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderPaymentSerializer(serializers.ModelSerializer):
     """
-    Compact payment information included with an order.
+    Compact, read-only payment information included with an order.
     """
 
     class Meta:
@@ -70,6 +70,9 @@ class OrderPaymentSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     """
     Serializer for order information.
+
+    Enforces payment safeguards before an order can enter
+    fulfillment or be cancelled after successful payment.
     """
 
     items = OrderItemSerializer(
@@ -125,7 +128,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def validate_status(self, value):
         """
-        Validate the allowed order status progression.
+        Validate order status progression and payment state.
         """
 
         order = self.instance
@@ -133,38 +136,33 @@ class OrderSerializer(serializers.ModelSerializer):
         if not order:
             return value
 
+        current_status = order.status
+
+        if value == current_status:
+            return value
+
         allowed_transitions = {
             Order.PENDING: [
                 Order.ACCEPTED,
                 Order.CANCELLED,
             ],
-
             Order.ACCEPTED: [
                 Order.PROCESSING,
                 Order.CANCELLED,
             ],
-
             Order.PROCESSING: [
                 Order.READY,
             ],
-
             Order.READY: [
                 Order.OUT_FOR_DELIVERY,
             ],
-
             Order.OUT_FOR_DELIVERY: [
                 Order.DELIVERED,
             ],
-
             Order.DELIVERED: [
                 Order.COMPLETED,
             ],
         }
-
-        current_status = order.status
-
-        if value == current_status:
-            return value
 
         if value not in allowed_transitions.get(
             current_status,
@@ -173,6 +171,46 @@ class OrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Invalid order status transition."
             )
+
+        payment = getattr(order, "payment", None)
+
+        if value == Order.ACCEPTED:
+            if (
+                payment is None
+                or payment.status != Payment.SUCCESSFUL
+            ):
+                raise serializers.ValidationError(
+                    "This order cannot be accepted until "
+                    "payment has been confirmed."
+                )
+
+        fulfillment_statuses = [
+            Order.PROCESSING,
+            Order.READY,
+            Order.OUT_FOR_DELIVERY,
+            Order.DELIVERED,
+            Order.COMPLETED,
+        ]
+
+        if value in fulfillment_statuses:
+            if (
+                payment is None
+                or payment.status != Payment.SUCCESSFUL
+            ):
+                raise serializers.ValidationError(
+                    "This order cannot proceed until "
+                    "payment has been confirmed."
+                )
+
+        if value == Order.CANCELLED:
+            if (
+                payment is not None
+                and payment.status == Payment.SUCCESSFUL
+            ):
+                raise serializers.ValidationError(
+                    "This paid order cannot be cancelled "
+                    "until the refund process is handled."
+                )
 
         return value
 

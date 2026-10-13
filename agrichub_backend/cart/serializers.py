@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from .models import Cart, CartItem
@@ -20,6 +21,12 @@ class CartItemSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    product_image = serializers.ImageField(
+        source="product.image",
+        read_only=True,
+        allow_null=True,
+    )
+
     subtotal = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -34,6 +41,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             "product",
             "product_name",
             "product_price",
+            "product_image",
             "quantity",
             "subtotal",
         ]
@@ -42,6 +50,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             "id",
             "product_name",
             "product_price",
+            "product_image",
             "subtotal",
         ]
 
@@ -121,6 +130,6 @@ class CartSerializer(serializers.ModelSerializer):
         """
 
         return sum(
-            item.subtotal
-            for item in obj.items.all()
+            (item.subtotal for item in obj.items.all()),
+            start=0,
         )

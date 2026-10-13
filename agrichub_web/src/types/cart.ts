@@ -1,3 +1,4 @@
+
 export interface CartItem {
   id: number;
 
@@ -7,11 +8,12 @@ export interface CartItem {
 
   product_price: string;
 
+  product_image: string | null;
+
   quantity: number;
 
   subtotal: string;
 }
-
 
 export interface Cart {
   id: number;
@@ -25,13 +27,11 @@ export interface Cart {
   updated_at: string;
 }
 
-
 export interface AddToCartData {
   product: number;
 
   quantity: number;
 }
-
 
 export interface UpdateCartItemData {
   quantity: number;

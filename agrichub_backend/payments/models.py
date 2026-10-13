@@ -6,6 +6,10 @@ from orders.models import Order
 class Payment(models.Model):
     """
     Represents payment information for an order.
+
+    Multiple farmer-specific payments may share one
+    Paystack reference when a buyer checks out a cart
+    containing products from multiple farmers.
     """
 
     CARD = "card"
@@ -50,6 +54,15 @@ class Payment(models.Model):
         decimal_places=2,
     )
 
+    # A single Paystack transaction may settle multiple
+    # farmer-specific payments. This field must not be unique.
+    paystack_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -64,4 +77,7 @@ class Payment(models.Model):
         verbose_name_plural = "Payments"
 
     def __str__(self):
-        return f"Payment #{self.id} - Order #{self.order.id}"
+        return (
+            f"Payment #{self.pk} - "
+            f"Order #{self.order_id}"
+        )

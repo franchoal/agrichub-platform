@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from .models import Payment
@@ -5,7 +6,7 @@ from .models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
     """
-    Serializer for payment records.
+    Read-only serializer for buyer payment records.
     """
 
     order_id = serializers.IntegerField(
@@ -28,6 +29,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             "method",
             "status",
             "amount",
+            "paystack_reference",
             "created_at",
             "updated_at",
         ]
@@ -36,8 +38,10 @@ class PaymentSerializer(serializers.ModelSerializer):
             "id",
             "order_id",
             "buyer",
+            "method",
             "status",
             "amount",
+            "paystack_reference",
             "created_at",
             "updated_at",
         ]
