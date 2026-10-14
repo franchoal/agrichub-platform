@@ -1,11 +1,12 @@
+
 import {
   type ReactNode,
   useEffect,
   useState,
 } from "react";
+import axios from "axios";
 
 import logoIcon from "../assets/logo/logo-icon.png";
-
 import { getProfile } from "../services/profileService";
 import { useAuthStore } from "../store/authStore";
 
@@ -40,25 +41,42 @@ const AuthProvider = ({
       return;
     }
 
+    let cancelled = false;
+
     const validateSession = async () => {
-      if (
-        !accessToken ||
-        !isAuthenticated
-      ) {
-        setIsCheckingSession(false);
+      setIsCheckingSession(true);
+
+      if (!accessToken || !isAuthenticated) {
+        if (!cancelled) {
+          setIsCheckingSession(false);
+        }
         return;
       }
 
       try {
         await getProfile();
-      } catch {
-        logout();
+      } catch (error: unknown) {
+        // Only clear credentials when the server explicitly
+        // rejects the access token. Preserve the session on
+        // network errors and temporary server failures.
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 401
+        ) {
+          logout();
+        }
       } finally {
-        setIsCheckingSession(false);
+        if (!cancelled) {
+          setIsCheckingSession(false);
+        }
       }
     };
 
-    validateSession();
+    void validateSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     hasHydrated,
     accessToken,
@@ -66,10 +84,7 @@ const AuthProvider = ({
     logout,
   ]);
 
-  if (
-    !hasHydrated ||
-    isCheckingSession
-  ) {
+  if (!hasHydrated || isCheckingSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <img

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
@@ -34,6 +33,11 @@ type VerificationState =
   | "successful"
   | "pending"
   | "error";
+
+type VerificationRequest = {
+  key: string;
+  promise: ReturnType<typeof paymentService.verifyPaystack>;
+};
 
 const readSavedCheckout = (): CheckoutPageState | undefined => {
   try {
@@ -89,42 +93,114 @@ const CheckoutSuccessPage = () => {
   const [verificationMessage, setVerificationMessage] =
     useState("");
 
-  const verificationStarted = useRef<string | null>(null);
+  const [verificationAttempt, setVerificationAttempt] =
+    useState(0);
+
+  /*
+   * Reuse the same in-flight verification request during React
+   * Strict Mode's development effect replay. A retry increments
+   * verificationAttempt and therefore starts a fresh request.
+   */
+  const verificationRequest = useRef<VerificationRequest | null>(
+    null,
+  );
+
+  const hasCheckoutOrders = Boolean(
+    checkoutResponse?.orders?.length,
+  );
 
   useEffect(() => {
     if (!reference) {
       return;
     }
 
-    // Prevent duplicate verification requests during rerenders.
-    if (verificationStarted.current === reference) {
-      return;
-    }
-
-    verificationStarted.current = reference;
-
     let active = true;
 
-    const verifyPayment = async () => {
-      setVerificationState("verifying");
-      setVerificationMessage(
-        "We are confirming your payment securely with AgricWise.",
-      );
+    const requestKey = `${reference}:${verificationAttempt}`;
 
-      try {
-        const result =
-          await paymentService.verifyPaystack(reference);
+    setVerificationState("verifying");
+    setVerificationMessage(
+      "We are confirming your payment securely with AgricWise.",
+    );
 
+    let request = verificationRequest.current;
+
+    if (!request || request.key !== requestKey) {
+      request = {
+        key: requestKey,
+        promise: paymentService.verifyPaystack(reference),
+      };
+
+      verificationRequest.current = request;
+    }
+
+    request.promise
+      .then((result) => {
         if (!active) {
           return;
         }
 
         const verifiedPayments = result.payments;
 
-        if (!Array.isArray(verifiedPayments) || verifiedPayments.length === 0) {
+        if (
+          !Array.isArray(verifiedPayments) ||
+          verifiedPayments.length === 0
+        ) {
           throw new Error(
             "The server did not return any payments for this transaction.",
           );
+        }
+
+        /*
+         * Reject duplicate payment records in the verification response.
+         * Each payment ID should appear exactly once.
+         */
+        const verifiedPaymentIds = verifiedPayments.map(
+          (payment) => payment.id,
+        );
+
+        const verifiedPaymentIdSet = new Set(
+          verifiedPaymentIds,
+        );
+
+        if (
+          verifiedPaymentIdSet.size !==
+          verifiedPaymentIds.length
+        ) {
+          throw new Error(
+            "The verification response contains duplicate payments. Please retry verification.",
+          );
+        }
+
+        /*
+         * When checkout details are available, compare the complete
+         * expected payment ID set with the server's verified payment set.
+         * Never declare checkout success for a partial response.
+         */
+        const expectedPaymentIds =
+          checkoutResponse?.orders?.map(
+            (item) => item.payment.id,
+          ) ?? [];
+
+        if (expectedPaymentIds.length > 0) {
+          const expectedPaymentIdSet = new Set(
+            expectedPaymentIds,
+          );
+
+          const allExpectedPaymentsReturned =
+            expectedPaymentIdSet.size ===
+              expectedPaymentIds.length &&
+            verifiedPayments.length ===
+              expectedPaymentIds.length &&
+            expectedPaymentIds.every((id) =>
+              verifiedPaymentIdSet.has(id),
+            );
+
+          if (!allExpectedPaymentsReturned) {
+            throw new Error(
+              "We could not match every order payment to this transaction. No full-payment confirmation has been displayed. Please retry verification or check your orders.",
+            );
+          }
         }
 
         const allSuccessful = verifiedPayments.every(
@@ -135,32 +211,40 @@ const CheckoutSuccessPage = () => {
           (payment) => payment.status === "failed",
         );
 
+        /*
+         * Only update the displayed payment records after confirming
+         * that the response contains the complete expected payment set.
+         */
         setCheckoutResponse((current) => {
           if (!current?.orders?.length) {
             return current;
           }
 
-          const updatedOrders = current.orders.map((item) => {
-            const verifiedPayment = verifiedPayments.find(
-              (payment) => payment.id === item.payment.id,
-            );
-
-            if (!verifiedPayment) {
-              return item;
-            }
-
-            return {
-              ...item,
-              payment: {
-                ...item.payment,
-                status: verifiedPayment.status,
-              },
-            };
-          });
+          const verifiedPaymentsById = new Map(
+            verifiedPayments.map((payment) => [
+              payment.id,
+              payment,
+            ]),
+          );
 
           return {
             ...current,
-            orders: updatedOrders,
+            orders: current.orders.map((item) => {
+              const verifiedPayment =
+                verifiedPaymentsById.get(item.payment.id);
+
+              if (!verifiedPayment) {
+                return item;
+              }
+
+              return {
+                ...item,
+                payment: {
+                  ...item.payment,
+                  status: verifiedPayment.status,
+                },
+              };
+            }),
           };
         });
 
@@ -175,12 +259,14 @@ const CheckoutSuccessPage = () => {
           try {
             sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
           } catch {
-            // Verification is already complete; storage cleanup is optional.
+            // Verification is complete; storage cleanup is optional.
           }
 
-          // If the buyer returned on a new browser session without
-          // the saved checkout details, show their order history.
-          if (!checkoutResponse?.orders?.length) {
+          /*
+           * If the buyer returned without saved checkout details,
+           * send them to their order history after verification.
+           */
+          if (!hasCheckoutOrders) {
             navigate("/orders", { replace: true });
           }
 
@@ -191,9 +277,10 @@ const CheckoutSuccessPage = () => {
         setVerificationMessage(
           hasFailedPayment
             ? "The transaction was not successful. Check your order details before attempting another payment."
-            : "The transaction has not been confirmed as successful. Please check your order status before trying to pay again.",
+            : "The transaction has not been confirmed as successful. Check your order status before trying to pay again.",
         );
-      } catch (error: unknown) {
+      })
+      .catch((error: unknown) => {
         if (!active) {
           return;
         }
@@ -205,15 +292,18 @@ const CheckoutSuccessPage = () => {
             ? error.message
             : "We could not verify this payment right now. Your payment status has not been confirmed.",
         );
-      }
-    };
-
-    void verifyPayment();
+      });
 
     return () => {
       active = false;
     };
-  }, [reference, navigate, checkoutResponse?.orders?.length]);
+  }, [
+    reference,
+    verificationAttempt,
+    navigate,
+    hasCheckoutOrders,
+    checkoutResponse?.orders,
+  ]);
 
   if (!checkoutResponse?.orders?.length && !reference) {
     return <Navigate to="/orders" replace />;
@@ -266,7 +356,8 @@ const CheckoutSuccessPage = () => {
     }
   };
 
-  const paymentConfirmed = verificationState === "successful";
+  const paymentConfirmed =
+    verificationState === "successful";
 
   const pageTitle =
     verificationState === "verifying"
@@ -335,14 +426,20 @@ const CheckoutSuccessPage = () => {
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="shrink-0 rounded-xl bg-gray-100 p-2.5 sm:p-3">
               {paymentConfirmed ? (
-                <ShieldCheck className="text-green-700" size={24} />
+                <ShieldCheck
+                  className="text-green-700"
+                  size={24}
+                />
               ) : verificationState === "verifying" ? (
                 <LoaderCircle
                   className="animate-spin text-blue-700"
                   size={24}
                 />
               ) : (
-                <AlertCircle className="text-amber-700" size={24} />
+                <AlertCircle
+                  className="text-amber-700"
+                  size={24}
+                />
               )}
             </div>
 
@@ -363,21 +460,21 @@ const CheckoutSuccessPage = () => {
                 Reference: {reference}
               </p>
 
-              {verificationState === "error" && (
+              {(verificationState === "error" ||
+                verificationState === "pending") && (
                 <Button
                   className="mt-4"
                   onClick={() => {
-                    // Reset the guard so the buyer can explicitly retry.
-                    verificationStarted.current = null;
                     setVerificationState("idle");
                     setVerificationMessage("");
-                    navigate(
-                      `${location.pathname}${location.search}`,
-                      { replace: true, state: location.state },
+                    setVerificationAttempt(
+                      (attempt) => attempt + 1,
                     );
                   }}
                 >
-                  Retry Verification
+                  {verificationState === "error"
+                    ? "Retry Verification"
+                    : "Check Payment Again"}
                 </Button>
               )}
             </div>
@@ -467,21 +564,27 @@ const CheckoutSuccessPage = () => {
                 {/* Order information */}
                 <div className="mt-5 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-3">
                   <div className="min-w-0 rounded-2xl bg-gray-50 p-4 sm:p-5">
-                    <p className="text-sm text-gray-500">Farmer</p>
+                    <p className="text-sm text-gray-500">
+                      Farmer
+                    </p>
                     <p className="mt-2 break-words font-bold text-gray-900">
                       {order.farmer}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-gray-50 p-4 sm:p-5">
-                    <p className="text-sm text-gray-500">Products</p>
+                    <p className="text-sm text-gray-500">
+                      Products
+                    </p>
                     <p className="mt-2 font-bold text-gray-900">
                       {order.items.length}
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-gray-50 p-4 sm:p-5">
-                    <p className="text-sm text-gray-500">Order Total</p>
+                    <p className="text-sm text-gray-500">
+                      Order Total
+                    </p>
                     <p className="mt-2 text-lg font-extrabold text-green-700 sm:text-xl">
                       ₦{Number(order.total).toLocaleString()}
                     </p>
@@ -526,14 +629,18 @@ const CheckoutSuccessPage = () => {
 
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Method</p>
+                          <p className="text-sm text-gray-500">
+                            Method
+                          </p>
                           <p className="mt-1 font-semibold text-gray-900">
                             {paymentMethodLabel(payment.method)}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-sm text-gray-500">Amount</p>
+                          <p className="text-sm text-gray-500">
+                            Amount
+                          </p>
                           <p className="mt-1 font-semibold text-gray-900">
                             ₦{Number(payment.amount).toLocaleString()}
                           </p>
