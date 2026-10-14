@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -54,6 +54,15 @@ const getErrorMessage = (
       ) {
         return data.message;
       }
+
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "error" in data &&
+        typeof data.error === "string"
+      ) {
+        return data.error;
+      }
     }
   }
 
@@ -87,6 +96,9 @@ const CheckoutPage = () => {
   const [isInitializingPayment, setIsInitializingPayment] =
     useState(false);
 
+  // Prevent rapid repeated clicks before React updates the UI.
+  const checkoutLock = useRef(false);
+
   const isProcessing =
     isCreatingOrder || isInitializingPayment;
 
@@ -118,7 +130,7 @@ const CheckoutPage = () => {
   }
 
   const handleCheckout = async () => {
-    if (isProcessing) {
+    if (checkoutLock.current || isProcessing) {
       return;
     }
 
@@ -132,127 +144,171 @@ const CheckoutPage = () => {
       return;
     }
 
-    setIsInitializingPayment(true);
-
-    let checkoutResponse:
-      | Awaited<ReturnType<typeof checkout>>
-      | undefined;
+    checkoutLock.current = true;
 
     try {
-      // Step 1: Create orders through the existing checkout API.
-      checkoutResponse = await checkout({
-        delivery_address: deliveryAddress.trim(),
-        payment_method: paymentMethod,
-      });
-    } catch (error: unknown) {
-      toast.error(
-        getErrorMessage(error, "Unable to create your order."),
-      );
-      setIsInitializingPayment(false);
-      return;
-    }
+      // STEP 1: Create the orders.
+      // Creating an order does not mean that payment succeeded.
+      let checkoutResponse:
+        | Awaited<ReturnType<typeof checkout>>
+        | undefined;
 
-    // Orders now exist. Do not repeat checkout if payment
-    // initialization fails, as that could create duplicate orders.
-    if (
-      !checkoutResponse.orders ||
-      checkoutResponse.orders.length === 0
-    ) {
-      toast.error(
-        "The checkout response contained no orders. Please check your orders before trying again.",
-      );
-
-      navigate("/orders", { replace: true });
-      setIsInitializingPayment(false);
-      return;
-    }
-
-    // Keep the checkout details available when Paystack returns
-    // the browser to the application.
-    try {
-      sessionStorage.setItem(
-        PENDING_CHECKOUT_KEY,
-        JSON.stringify(checkoutResponse),
-      );
-    } catch {
-      // Payment initialization can continue if browser storage
-      // is unavailable. The callback must still verify payment.
-    }
-
-    try {
-      // Step 2: Collect every farmer's payment ID and initialize
-      // one combined Paystack transaction for this checkout.
-      const paymentIds = [
-        ...new Set(
-          checkoutResponse.orders.map(
-            (item) => item.payment.id,
+      try {
+        checkoutResponse = await checkout({
+          delivery_address: deliveryAddress.trim(),
+          payment_method: paymentMethod,
+        });
+      } catch (error: unknown) {
+        toast.error(
+          getErrorMessage(
+            error,
+            "Unable to create your order. Please try again.",
           ),
-        ),
-      ];
-
-      if (
-        paymentIds.length !== checkoutResponse.orders.length ||
-        paymentIds.some(
-          (id) => !Number.isInteger(id) || id <= 0,
-        )
-      ) {
-        throw new Error(
-          "The order response contains invalid payment IDs.",
         );
+
+        return;
       }
 
-      const payment =
-        await paymentService.initializePaystack(paymentIds);
-
+      // From this point onward, orders may already exist.
+      // Never repeat order creation just because payment fails.
       if (
-        !payment.authorization_url ||
-        !payment.reference
+        !Array.isArray(checkoutResponse.orders) ||
+        checkoutResponse.orders.length === 0
       ) {
-        throw new Error(
-          "Paystack did not return a valid checkout session.",
+        toast.error(
+          "No orders were returned. Check your order history before trying checkout again.",
+          { duration: 7000 },
         );
+
+        navigate("/orders", { replace: true });
+        return;
       }
 
-      // Only redirect to the trusted Paystack hosted checkout.
-      const authorizationUrl = new URL(
-        payment.authorization_url,
-      );
+      // Save the order details for the Paystack return page.
+      // The return page uses the same key.
+      try {
+        sessionStorage.setItem(
+          PENDING_CHECKOUT_KEY,
+          JSON.stringify(checkoutResponse),
+        );
+      } catch {
+        // Continue with payment initialization if browser storage
+        // is unavailable. Route state is retained on local failures.
+      }
 
-      if (
-        authorizationUrl.protocol !== "https:" ||
-        !(
+      // STEP 2: Initialize Paystack for all orders created
+      // during this checkout, including orders from multiple farmers.
+      setIsInitializingPayment(true);
+
+      try {
+        const paymentIds = [
+          ...new Set(
+            checkoutResponse.orders.map(
+              (item) => item.payment?.id,
+            ),
+          ),
+        ];
+
+        if (
+          paymentIds.length !== checkoutResponse.orders.length ||
+          paymentIds.some(
+            (id) =>
+              !Number.isSafeInteger(id) ||
+              id <= 0,
+          )
+        ) {
+          throw new Error(
+            "The order response contains invalid payment IDs. Your orders may already exist; check your order history before retrying.",
+          );
+        }
+
+        const payment =
+          await paymentService.initializePaystack(paymentIds);
+
+        if (
+          typeof payment?.authorization_url !== "string" ||
+          !payment.authorization_url.trim() ||
+          typeof payment.reference !== "string" ||
+          !payment.reference.trim()
+        ) {
+          throw new Error(
+            "Paystack did not return a valid checkout session. Your order remains unconfirmed.",
+          );
+        }
+
+        // STEP 3: Validate the hosted payment URL before redirecting.
+        let authorizationUrl: URL;
+
+        try {
+          authorizationUrl = new URL(payment.authorization_url);
+        } catch {
+          throw new Error(
+            "The payment provider returned an invalid checkout URL.",
+          );
+        }
+
+        const isTrustedPaystackHost =
           authorizationUrl.hostname === "paystack.com" ||
-          authorizationUrl.hostname.endsWith(".paystack.com")
-        )
-      ) {
-        throw new Error(
-          "The payment provider returned an invalid checkout URL.",
-        );
-      }
+          authorizationUrl.hostname.endsWith(".paystack.com");
 
-      toast.success("Redirecting you to secure payment...");
+        if (
+          authorizationUrl.protocol !== "https:" ||
+          !isTrustedPaystackHost ||
+          authorizationUrl.username ||
+          authorizationUrl.password
+        ) {
+          throw new Error(
+            "The payment provider returned an untrusted checkout URL. Payment was not started.",
+          );
+        }
 
-      // Full-page navigation is required for Paystack Checkout.
-      window.location.assign(authorizationUrl.toString());
-    } catch (error: unknown) {
-      toast.error(
-        `Your order was created, but payment could not be started. ${getErrorMessage(
+        // Full-page navigation is required for hosted Paystack Checkout.
+        toast.success("Redirecting you to secure payment...");
+
+        window.location.assign(authorizationUrl.toString());
+
+        // Do not navigate to the success page here.
+        // Paystack must process the transaction and return a reference
+        // for the backend to verify.
+      } catch (error: unknown) {
+        const paymentError = getErrorMessage(
           error,
-          "Please retry payment from your order details or contact support.",
-        )}`,
-        { duration: 7000 },
-      );
+          "Please view your existing orders and retry payment without creating duplicate orders.",
+        );
 
-      // Keep the created orders visible instead of sending the
-      // buyer back to checkout and risking duplicate orders.
-      navigate("/checkout/success", {
-        state: {
+        const checkoutWithPaymentError = {
           ...checkoutResponse,
           paymentInitializationError: true,
-        },
-        replace: true,
-      });
+        };
+
+        // Preserve the original orders and explicitly record that
+        // payment initialization failed.
+        try {
+          sessionStorage.setItem(
+            PENDING_CHECKOUT_KEY,
+            JSON.stringify(checkoutWithPaymentError),
+          );
+        } catch {
+          // Route state below still carries the existing orders.
+        }
+
+        toast.error(
+          `Your order was created, but payment could not be started. ${paymentError}`,
+          { duration: 8000 },
+        );
+
+        // This page displays the existing orders and explains that
+        // payment was not started. It must not report payment success.
+        navigate("/checkout/success", {
+          state: {
+            ...checkoutWithPaymentError,
+            paymentInitializationMessage: paymentError,
+          },
+          replace: true,
+        });
+      }
     } finally {
+      checkoutLock.current = false;
       setIsInitializingPayment(false);
     }
   };
@@ -547,7 +603,8 @@ const CheckoutPage = () => {
                   <p className="mt-1.5 text-xs leading-5 text-gray-600 sm:mt-2 sm:text-sm sm:leading-6">
                     Payment is processed through Paystack. AgricWise
                     verifies the transaction with its backend before
-                    treating the payment as successful.
+                    treating the payment as successful. Creating an
+                    order alone does not confirm payment.
                   </p>
                 </div>
               </div>
