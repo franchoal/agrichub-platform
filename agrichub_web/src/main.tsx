@@ -21,14 +21,25 @@ createRoot(rootElement).render(
   <StrictMode>
     <AppProvider>
       <RouterProvider router={router} />
+    <Toaster
+  position="top-center"
+  reverseOrder={false}
+  gutter={8}
+  containerStyle={{
+    top: 16,
+    left: 16,
+    right: 16,
+    pointerEvents: "none",
+  }}
+  toastOptions={{
+    duration: 2500,
+    style: {
+      pointerEvents: "none",
+      maxWidth: "min(420px, calc(100vw - 32px))",
+    },
+  }}
+/>
 
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 3000,
-        }}
-      />
     </AppProvider>
   </StrictMode>
 );

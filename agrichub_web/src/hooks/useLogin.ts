@@ -37,7 +37,10 @@ export const useLogin = (
         refresh: response.refresh,
       });
 
-      toast.success("Login successful!");
+      toast.success("Login successful!", {
+  duration: 2000,
+  position: "top-center",
+});
 
       /*
        * ==========================================
