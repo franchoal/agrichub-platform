@@ -14,6 +14,8 @@ from .models import Payment
 
 PAYSTACK_API_URL = "https://api.paystack.co"
 PAYSTACK_TIMEOUT = 20
+AGRICWISE_COMMISSION_PERCENT = 5
+SELLER_SHARE_PERCENT = 100 - AGRICWISE_COMMISSION_PERCENT
 
 
 def _paystack_secret_key():
@@ -51,6 +53,107 @@ def _amount_in_kobo(amount):
     return int(amount * 100)
 
 
+def _build_dynamic_split(payments):
+    """
+    Build a Paystack flat split for multiple farmer-specific payments.
+
+    Each seller receives 95% of their order amount, rounded down to
+    the nearest kobo. The remaining amount stays with AgricWise.
+
+    Duplicate subaccount codes are combined into a single share.
+    Missing subaccounts block checkout; there is no unsplit fallback.
+    """
+    shares_by_subaccount = {}
+    total_amount_kobo = 0
+    total_seller_share_kobo = 0
+
+    for payment in payments:
+        order = payment.order
+        farmer = order.farmer
+
+        subaccount_code = (
+            farmer.paystack_subaccount_code or ""
+        ).strip()
+
+        if not subaccount_code:
+            business_name = (
+                farmer.farm_name or f"Business for Order #{order.pk}"
+            )
+            raise ValueError(
+                f"Paystack settlement is not configured for "
+                f"'{business_name}'. Please contact AgricWise support "
+                "before checkout."
+            )
+
+        order_amount_kobo = _amount_in_kobo(payment.amount)
+
+        # Calculate the seller share in integer kobo to avoid
+        # floating-point errors and ensure the shares never exceed
+        # the checkout total.
+        seller_share_kobo = (
+            order_amount_kobo * SELLER_SHARE_PERCENT
+        ) // 100
+
+        platform_share_kobo = order_amount_kobo - seller_share_kobo
+
+        if seller_share_kobo <= 0 or platform_share_kobo <= 0:
+            raise ValueError(
+                f"Order #{order.pk} is too small to apply the "
+                "seller settlement and AgricWise commission safely. "
+                "Please review the order amount."
+            )
+
+        shares_by_subaccount[subaccount_code] = (
+            shares_by_subaccount.get(subaccount_code, 0)
+            + seller_share_kobo
+        )
+
+        total_amount_kobo += order_amount_kobo
+        total_seller_share_kobo += seller_share_kobo
+
+    if not shares_by_subaccount:
+        raise ValueError(
+            "No seller settlement accounts were found for this checkout."
+        )
+
+    if total_seller_share_kobo >= total_amount_kobo:
+        raise ValueError(
+            "The checkout split is invalid. Please contact support."
+        )
+
+    subaccounts = [
+        {
+            "subaccount": subaccount_code,
+            "share": share_kobo,
+        }
+        for subaccount_code, share_kobo in sorted(
+            shares_by_subaccount.items()
+        )
+    ]
+
+    if any(item["share"] <= 0 for item in subaccounts):
+        raise ValueError(
+            "A seller settlement share is invalid. "
+            "Please contact support."
+        )
+
+    if sum(item["share"] for item in subaccounts) != total_seller_share_kobo:
+        raise ValueError(
+            "Seller settlement shares do not match the expected total."
+        )
+
+    if sum(item["share"] for item in subaccounts) >= total_amount_kobo:
+        raise ValueError(
+            "Seller settlement shares leave no platform balance."
+        )
+
+    return {
+        "type": "flat",
+        "bearer_type": "all-proportional",
+        "subaccounts": subaccounts,
+    }
+
+
 def _clear_uninitialized_reference(payment_ids, reference):
     """
     Release a reserved reference only when Paystack has
@@ -65,11 +168,12 @@ def _clear_uninitialized_reference(payment_ids, reference):
 
 def initialize_paystack_transaction(payment_ids, buyer, callback_url):
     """
-    Initialize one Paystack transaction for pending payments
-    belonging to the same buyer.
+    Initialize one Paystack transaction for pending payments belonging
+    to the same buyer.
 
     Each farmer retains a separate Order and Payment record.
     The selected payments share one Paystack reference.
+    Seller payouts are handled by Paystack dynamic splits.
     """
     if not buyer.email or not buyer.email.strip():
         raise ValueError("A valid email address is required for payment.")
@@ -89,7 +193,11 @@ def initialize_paystack_transaction(payment_ids, buyer, callback_url):
                 pk__in=payment_ids,
                 order__buyer=buyer,
             )
-            .select_related("order", "order__buyer")
+            .select_related(
+                "order",
+                "order__buyer",
+                "order__farmer",
+            )
             .order_by("id")
         )
 
@@ -111,6 +219,10 @@ def initialize_paystack_transaction(payment_ids, buyer, callback_url):
             raise ValueError(
                 "Only payments for pending orders can be initialized."
             )
+
+        # Validate every seller account and calculate all shares before
+        # reserving a reference or contacting Paystack.
+        split = _build_dynamic_split(payments)
 
         total_amount = sum(
             (payment.amount for payment in payments),
@@ -140,6 +252,7 @@ def initialize_paystack_transaction(payment_ids, buyer, callback_url):
             "platform": "AgricWise Africa",
             "payment_ids": payment_ids,
         },
+        "split": split,
     }
 
     try:
@@ -151,7 +264,7 @@ def initialize_paystack_transaction(payment_ids, buyer, callback_url):
         )
         response_data = response.json()
     except (requests.RequestException, ValueError) as exc:
-        # The request may have reached Paystack. Retain the reference
+        # The request may have reached Paystack. Keep the reference
         # until the transaction can be reconciled.
         raise ValueError(
             "Paystack's initialization response could not be confirmed. "
@@ -166,6 +279,7 @@ def initialize_paystack_transaction(payment_ids, buyer, callback_url):
         )
 
     data = response_data.get("data") or {}
+
     if not isinstance(data, dict):
         data = {}
 
@@ -240,9 +354,7 @@ def verify_paystack_transaction(reference):
         raise ValueError("Paystack could not verify this transaction.")
 
     if data.get("status") != "success":
-        raise ValueError(
-            "Paystack has not confirmed successful payment."
-        )
+        raise ValueError("Paystack has not confirmed successful payment.")
 
     if data.get("reference") != reference:
         raise ValueError("The transaction reference does not match.")
@@ -251,10 +363,12 @@ def verify_paystack_transaction(reference):
         raise ValueError("The transaction currency does not match.")
 
     customer = data.get("customer") or {}
+
     if not isinstance(customer, dict):
         raise ValueError("Paystack returned invalid customer details.")
 
     customer_email = customer.get("email")
+
     if not isinstance(customer_email, str) or not customer_email.strip():
         raise ValueError("Paystack did not return a customer email.")
 
@@ -326,9 +440,7 @@ def verify_paystack_transaction(reference):
         orders_by_id = {order.pk: order for order in orders}
 
         if len(orders) != len(order_ids):
-            raise ValueError(
-                "One or more linked orders could not be found."
-            )
+            raise ValueError("One or more linked orders could not be found.")
 
         if any(order.buyer_id != buyer.pk for order in orders):
             raise ValueError(
@@ -336,10 +448,7 @@ def verify_paystack_transaction(reference):
             )
 
         # Repeated verification is harmless once every payment succeeded.
-        if all(
-            payment.status == Payment.SUCCESSFUL
-            for payment in payments
-        ):
+        if all(payment.status == Payment.SUCCESSFUL for payment in payments):
             return payments
 
         if any(

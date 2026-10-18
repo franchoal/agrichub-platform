@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 
 from .models import Payment
@@ -5,9 +6,7 @@ from .models import Payment
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    """
-    Admin configuration for payments.
-    """
+    """Admin configuration for payment records."""
 
     list_display = (
         "id",
@@ -37,12 +36,13 @@ class PaymentAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
-
+    @admin.display(description="Farmer")
     def get_farmer(self, obj):
-        """
-        Display farmer name in payment admin list.
-        """
+        """Display the agricultural business associated with a payment."""
+        order = getattr(obj, "order", None)
+        farmer = getattr(order, "farmer", None) if order else None
 
-        return obj.order.farmer.farm_name
+        if farmer is None:
+            return "—"
 
-    get_farmer.short_description = "Farmer"
+        return getattr(farmer, "farm_name", "—") or "—"

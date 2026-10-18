@@ -20,7 +20,10 @@ from .services import (
 
 
 class PaystackPaymentServiceTests(TestCase):
-    """Test payment processing without making real Paystack requests."""
+    """Test Paystack processing without making real API requests."""
+
+    TEST_SUBACCOUNT_ONE = "ACCT_TEST_FARMER_ONE"
+    TEST_SUBACCOUNT_TWO = "ACCT_TEST_FARMER_TWO"
 
     def setUp(self):
         self.buyer = User.objects.create_user(
@@ -50,12 +53,14 @@ class PaystackPaymentServiceTests(TestCase):
             user=self.farmer_one_user,
             farm_name="First Test Farm",
             farm_location="Abeokuta",
+            paystack_subaccount_code=self.TEST_SUBACCOUNT_ONE,
         )
 
         self.farmer_two = FarmerProfile.objects.create(
             user=self.farmer_two_user,
             farm_name="Second Test Farm",
             farm_location="Ibadan",
+            paystack_subaccount_code=self.TEST_SUBACCOUNT_TWO,
         )
 
         self.order_one = Order.objects.create(
@@ -121,9 +126,8 @@ class PaystackPaymentServiceTests(TestCase):
             }
         )
 
-    def test_initialization_combines_payments_from_multiple_farmers(self):
-        """One checkout should initialize the combined amount."""
-
+    def initialize_payment_request(self, payment_ids):
+        """Mock initialization and return the outgoing request payload."""
         with (
             patch(
                 "payments.services._paystack_secret_key",
@@ -135,6 +139,7 @@ class PaystackPaymentServiceTests(TestCase):
             ),
             patch("payments.services.requests.post") as mocked_post,
         ):
+
             def initialize_response(*args, **kwargs):
                 reference = kwargs["json"]["reference"]
                 return self.paystack_response(
@@ -154,21 +159,28 @@ class PaystackPaymentServiceTests(TestCase):
             mocked_post.side_effect = initialize_response
 
             result = initialize_paystack_transaction(
-                payment_ids=[
-                    self.payment_one.pk,
-                    self.payment_two.pk,
-                ],
+                payment_ids=payment_ids,
                 buyer=self.buyer,
                 callback_url="https://example.test/checkout/success",
             )
+
+        return result, mocked_post.call_args.kwargs["json"]
+
+    def test_initialization_combines_payments_from_multiple_farmers(self):
+        """One checkout charges the combined amount and configures seller splits."""
+
+        result, request_payload = self.initialize_payment_request(
+            [
+                self.payment_one.pk,
+                self.payment_two.pk,
+            ]
+        )
 
         self.assertTrue(result["reference"].startswith("aw_"))
         self.assertEqual(
             result["authorization_url"],
             "https://checkout.example.test/authorize",
         )
-
-        request_payload = mocked_post.call_args.kwargs["json"]
 
         self.assertEqual(request_payload["email"], self.buyer.email)
         self.assertEqual(request_payload["amount"], 400000)
@@ -177,6 +189,33 @@ class PaystackPaymentServiceTests(TestCase):
             set(request_payload["metadata"]["payment_ids"]),
             {self.payment_one.pk, self.payment_two.pk},
         )
+
+        split = request_payload["split"]
+
+        self.assertEqual(split["type"], "flat")
+        self.assertEqual(split["bearer_type"], "all-proportional")
+        self.assertEqual(
+            split["subaccounts"],
+            [
+                {
+                    "subaccount": self.TEST_SUBACCOUNT_ONE,
+                    "share": 142500,
+                },
+                {
+                    "subaccount": self.TEST_SUBACCOUNT_TWO,
+                    "share": 237500,
+                },
+            ],
+        )
+
+        # ₦1,425 + ₦2,375 is ₦3,800 for the sellers.
+        # The remaining ₦200 is the platform's gross share before
+        # Paystack's transaction fee is proportionally allocated.
+        seller_shares_kobo = sum(
+            item["share"] for item in split["subaccounts"]
+        )
+        self.assertEqual(seller_shares_kobo, 380000)
+        self.assertLessEqual(seller_shares_kobo, request_payload["amount"])
 
         self.payment_one.refresh_from_db()
         self.payment_two.refresh_from_db()
@@ -193,49 +232,60 @@ class PaystackPaymentServiceTests(TestCase):
     def test_initialization_deduplicates_payment_ids(self):
         """Repeated IDs must not cause the same payment to be charged twice."""
 
-        with (
-            patch(
-                "payments.services._paystack_secret_key",
-                return_value="sk_test_not_real",
-            ),
-            patch(
-                "payments.services._paystack_currency",
-                return_value="NGN",
-            ),
-            patch("payments.services.requests.post") as mocked_post,
-        ):
-            def initialize_response(*args, **kwargs):
-                reference = kwargs["json"]["reference"]
-                return self.paystack_response(
-                    {
-                        "status": True,
-                        "data": {
-                            "reference": reference,
-                            "authorization_url": (
-                                "https://checkout.example.test/authorize"
-                            ),
-                        },
-                    }
-                )
-
-            mocked_post.side_effect = initialize_response
-
-            initialize_paystack_transaction(
-                payment_ids=[
-                    self.payment_one.pk,
-                    self.payment_one.pk,
-                ],
-                buyer=self.buyer,
-                callback_url="https://example.test/checkout/success",
-            )
-
-        payload = mocked_post.call_args.kwargs["json"]
+        _, payload = self.initialize_payment_request(
+            [
+                self.payment_one.pk,
+                self.payment_one.pk,
+            ]
+        )
 
         self.assertEqual(payload["amount"], 150000)
         self.assertEqual(
             payload["metadata"]["payment_ids"],
             [self.payment_one.pk],
         )
+        self.assertEqual(
+            payload["split"]["subaccounts"],
+            [
+                {
+                    "subaccount": self.TEST_SUBACCOUNT_ONE,
+                    "share": 142500,
+                }
+            ],
+        )
+
+    def test_initialization_rejects_missing_seller_subaccount(self):
+        """Checkout must not proceed when any seller lacks a subaccount."""
+
+        self.farmer_two.paystack_subaccount_code = ""
+        self.farmer_two.save(update_fields=["paystack_subaccount_code"])
+
+        with (
+            patch(
+                "payments.services._paystack_secret_key",
+                return_value="sk_test_not_real",
+            ),
+            patch("payments.services.requests.post") as mocked_post,
+        ):
+            with self.assertRaises(ValueError):
+                initialize_paystack_transaction(
+                    payment_ids=[
+                        self.payment_one.pk,
+                        self.payment_two.pk,
+                    ],
+                    buyer=self.buyer,
+                    callback_url="https://example.test/checkout/success",
+                )
+
+        mocked_post.assert_not_called()
+
+        self.payment_one.refresh_from_db()
+        self.payment_two.refresh_from_db()
+
+        self.assertEqual(self.payment_one.paystack_reference, "")
+        self.assertEqual(self.payment_two.paystack_reference, "")
+        self.assertEqual(self.payment_one.status, Payment.PENDING)
+        self.assertEqual(self.payment_two.status, Payment.PENDING)
 
     def test_initialization_rejects_another_buyers_payment(self):
         """A buyer cannot initialize another buyer's payment."""
@@ -407,7 +457,7 @@ class PaystackPaymentServiceTests(TestCase):
         )
 
     def test_verification_rejects_an_incorrect_amount(self):
-        """A lower amount must never settle the orders."""
+        """An incorrect checkout total must never settle the orders."""
 
         reference = "aw_test_wrong_amount"
 
@@ -541,4 +591,3 @@ class PaystackPaymentServiceTests(TestCase):
 
         with self.assertRaisesRegex(ValueError, "disabled"):
             confirm_payment(self.payment_one)
-

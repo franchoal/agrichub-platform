@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
@@ -64,6 +65,21 @@ class FarmerProfile(models.Model):
         AgriculturalCategory,
         blank=True,
         related_name="business_profiles",
+    )
+
+    # Private settlement configuration.
+    # This is a Paystack subaccount code, NOT a bank account number.
+    # Leave blank until the business has a verified and active
+    # Paystack subaccount configured for settlement.
+    paystack_subaccount_code = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text=(
+            "Private Paystack subaccount code for seller settlements. "
+            "Enter only after the subaccount has been verified. "
+            "Do not enter a bank account number."
+        ),
     )
 
     # Publication and verification are intentionally separate concepts.
@@ -164,7 +180,6 @@ class AgriculturalService(models.Model):
     )
 
     image = models.ImageField(
-        upload_to="services/",
         blank=True,
         null=True,
     )
