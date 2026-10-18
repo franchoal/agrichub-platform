@@ -21,6 +21,8 @@ import {
 } from "react-router-dom";
 
 import { logoIcon } from "../assets/logo";
+import { useCart } from "../hooks/useCart";
+import { useNotifications } from "../hooks/useNotifications";
 import { useAuthStore } from "../store/authStore";
 
 const MainLayout = () => {
@@ -28,6 +30,21 @@ const MainLayout = () => {
   const location = useLocation();
 
   const { user, logout } = useAuthStore();
+
+  const { data: cart } = useCart();
+
+  const { data: notifications } = useNotifications({
+    enabled: Boolean(user),
+  });
+
+  const cartCount = (cart?.items ?? []).reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const unreadCount = (
+    notifications?.results ?? []
+  ).filter((notification) => !notification.is_read).length;
 
   const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false);
@@ -201,9 +218,19 @@ const MainLayout = () => {
                       ? "bg-green-50 text-green-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
                   }`}
-                  aria-label="Cart"
+                  aria-label={
+                    cartCount > 0
+                      ? `Cart, ${cartCount} items`
+                      : "Cart"
+                  }
                 >
                   <ShoppingCart size={19} />
+
+                  {cartCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
                 </Link>
 
                 {/* NOTIFICATIONS */}
@@ -215,9 +242,19 @@ const MainLayout = () => {
                       ? "bg-green-50 text-green-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-green-700"
                   }`}
-                  aria-label="Notifications"
+                  aria-label={
+                    unreadCount > 0
+                      ? `Notifications, ${unreadCount} unread`
+                      : "Notifications"
+                  }
                 >
                   <Bell size={19} />
+
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
 
                 {/* PROFILE */}
@@ -364,14 +401,25 @@ const MainLayout = () => {
                     onClick={closeMobileMenu}
                     className={mobileNavClass("/cart")}
                   >
-                    <ShoppingCart
-                      size={18}
-                      className="shrink-0"
-                    />
+                    <span className="relative flex shrink-0 items-center">
+                      <ShoppingCart size={18} />
 
-                    <span className="min-w-0 truncate">
+                      {cartCount > 0 && (
+                        <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white">
+                          {cartCount > 99 ? "99+" : cartCount}
+                        </span>
+                      )}
+                    </span>
+
+                    <span className="min-w-0 flex-1 truncate">
                       Cart
                     </span>
+
+                    {cartCount > 0 && (
+                      <span className="shrink-0 text-xs font-bold text-green-700">
+                        {cartCount} {cartCount === 1 ? "item" : "items"}
+                      </span>
+                    )}
                   </Link>
 
                   {/* BUSINESS WORKSPACE */}
@@ -400,14 +448,25 @@ const MainLayout = () => {
                       "/notifications"
                     )}
                   >
-                    <Bell
-                      size={18}
-                      className="shrink-0"
-                    />
+                    <span className="relative flex shrink-0 items-center">
+                      <Bell size={18} />
 
-                    <span className="min-w-0 truncate">
+                      {unreadCount > 0 && (
+                        <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </span>
+
+                    <span className="min-w-0 flex-1 truncate">
                       Notifications
                     </span>
+
+                    {unreadCount > 0 && (
+                      <span className="shrink-0 text-xs font-bold text-red-600">
+                        {unreadCount} unread
+                      </span>
+                    )}
                   </Link>
 
                   {/* PROFILE */}
@@ -572,14 +631,27 @@ const MainLayout = () => {
           <Link
             to="/cart"
             className={bottomNavClass("/cart")}
+            aria-label={
+              cartCount > 0
+                ? `Cart, ${cartCount} items`
+                : "Cart"
+            }
           >
-            <ShoppingCart
-              size={20}
-              strokeWidth={
-                isActive("/cart") ? 2.5 : 2
-              }
-              className="shrink-0"
-            />
+            <span className="relative flex shrink-0 items-center justify-center">
+              <ShoppingCart
+                size={20}
+                strokeWidth={
+                  isActive("/cart") ? 2.5 : 2
+                }
+                className="shrink-0"
+              />
+
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </span>
 
             <span className="max-w-full truncate text-[10px] font-semibold">
               Cart
