@@ -63,7 +63,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       devOptions: {
-        enabled: false,
+        enabled: true, // Activated for local testing
+        type: "module", // Required for Vite dev server service workers
       },
     }),
   ],

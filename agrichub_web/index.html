@@ -15,8 +15,31 @@
       content="Connecting agriculture. Empowering communities. Access verified agribusinesses, products, and markets."
     />
     <meta property="og:type" content="website" />
+    
     <link rel="icon" type="image/png" href="/favicon.png" />
+    
+    <!-- PWA Manifest Requirement -->
+    <link rel="manifest" href="/manifest.json" />
+
     <title>AgricWise Africa | Smart Agricultural Ecosystem</title>
+
+    <!-- CRITICAL FIX: Catch PWA install prompt before React loads -->
+    <script>
+      window.deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later by your React app
+        window.deferredInstallPrompt = e;
+        // Dispatch the custom event your React utility is listening for
+        window.dispatchEvent(new Event("agricwise-install-available"));
+      });
+
+      window.addEventListener('appinstalled', () => {
+        window.deferredInstallPrompt = null;
+      });
+    </script>
+
     <style>
       /* Keep the SEO fallback hidden visually for regular users, but readable by bots */
       .seo-fallback-content {

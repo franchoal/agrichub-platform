@@ -1,5 +1,4 @@
-
-interface BeforeInstallPromptEvent extends Event {
+export interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{
     outcome: "accepted" | "dismissed";
@@ -11,11 +10,14 @@ declare global {
   interface WindowEventMap {
     "agricwise-install-available": Event;
   }
+  // Add the property to the global Window interface
+  interface Window {
+    deferredInstallPrompt: BeforeInstallPromptEvent | null;
+  }
 }
 
 const APP_URL = "https://myagricwyse.online/";
 
-let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
 let listenersInitialized = false;
 
 function initializeInstallListeners() {
@@ -25,9 +27,10 @@ function initializeInstallListeners() {
 
   listenersInitialized = true;
 
+  // Keep this as a fallback in case React loads faster than the browser fires it
   window.addEventListener("beforeinstallprompt", (event: Event) => {
     event.preventDefault();
-    deferredInstallPrompt = event as BeforeInstallPromptEvent;
+    window.deferredInstallPrompt = event as BeforeInstallPromptEvent;
 
     window.dispatchEvent(
       new Event("agricwise-install-available"),
@@ -35,7 +38,7 @@ function initializeInstallListeners() {
   });
 
   window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
+    window.deferredInstallPrompt = null;
   });
 }
 
@@ -43,7 +46,8 @@ initializeInstallListeners();
 
 export function canInstallAgricWise(): boolean {
   initializeInstallListeners();
-  return Boolean(deferredInstallPrompt);
+  // Read directly from the global window object populated by index.html
+  return Boolean(window.deferredInstallPrompt);
 }
 
 export function isRunningAsInstalledApp(): boolean {
@@ -68,8 +72,7 @@ export function isIOSDevice(): boolean {
 
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" &&
-      navigator.maxTouchPoints > 1)
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
   );
 }
 
@@ -90,7 +93,8 @@ export async function installAgricWise(): Promise<AgricWiseInstallResult> {
     };
   }
 
-  const installEvent = deferredInstallPrompt;
+  // Grab the event directly from the global window object
+  const installEvent = window.deferredInstallPrompt;
 
   if (!installEvent) {
     return {
@@ -106,8 +110,8 @@ export async function installAgricWise(): Promise<AgricWiseInstallResult> {
 
     const choice = await installEvent.userChoice;
 
-    if (deferredInstallPrompt === installEvent) {
-      deferredInstallPrompt = null;
+    if (choice.outcome === "accepted") {
+      window.deferredInstallPrompt = null;
     }
 
     window.dispatchEvent(
@@ -122,9 +126,7 @@ export async function installAgricWise(): Promise<AgricWiseInstallResult> {
           : "Installation was cancelled. You can try again from your browser's install option.",
     };
   } catch {
-    if (deferredInstallPrompt === installEvent) {
-      deferredInstallPrompt = null;
-    }
+    window.deferredInstallPrompt = null;
 
     window.dispatchEvent(
       new Event("agricwise-install-available"),
