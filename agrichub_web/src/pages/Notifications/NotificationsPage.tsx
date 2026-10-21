@@ -50,7 +50,7 @@ const NotificationsPage = () => {
   });
 
   const getNotificationIcon = (type: string) => {
-    const normalizedType = type.toLowerCase();
+    const normalizedType = type ? type.toLowerCase() : "";
 
     if (
       normalizedType.includes("order") ||
@@ -78,13 +78,13 @@ const NotificationsPage = () => {
     return BellRing;
   };
 
-  // HELPER: Safely extract the target ID from backend fields OR fallback to message regex
+  // HELPER: Safely extract the target Order ID from backend fields OR fallback to message regex
   const getNotificationTargetId = (notification: any) => {
     let targetId = notification.order_id || notification.reference_id || notification.related_id;
 
     if (!targetId && notification.message) {
-      // Matches "#15" or "Order 15" (case insensitive)
-      const match = notification.message.match(/#(\d+)|order\s+(\d+)/i);
+      // Matches "#34" or "order #34" or "order 34" (case insensitive)
+      const match = notification.message.match(/order\s*#?(\d+)|#(\d+)/i);
       if (match) {
         targetId = parseInt(match[1] || match[2], 10);
       }
@@ -102,13 +102,12 @@ const NotificationsPage = () => {
     const targetId = getNotificationTargetId(notification);
     const type = notification.notification_type?.toLowerCase() || "";
 
-    // 3. Handle Routing
-    if (targetId && (type.includes("order") || type.includes("delivery") || type.includes("payment"))) {
-      // FIXED: Routing directly to "/orders/:id" as defined in your App Router
+    // 3. Handle Routing to Order Details Page
+    if (targetId && (type.includes("order") || type.includes("delivery") || type.includes("payment") || true)) {
       navigate(`/orders/${targetId}`);
-    } else if (targetId) {
-      // Fallback: If we found an ID, try routing anyway
-      navigate(`/orders/${targetId}`);
+    } else {
+      // Fallback to orders list if no specific order ID could be determined
+      navigate("/orders");
     }
   };
 
@@ -226,7 +225,6 @@ const NotificationsPage = () => {
                 notification.notification_type
               );
               
-              // Calculate if we have a valid link using our helper
               const targetId = getNotificationTargetId(notification);
               const hasLink = Boolean(targetId);
 
@@ -234,7 +232,7 @@ const NotificationsPage = () => {
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`transition ${hasLink ? "cursor-pointer" : "cursor-default"}`}
+                  className="cursor-pointer transition"
                 >
                   <Card
                     className={`overflow-hidden rounded-3xl border-0 p-0 shadow-sm transition hover:shadow-md ${
@@ -290,10 +288,9 @@ const NotificationsPage = () => {
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 shadow-sm">
-                              {notification.notification_type.replaceAll(
-                                "_",
-                                " "
-                              )}
+                              {notification.notification_type
+                                ? notification.notification_type.replaceAll("_", " ")
+                                : "Update"}
                             </span>
 
                             <span className="flex items-center gap-1 text-[11px] text-gray-400">
@@ -304,21 +301,21 @@ const NotificationsPage = () => {
                             </span>
                           </div>
                           
-                          {/* Visual cue for clickable notifications */}
+                          {/* Visual cue for clickable order view */}
                           {hasLink && (
                             <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600">
-                              View Details <ExternalLink size={12} />
+                              View Order <ExternalLink size={12} />
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* STATUS BAR (Only for unread) */}
+                    {/* STATUS BAR */}
                     {!notification.is_read && (
                       <div className="flex items-center gap-2 border-t border-green-100 bg-green-100/50 px-4 py-2.5 text-[11px] font-medium text-green-700 sm:px-5">
                         <CheckCircle2 size={14} />
-                        Tap to mark as read {hasLink && "& view"}
+                        Tap to view order details & mark as read
                       </div>
                     )}
                   </Card>
