@@ -104,10 +104,11 @@ const NotificationsPage = () => {
 
     // 3. Handle Routing
     if (targetId && (type.includes("order") || type.includes("delivery") || type.includes("payment"))) {
-      navigate(`/buyer/orders/${targetId}`);
+      // FIXED: Routing directly to "/orders/:id" as defined in your App Router
+      navigate(`/orders/${targetId}`);
     } else if (targetId) {
       // Fallback: If we found an ID, try routing anyway
-      navigate(`/buyer/orders/${targetId}`);
+      navigate(`/orders/${targetId}`);
     }
   };
 
