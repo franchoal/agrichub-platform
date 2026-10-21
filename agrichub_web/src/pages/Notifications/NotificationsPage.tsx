@@ -6,21 +6,18 @@ import {
   Package,
   ShoppingBasket,
   UserRound,
+  ExternalLink,
 } from "lucide-react";
-
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Card, Button } from "../../components/ui";
-
 import { useNotifications } from "../../hooks/useNotifications";
-
 import { notificationService } from "../../services/notificationService";
 
 const NotificationsPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const {
     data: notifications,
@@ -31,13 +28,11 @@ const NotificationsPage = () => {
   const notificationList = notifications?.results ?? [];
 
   const unreadCount = notificationList.filter(
-    (notification) => !notification.is_read
+    (notification: any) => !notification.is_read
   ).length;
 
   const markReadMutation = useMutation({
-    mutationFn: (id: number) =>
-      notificationService.markNotificationRead(id),
-
+    mutationFn: (id: number) => notificationService.markNotificationRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["notifications"],
@@ -46,9 +41,7 @@ const NotificationsPage = () => {
   });
 
   const markAllMutation = useMutation({
-    mutationFn:
-      notificationService.markAllNotificationsRead,
-
+    mutationFn: notificationService.markAllNotificationsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["notifications"],
@@ -85,12 +78,28 @@ const NotificationsPage = () => {
     return BellRing;
   };
 
+  const handleNotificationClick = (notification: any) => {
+    // 1. Mark as read if it's currently unread
+    if (!notification.is_read) {
+      markReadMutation.mutate(notification.id);
+    }
+
+    // 2. Handle Routing
+    // Check your backend payload to see if it sends order_id, reference_id, or something else.
+    const targetId = notification.order_id || notification.reference_id || notification.related_id;
+    const type = notification.notification_type?.toLowerCase() || "";
+
+    if (targetId && (type.includes("order") || type.includes("delivery") || type.includes("payment"))) {
+      // Route the buyer directly to their order tracking page
+      navigate(`/buyer/orders/${targetId}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <main className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
           <div className="mb-5 h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
-
           <div className="space-y-3">
             {[1, 2, 3, 4].map((item) => (
               <div
@@ -112,7 +121,6 @@ const NotificationsPage = () => {
             <h2 className="text-xl font-bold text-red-700">
               Unable to Load Notifications
             </h2>
-
             <p className="mt-2 text-sm leading-6 text-red-600">
               Please try again later.
             </p>
@@ -136,7 +144,6 @@ const NotificationsPage = () => {
               <h1 className="text-xl font-bold text-gray-900">
                 Notifications
               </h1>
-
               <p className="text-xs text-gray-500">
                 {unreadCount > 0
                   ? `${unreadCount} unread notification${
@@ -168,14 +175,9 @@ const NotificationsPage = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-green-100">
                   Notification Center
                 </p>
-
-                <h2 className="mt-1 text-xl font-bold">
-                  Stay updated
-                </h2>
-
+                <h2 className="mt-1 text-xl font-bold">Stay updated</h2>
                 <p className="mt-1 text-sm text-green-100">
-                  Orders, payments, marketplace activity and account
-                  updates appear here.
+                  Orders, payments, marketplace activity and account updates appear here.
                 </p>
               </div>
 
@@ -190,40 +192,34 @@ const NotificationsPage = () => {
         {notificationList.length === 0 ? (
           <Card className="rounded-3xl border-0 p-10 text-center shadow-sm sm:p-14">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
-              <Bell
-                size={38}
-                className="text-green-600"
-              />
+              <Bell size={38} className="text-green-600" />
             </div>
-
             <h2 className="mt-5 text-2xl font-bold text-gray-900">
               You're All Caught Up
             </h2>
-
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500">
-              There are no new notifications at the moment. We'll
-              notify you whenever there's important activity.
+              There are no new notifications at the moment. We'll notify you
+              whenever there's important activity.
             </p>
           </Card>
         ) : (
           <section className="space-y-3">
-            {notificationList.map((notification) => {
+            {notificationList.map((notification: any) => {
               const NotificationIcon = getNotificationIcon(
                 notification.notification_type
               );
+              
+              // Determine if this notification has a destination
+              const hasLink = Boolean(notification.order_id || notification.reference_id || notification.related_id);
 
               return (
                 <div
                   key={notification.id}
-                  onClick={() => {
-                    if (!notification.is_read) {
-                      markReadMutation.mutate(notification.id);
-                    }
-                  }}
+                  onClick={() => handleNotificationClick(notification)}
                   className="cursor-pointer"
                 >
                   <Card
-                    className={`overflow-hidden rounded-3xl border-0 p-0 shadow-sm transition ${
+                    className={`overflow-hidden rounded-3xl border-0 p-0 shadow-sm transition hover:shadow-md ${
                       notification.is_read
                         ? "bg-white"
                         : "bg-green-50/70 ring-1 ring-green-200"
@@ -273,30 +269,38 @@ const NotificationsPage = () => {
                         </div>
 
                         {/* META */}
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 shadow-sm">
-                            {notification.notification_type.replaceAll(
-                              "_",
-                              " "
-                            )}
-                          </span>
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 shadow-sm">
+                              {notification.notification_type.replaceAll(
+                                "_",
+                                " "
+                              )}
+                            </span>
 
-                          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                            <Clock3 size={12} />
-
-                            {new Date(
-                              notification.created_at
-                            ).toLocaleString()}
-                          </span>
+                            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                              <Clock3 size={12} />
+                              {new Date(
+                                notification.created_at
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          {/* Visual cue for clickable notifications */}
+                          {hasLink && (
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600">
+                              View Details <ExternalLink size={12} />
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* STATUS */}
+                    {/* STATUS BAR (Only for unread) */}
                     {!notification.is_read && (
                       <div className="flex items-center gap-2 border-t border-green-100 bg-green-100/50 px-4 py-2.5 text-[11px] font-medium text-green-700 sm:px-5">
                         <CheckCircle2 size={14} />
-                        Tap to mark as read
+                        Tap to mark as read {hasLink && "& view"}
                       </div>
                     )}
                   </Card>
