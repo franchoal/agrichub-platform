@@ -4,6 +4,7 @@ import {
   Home,
   LogOut,
   Menu,
+  PackageCheck,
   Plus,
   ShoppingBag,
   ShoppingCart,
@@ -193,12 +194,21 @@ const MainLayout = () => {
             </Link>
 
             {user && (
-              <Link
-                to="/farmer"
-                className={desktopNavClass("/farmer")}
-              >
-                My Business
-              </Link>
+              <>
+                <Link
+                  to="/orders"
+                  className={desktopNavClass("/orders")}
+                >
+                  My Orders
+                </Link>
+
+                <Link
+                  to="/farmer"
+                  className={desktopNavClass("/farmer")}
+                >
+                  My Business
+                </Link>
+              </>
             )}
           </nav>
 
@@ -394,6 +404,23 @@ const MainLayout = () => {
 
               {user && (
                 <>
+                  {/* MY ORDERS */}
+
+                  <Link
+                    to="/orders"
+                    onClick={closeMobileMenu}
+                    className={mobileNavClass("/orders")}
+                  >
+                    <PackageCheck
+                      size={18}
+                      className="shrink-0"
+                    />
+
+                    <span className="min-w-0 truncate">
+                      My Orders
+                    </span>
+                  </Link>
+
                   {/* CART */}
 
                   <Link
@@ -721,6 +748,13 @@ const MainLayout = () => {
                 className="transition hover:text-green-700"
               >
                 Marketplace
+              </Link>
+
+              <Link
+                to="/orders"
+                className="transition hover:text-green-700"
+              >
+                Orders
               </Link>
 
               <Link
