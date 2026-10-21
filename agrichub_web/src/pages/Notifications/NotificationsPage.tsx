@@ -78,19 +78,35 @@ const NotificationsPage = () => {
     return BellRing;
   };
 
+  // HELPER: Safely extract the target ID from backend fields OR fallback to message regex
+  const getNotificationTargetId = (notification: any) => {
+    let targetId = notification.order_id || notification.reference_id || notification.related_id;
+
+    if (!targetId && notification.message) {
+      // Matches "#15" or "Order 15" (case insensitive)
+      const match = notification.message.match(/#(\d+)|order\s+(\d+)/i);
+      if (match) {
+        targetId = parseInt(match[1] || match[2], 10);
+      }
+    }
+    return targetId;
+  };
+
   const handleNotificationClick = (notification: any) => {
     // 1. Mark as read if it's currently unread
     if (!notification.is_read) {
       markReadMutation.mutate(notification.id);
     }
 
-    // 2. Handle Routing
-    // Check your backend payload to see if it sends order_id, reference_id, or something else.
-    const targetId = notification.order_id || notification.reference_id || notification.related_id;
+    // 2. Extract ID and Type
+    const targetId = getNotificationTargetId(notification);
     const type = notification.notification_type?.toLowerCase() || "";
 
+    // 3. Handle Routing
     if (targetId && (type.includes("order") || type.includes("delivery") || type.includes("payment"))) {
-      // Route the buyer directly to their order tracking page
+      navigate(`/buyer/orders/${targetId}`);
+    } else if (targetId) {
+      // Fallback: If we found an ID, try routing anyway
       navigate(`/buyer/orders/${targetId}`);
     }
   };
@@ -209,14 +225,15 @@ const NotificationsPage = () => {
                 notification.notification_type
               );
               
-              // Determine if this notification has a destination
-              const hasLink = Boolean(notification.order_id || notification.reference_id || notification.related_id);
+              // Calculate if we have a valid link using our helper
+              const targetId = getNotificationTargetId(notification);
+              const hasLink = Boolean(targetId);
 
               return (
                 <div
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className="cursor-pointer"
+                  className={`transition ${hasLink ? "cursor-pointer" : "cursor-default"}`}
                 >
                   <Card
                     className={`overflow-hidden rounded-3xl border-0 p-0 shadow-sm transition hover:shadow-md ${
