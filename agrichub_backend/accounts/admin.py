@@ -1,23 +1,24 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 
 from .models import User, Profile
 
 
 @admin.register(User)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(admin.ModelAdmin):
     model = User
 
     list_display = (
         "email",
         "first_name",
         "last_name",
+        "role",
         "is_staff",
         "is_active",
         "date_joined",
     )
 
     list_filter = (
+        "role",
         "is_staff",
         "is_active",
         "is_verified",
@@ -32,6 +33,16 @@ class CustomUserAdmin(UserAdmin):
         "phone_number",
     )
 
+    # CRITICAL FIX: auto_now fields must be read-only if included in fieldsets.
+    # Password is made read-only so admins don't accidentally save plaintext passwords.
+    readonly_fields = (
+        "password",
+        "last_login",
+        "date_joined",
+        "created_at",
+        "updated_at",
+    )
+
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (
@@ -41,6 +52,7 @@ class CustomUserAdmin(UserAdmin):
                     "first_name",
                     "last_name",
                     "phone_number",
+                    "role",
                 )
             },
         ),
@@ -66,24 +78,6 @@ class CustomUserAdmin(UserAdmin):
                     "created_at",
                     "updated_at",
                 )
-            },
-        ),
-    )
-
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": (
-                    "email",
-                    "first_name",
-                    "last_name",
-                    "password1",
-                    "password2",
-                    "is_staff",
-                    "is_active",
-                ),
             },
         ),
     )
