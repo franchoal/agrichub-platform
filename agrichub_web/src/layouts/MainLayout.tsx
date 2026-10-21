@@ -110,16 +110,6 @@ const MainLayout = () => {
   ========================================================
   MOBILE BOTTOM NAVIGATION
   ========================================================
-
-  The bottom navigation is intentionally kept to five
-  primary actions for a native-app feel:
-
-      Home
-      Businesses
-      Business / Join
-      Cart
-      Profile
-  ========================================================
   */
 
   const bottomNavClass = (path: string) =>
@@ -168,7 +158,7 @@ const MainLayout = () => {
           </Link>
 
           {/* =================================================
-              DESKTOP NAVIGATION
+              DESKTOP NAVIGATION (NOW INCLUDES PERMANENT "MY ORDERS")
           ================================================= */}
 
           <nav className="hidden min-w-0 items-center gap-1 md:flex">
@@ -193,22 +183,20 @@ const MainLayout = () => {
               Marketplace
             </Link>
 
-            {user && (
-              <>
-                <Link
-                  to="/orders"
-                  className={desktopNavClass("/orders")}
-                >
-                  My Orders
-                </Link>
+            <Link
+              to="/orders"
+              className={desktopNavClass("/orders")}
+            >
+              My Orders
+            </Link>
 
-                <Link
-                  to="/farmer"
-                  className={desktopNavClass("/farmer")}
-                >
-                  My Business
-                </Link>
-              </>
+            {user && (
+              <Link
+                to="/farmer"
+                className={desktopNavClass("/farmer")}
+              >
+                My Business
+              </Link>
             )}
           </nav>
 
@@ -402,25 +390,25 @@ const MainLayout = () => {
                 </span>
               </Link>
 
+              {/* MY ORDERS (ALWAYS AVAILABLE) */}
+
+              <Link
+                to="/orders"
+                onClick={closeMobileMenu}
+                className={mobileNavClass("/orders")}
+              >
+                <PackageCheck
+                  size={18}
+                  className="shrink-0"
+                />
+
+                <span className="min-w-0 truncate">
+                  My Orders
+                </span>
+              </Link>
+
               {user && (
                 <>
-                  {/* MY ORDERS */}
-
-                  <Link
-                    to="/orders"
-                    onClick={closeMobileMenu}
-                    className={mobileNavClass("/orders")}
-                  >
-                    <PackageCheck
-                      size={18}
-                      className="shrink-0"
-                    />
-
-                    <span className="min-w-0 truncate">
-                      My Orders
-                    </span>
-                  </Link>
-
                   {/* CART */}
 
                   <Link
