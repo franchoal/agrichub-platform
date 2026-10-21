@@ -209,7 +209,7 @@ export const router = createBrowserRouter([
   and uses the existing PWA configuration.
   */
 
-  
+
 
 
   /*
@@ -387,6 +387,23 @@ export const router = createBrowserRouter([
 
       /*
       ========================================
+      ORDERS (ACCESSIBLE FROM NAVBAR)
+      ========================================
+      */
+
+      {
+        path: "orders",
+        element: <OrdersPage />,
+      },
+
+      {
+        path: "orders/:id",
+        element: <OrderDetailsPage />,
+      },
+
+
+      /*
+      ========================================
       AUTHENTICATED AGRICWISE USERS
       ========================================
       */
@@ -460,23 +477,6 @@ export const router = createBrowserRouter([
           {
             path: "checkout/success",
             element: <CheckoutSuccessPage />,
-          },
-
-
-          /*
-          ====================================
-          ORDERS
-          ====================================
-          */
-
-          {
-            path: "orders",
-            element: <OrdersPage />,
-          },
-
-          {
-            path: "orders/:id",
-            element: <OrderDetailsPage />,
           },
 
 
@@ -620,5 +620,3 @@ export const router = createBrowserRouter([
     ),
   },
 ]);
-
-
