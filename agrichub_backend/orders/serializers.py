@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 
 from payments.models import Payment
@@ -76,8 +75,8 @@ class OrderSerializer(serializers.ModelSerializer):
     fulfillment or be cancelled after successful payment.
 
     Contact information is disclosed only to the buyer or
-    assigned farmer when payment is successful and the order
-    has been accepted.
+    assigned farmer when payment is successful (via Paystack)
+    and the order has not been cancelled.
     """
 
     items = OrderItemSerializer(
@@ -225,8 +224,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_contacts(self, obj):
         """
-        Return the other party's contact details only when
-        payment is successful and the order is accepted.
+        Return the other party's contact details instantly when
+        Paystack confirms the payment as successful, unless the order is cancelled.
         """
 
         request = self.context.get("request")
@@ -236,11 +235,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
         payment = getattr(obj, "payment", None)
 
-        if (
-            obj.status != Order.ACCEPTED
-            or payment is None
-            or payment.status != Payment.SUCCESSFUL
-        ):
+        # Require a successful payment from Paystack
+        if payment is None or payment.status != Payment.SUCCESSFUL:
+            return None
+
+        # Hide contacts if the order is eventually cancelled
+        if obj.status == Order.CANCELLED:
             return None
 
         user = request.user
