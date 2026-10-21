@@ -40,6 +40,13 @@ class Notification(models.Model):
         choices=NOTIFICATION_TYPE_CHOICES,
     )
 
+    # ADD THIS: Stores the related Order ID (or other model ID)
+    reference_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="ID of the related object (e.g., Order ID)",
+    )
+
     is_read = models.BooleanField(
         default=False,
     )
@@ -54,4 +61,4 @@ class Notification(models.Model):
         verbose_name_plural = "Notifications"
 
     def __str__(self):
-        return f"{self.title} - {self.user.email}"
+        return f"{self.title} → {self.user.email}"
