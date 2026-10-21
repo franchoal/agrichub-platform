@@ -1,3 +1,4 @@
+
 import { api } from "./api";
 
 
@@ -70,6 +71,19 @@ export interface OrderDelivery {
 
 /*
 ======================================================
+ORDER CONTACT
+======================================================
+*/
+
+export interface OrderContact {
+  name: string;
+  phone: string | null;
+  role: "buyer" | "farmer";
+}
+
+
+/*
+======================================================
 ORDER
 ======================================================
 */
@@ -83,6 +97,7 @@ export interface Order {
   items: OrderItem[];
   payment: OrderPayment | null;
   delivery: OrderDelivery | null;
+  contacts: OrderContact | null;
   created_at: string;
   updated_at: string;
 }

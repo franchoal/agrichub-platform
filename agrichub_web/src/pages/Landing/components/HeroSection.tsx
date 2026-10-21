@@ -1,18 +1,23 @@
-import { ArrowRight, Play } from "lucide-react";
+
+import { ArrowRight, Download } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import logoIcon from "../../../assets/logo/logo-icon.png";
+import { installAgricWise } from "../../../utils/agricwiseInstall";
 
 function HeroSection() {
   const navigate = useNavigate();
+  const [installMessage, setInstallMessage] = useState("");
 
-  const handleExplore = () => {
-    document
-      .getElementById("about-agricwise")
-      ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+  const handleDownload = async () => {
+    setInstallMessage("");
+
+    const result = await installAgricWise();
+
+    if (result.message) {
+      setInstallMessage(result.message);
+    }
   };
 
   return (
@@ -105,17 +110,25 @@ function HeroSection() {
 
               <button
                 type="button"
-                onClick={handleExplore}
+                onClick={handleDownload}
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-md transition duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 sm:w-auto sm:px-7"
               >
-                <Play
-                  size={16}
-                  fill="currentColor"
-                />
+                <Download size={17} />
 
-                Explore AgricWise
+                Download AgricWise App
               </button>
             </div>
+
+            {/* Installation guidance */}
+            {installMessage && (
+              <p
+                role="status"
+                aria-live="polite"
+                className="mt-4 max-w-xl rounded-xl border border-white/20 bg-black/45 px-4 py-3 text-sm leading-6 text-white/90 backdrop-blur-sm"
+              >
+                {installMessage}
+              </p>
+            )}
 
             {/* Platform positioning */}
             <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-semibold text-white/70 sm:mt-10 sm:gap-x-5 sm:text-xs">

@@ -11,17 +11,14 @@ import {
 import { toast } from "react-hot-toast";
 
 import {
-
   CheckCircle2,
-
   CreditCard,
-
   Loader2,
-
   MapPin,
-
   Truck,
-
+  Phone,
+  MessageCircle,
+  UserRound,
 } from "lucide-react";
 
 
@@ -447,7 +444,20 @@ const OrderDetailsPage = () => {
 
 
   const orderStatusIndex = getStatusIndex(order.status);
+    // The backend exposes contacts only when payment is successful
+  // and the farmer has accepted the order.
+  const farmerContact =
+    order.contacts?.role === "farmer" ? order.contacts : null;
 
+  const farmerPhone = farmerContact?.phone?.trim() || null;
+
+  const whatsappPhone = farmerPhone
+    ? farmerPhone.replace(/[^\d]/g, "")
+    : "";
+
+  const whatsappUrl = whatsappPhone
+    ? `https://wa.me/${whatsappPhone}`
+    : null;
 
 
   return (
@@ -593,7 +603,92 @@ const OrderDetailsPage = () => {
           </Card>
 
         </section>
+      
+              {/* FARMER CONTACT — PROVIDED BY THE BACKEND WHEN AUTHORIZED */}
+        {farmerContact && (
+          <section className="mt-6 sm:mt-8">
+            <Card className="overflow-hidden rounded-2xl border border-green-100 shadow-lg sm:rounded-[30px]">
+              <div className="bg-green-50 px-5 py-6 sm:px-8 sm:py-7">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="shrink-0 rounded-xl bg-white p-3 shadow-sm">
+                    <UserRound
+                      size={24}
+                      className="text-green-700"
+                    />
+                  </div>
 
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                      Contact the Farmer
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-600 sm:text-base">
+                      Your order has been accepted. You can now contact
+                      the farmer to coordinate logistics and delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5 p-5 sm:p-8">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 sm:text-sm">
+                    Farmer's Name
+                  </p>
+
+                  <p className="mt-2 break-words text-lg font-bold text-gray-900 sm:text-xl">
+                    {farmerContact.name}
+                  </p>
+                </div>
+
+                {farmerPhone ? (
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500 sm:text-sm">
+                      Phone Number
+                    </p>
+
+                    <a
+                      href={`tel:${farmerPhone}`}
+                      className="mt-2 inline-flex items-center gap-2 break-all text-base font-semibold text-green-700 hover:text-green-800 sm:text-lg"
+                    >
+                      <Phone size={18} className="shrink-0" />
+                      {farmerPhone}
+                    </a>
+                  </div>
+                ) : (
+                  <p className="rounded-xl bg-gray-50 p-4 text-sm leading-6 text-gray-600">
+                    The farmer has not provided a phone number. Please
+                    contact AgricWise support for assistance with logistics.
+                  </p>
+                )}
+
+                {farmerPhone && (
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <a
+                      href={`tel:${farmerPhone}`}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 sm:w-auto"
+                    >
+                      <Phone size={18} />
+                      Call Farmer
+                    </a>
+
+                    {whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-green-600 px-5 py-3 font-semibold text-green-700 transition hover:bg-green-50 sm:w-auto"
+                      >
+                        <MessageCircle size={18} />
+                        WhatsApp Farmer
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </section>
+        )}
 
 
         {/* ORDER PROGRESS */}

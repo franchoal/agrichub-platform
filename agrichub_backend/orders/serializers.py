@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from payments.models import Payment
@@ -73,6 +74,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     Enforces payment safeguards before an order can enter
     fulfillment or be cancelled after successful payment.
+
+    Contact information is disclosed only to the buyer or
+    assigned farmer when payment is successful and the order
+    has been accepted.
     """
 
     items = OrderItemSerializer(
@@ -98,6 +103,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     delivery = serializers.SerializerMethodField()
 
+    contacts = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
 
@@ -110,6 +117,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "total",
             "payment",
             "delivery",
+            "contacts",
             "created_at",
             "updated_at",
         ]
@@ -122,6 +130,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "total",
             "payment",
             "delivery",
+            "contacts",
             "created_at",
             "updated_at",
         ]
@@ -213,6 +222,57 @@ class OrderSerializer(serializers.ModelSerializer):
                 )
 
         return value
+
+    def get_contacts(self, obj):
+        """
+        Return the other party's contact details only when
+        payment is successful and the order is accepted.
+        """
+
+        request = self.context.get("request")
+
+        if request is None or not request.user.is_authenticated:
+            return None
+
+        payment = getattr(obj, "payment", None)
+
+        if (
+            obj.status != Order.ACCEPTED
+            or payment is None
+            or payment.status != Payment.SUCCESSFUL
+        ):
+            return None
+
+        user = request.user
+
+        if user.pk == obj.buyer_id:
+            other_party = obj.farmer.user
+
+            name = obj.farmer.farm_name
+            role = "farmer"
+
+        elif user.pk == obj.farmer.user_id:
+            other_party = obj.buyer
+
+            name = " ".join(
+                part
+                for part in [
+                    other_party.first_name,
+                    other_party.last_name,
+                ]
+                if part
+            ) or other_party.email
+
+            role = "buyer"
+
+        else:
+            return None
+
+        return {
+            "name": name,
+            "phone": other_party.phone_number or None,
+            "role": role,
+        }
 
     def get_total(self, obj):
         """
